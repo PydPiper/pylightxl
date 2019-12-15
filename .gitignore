@@ -1,3 +1,7 @@
-.idea
+*.idea
 venv
-.pyc
+*.pyc
+*.xml
+*.xlsx
+*.xlsm
+__pycache__

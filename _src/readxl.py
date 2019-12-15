@@ -1,231 +1,9 @@
+# standard lib imports
 import zipfile
 import re
-from functools import reduce
 from os.path import isfile
-
-
-class Database:
-
-    def __init__(self):
-        self._worksheet = {}
-
-    def __repr__(self):
-        return 'pylightxl.Database'
-
-    def worksheet(self, sheetname):
-        """
-        Indexes worksheets within the database
-        :param str sheetname: worksheet name
-        :return: pylightxl.Database.Worksheet class object
-        """
-
-        try:
-            return self._worksheet[sheetname]
-        except KeyError:
-            raise ValueError('Error - Sheetname ({}) is not in the database'.format(sheetname))
-
-    @property
-    def worksheetnames(self):
-        """
-        Returns a list of database stored worksheet names
-        :return: list of worksheet names
-        """
-
-        return list(self._worksheet.keys())
-
-    def add_worksheet(self, sheetname, data):
-        """
-        Logs worksheet name and its data in the database
-        :param str sheetname: worksheet name
-        :param data: dictionary of worksheet cell values (ex: {'A1': 10, 'A2': 20})
-        :return: None
-        """
-
-        self._worksheet.update({sheetname: Worksheet(data)})
-
-
-class Worksheet:
-
-    def __init__(self, data):
-        self._data = data
-        self.maxrow = 0
-        self.maxcol = 0
-        self._calc_size()
-
-    def __repr__(self):
-        return 'pylightxl.Database.Worksheet'
-
-    def _calc_size(self):
-        """
-        Calculates the size of the worksheet row/col. This only occurs on initialization
-        :return: None (but this creates instance attributes maxrow/maxcol)
-        """
-
-        if self._data != {}:
-            list_of_addresses = list(self._data.keys())
-            list_of_addresses.sort()
-            largest_col_address = list_of_addresses[-1]
-            self.maxcol = self.address2index(largest_col_address)[1]
-
-            strVSnum = re.compile(r'[A-Z]+')
-            list_of_rows = [int(strVSnum.split(address)[1]) for address in list_of_addresses]
-            self.maxrow = max(list_of_rows)
-        else:
-            self.maxrow = 0
-            self.maxcol = 0
-
-    @property
-    def size(self):
-        """
-        Returns the size of the worksheet (row/col)
-        :return: list of [maxrow, maxcol]
-        """
-
-        return [self.maxrow, self.maxcol]
-
-    def address(self, address):
-        """
-        Takes an excel address and returns the worksheet stored value
-        :param str address: Excel address (ex: "A1")
-        :return: cell value
-        """
-
-        try:
-            rv = self._data[address]
-        except KeyError:
-            # no data was parsed, return empty cell value
-            rv = ""
-
-        return rv
-
-    def index(self, row, col):
-        """
-        Takes an excel row and col starting at index 1 and returns the worksheet stored value
-        :param int row: row index (starting at 1)
-        :param int col: col index (start at 1 that corresponds to column "A")
-        :return: cell value
-        """
-
-        address = self.index2address(row,col)
-        try:
-            rv = self._data[address]
-        except KeyError:
-            # no data was parsed, return empty cell value
-            rv = ""
-
-        return rv
-
-    def row(self, row):
-        """
-        Takes a row index input and returns a list of cell data
-        :param int row: row index (starting at 1)
-        :return: list of cell data
-        """
-
-        rv = []
-
-        for c in range(1, self.maxcol + 1):
-            val = self.index(row, c)
-            rv.append(val)
-
-        return rv
-
-    def col(self, col):
-        """
-        Takes a col index input and returns a list of cell data
-        :param int col: col index (start at 1 that corresponds to column "A")
-        :return: list of cell data
-        """
-
-        rv = []
-
-        for r in range(1, self.maxrow + 1):
-            val = self.index(r, col)
-            rv.append(val)
-
-        return rv
-
-    @property
-    def rows(self):
-        """
-        Returns a list of rows that can be iterated through
-        :return: list of rows-lists (ex: [[11,12,13],[21,22,23]] for 2 rows with 3 columns of data
-        """
-
-        rv = []
-
-        for r in range(1, self.maxrow + 1):
-            rv.append(self.row(r))
-
-        return rv
-
-    @property
-    def cols(self):
-        """
-        Returns a list of cols that can be iterated through
-        :return: list of cols-lists (ex: [[11,21],[12,22],[13,23]] for 2 rows with 3 columns of data
-        """
-
-        rv = []
-
-        for c in range(1, self.maxcol + 1):
-            rv.append(self.col(c))
-
-        return rv
-
-    def address2index(self, address):
-        """
-        Convert excel address to row/col index
-        :param str address: Excel address (ex: "A1")
-        :return: list of [row, col]
-        """
-        if type(address) is not str:
-            raise ValueError('Error - Address ({}) must be a string.'.format(address))
-        if address == '':
-            raise ValueError('Error - Address ({}) cannot be an empty str.'.format(address))
-
-        address = address.upper()
-
-        strVSnum = re.compile(r'[A-Z]+')
-        try:
-            colstr = strVSnum.findall(address)[0]
-        except IndexError:
-            raise ValueError('Error - Incorrect address ({}) entry. Address must be an alphanumeric '
-                             'where the starting character(s) are alpha characters a-z'.format(address))
-
-        if not colstr.isalpha():
-            raise ValueError('Error - Incorrect address ({}) entry. Address must be an alphanumeric '
-                             'where the starting character(s) are alpha characters a-z'.format(address))
-
-        if len(colstr) == 1:
-            col = ord(colstr) - 64
-        else:
-            col = reduce(lambda x, y: ord(x)-64+ord(y)-64, colstr)
-
-        try:
-            row = int(strVSnum.split(address)[1])
-        except (IndexError, ValueError):
-            raise ValueError('Error - Incorrect address ({}) entry. Address must be an alphanumeric '
-                             'where the trailing character(s) are numeric characters 1-9'.format(address))
-
-        return [row, col]
-
-    def index2address(self, row, col):
-        """
-        Converts index row/col to excel address
-        :param int row: row index (starting at 1)
-        :param int col: col index (start at 1 that corresponds to column "A")
-        :return: str excel address
-        """
-        if type(row) is not int and type(row) is not float:
-            raise ValueError('Error - Incorrect row ({}) entry. Row must either be a int or float'.format(row))
-        if type(col) is not int and type(col) is not float:
-            raise ValueError('Error - Incorrect col ({}) entry. Col must either be a int or float'.format(col))
-        if row <= 0 or col <= 0:
-            raise ValueError('Error - Row ({}) and Col ({}) entry cannot be less than 1'.format(row, col))
-
-        colname = chr(col+64)
-        return colname + str(row)
+# local lib imports
+from .database import Database
 
 
 def readxl(fn):
@@ -261,7 +39,7 @@ def readxl(fn):
         # scrape each sheet#.xml file
         for i, zip_sheetname in enumerate(zip_sheetnames):
             with f_zip.open(zip_sheetname, 'r') as f:
-                db.add_worksheet(sheetname=sheetnames[i], data=scrape_worksheetxml(f, sharedString))
+                db.add_worksheet(sheetname=sheetnames[i], data=scrape(f, sharedString))
 
     return db
 
@@ -311,6 +89,7 @@ def get_sheetnames(file):
         sheetnames.append(sheet_line.split('"')[1])
 
     return sheetnames
+
 
 def get_zipsheetnames(zipfile):
     """
@@ -384,9 +163,56 @@ def scrape_worksheetxml(file, sharedString=None):
     return data
 
 
+def scrape(f, sharedString=None):
+
+    data = {}
+    sharedString = sharedString if sharedString != None else {}
 
 
+    sample_size = 1000
 
-db = readxl('../Book2.xlsx')
-pass
+    re_cr_tag = re.compile(r'(?<=<c r=)(.+?)(?=</c>)')
+    re_cell_val = re.compile(r'(?<=<v>)(.*)(?=</v>)')
 
+    # read and dump data till "sheetData" is reached
+    while True:
+        text_buff = f.read(sample_size).decode()
+
+        # if sample reading catches "sheetData" entirely
+        if 'sheetData' in text_buff:
+            break
+        else:
+            # it is possible to slice through "sheetData" during sampling but 2x slices cannot miss
+            #   "sheetData" b/c len("sheetData")=9 char which is way less than 2x sample_size
+            text_buff += f.read(sample_size).decode()
+            if 'sheetData' in text_buff:
+                break
+            # if "sheetData" was not found, dump text_buff from memory
+
+    # "sheetData" reach, log address/val
+    while True:
+
+        match = re_cr_tag.findall(text_buff)
+
+        while True:
+            if match:
+                first_match = match.pop(0)
+                cell_address = first_match.split('"')[1]
+                val_common_str = True if 't="s"' in first_match else False
+
+                cell_val = re_cell_val.findall(first_match)[0]
+                if val_common_str:
+                    cell_val = sharedString[int(cell_val)]
+
+                data.update({cell_address: cell_val})
+            else:
+                # only carry forward the reminder unmatched text
+                text_buff = re_cr_tag.split(text_buff)[-1]
+                next_buff = f.read(sample_size).decode()
+                text_buff += next_buff
+                break
+
+        if not next_buff:
+            break
+
+    return data
