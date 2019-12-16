@@ -4,12 +4,12 @@ import re
 class Database:
 
     def __init__(self):
-        self._worksheet = {}
+        self._ws = {}
 
     def __repr__(self):
         return 'pylightxl.Database'
 
-    def worksheet(self, sheetname):
+    def ws(self, sheetname):
         """
         Indexes worksheets within the database
         :param str sheetname: worksheet name
@@ -17,20 +17,20 @@ class Database:
         """
 
         try:
-            return self._worksheet[sheetname]
+            return self._ws[sheetname]
         except KeyError:
             raise ValueError('Error - Sheetname ({}) is not in the database'.format(sheetname))
 
     @property
-    def worksheetnames(self):
+    def ws_names(self):
         """
         Returns a list of database stored worksheet names
         :return: list of worksheet names
         """
 
-        return list(self._worksheet.keys())
+        return list(self._ws.keys())
 
-    def add_worksheet(self, sheetname, data):
+    def add_ws(self, sheetname, data):
         """
         Logs worksheet name and its data in the database
         :param str sheetname: worksheet name
@@ -38,7 +38,7 @@ class Database:
         :return: None
         """
 
-        self._worksheet.update({sheetname: Worksheet(data)})
+        self._ws.update({sheetname: Worksheet(data)})
 
 
 class Worksheet:

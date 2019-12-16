@@ -8,10 +8,12 @@ from .database import Database
 # c-python functions
 from .readxl_scrape import scrape
 
-def readxl(fn):
+
+def readxl(fn, sheetnames=()):
     """
     Reads an xlsx or xlsm file and returns a pylightxl database
     :param str fn: Excel file name
+    :param tuple sheetnames: sheetnames to read into the database, if not specified - all sheets are read
     :return: pylightxl.Database class
     """
 
@@ -26,10 +28,19 @@ def readxl(fn):
 
         # get custom sheetnames
         with f_zip.open('xl/workbook.xml', 'r') as f:
-            sheetnames = get_sheetnames(f)
+            sh_names = get_sheetnames(f)
 
         # get all of the zip'ed xml sheetnames
         zip_sheetnames = get_zipsheetnames(f_zip)
+
+        # remove all names not in entry sheetnames
+        if sheetnames:
+            for sn in sheetnames:
+                try:
+                    pop_index = sh_names.index(sn)
+                    _ = zip_sheetnames.pop(pop_index)
+                except ValueError:
+                    raise ValueError('Error - Sheetname ({}) is not in the workbook.'.format(sn))
 
         # gat common string cell value table
         if 'xl/sharedStrings.xml' in f_zip.NameToInfo.keys():
@@ -41,7 +52,7 @@ def readxl(fn):
         # scrape each sheet#.xml file
         for i, zip_sheetname in enumerate(zip_sheetnames):
             with f_zip.open(zip_sheetname, 'r') as f:
-                db.add_worksheet(sheetname=sheetnames[i], data=scrape(f, sharedString))
+                db.add_ws(sheetname=sh_names[i], data=scrape(f, sharedString))
 
     return db
 
