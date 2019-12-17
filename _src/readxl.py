@@ -35,14 +35,16 @@ def readxl(fn, sheetnames=()):
 
         # remove all names not in entry sheetnames
         if sheetnames:
+            temp = []
             for sn in sheetnames:
                 try:
                     pop_index = sh_names.index(sn)
-                    _ = zip_sheetnames.pop(pop_index)
+                    temp.append(zip_sheetnames.pop(pop_index))
                 except ValueError:
                     raise ValueError('Error - Sheetname ({}) is not in the workbook.'.format(sn))
+            zip_sheetnames = temp
 
-        # gat common string cell value table
+        # get common string cell value table
         if 'xl/sharedStrings.xml' in f_zip.NameToInfo.keys():
             with f_zip.open('xl/sharedStrings.xml') as f:
                 sharedString = get_sharedStrings(f)
@@ -133,46 +135,5 @@ def get_sharedStrings(file):
         sharedStrings.update({i: val})
 
     return sharedStrings
-
-
-def scrape_worksheetxml(file, sharedString=None):
-    """
-    Takes a file-handle of xl/worksheets/sheet#.xml and returns a dict of cell data
-    :param open-filehandle file: xl/worksheets/sheet#.xml file-handle
-    :param dict sharedString: shared string dict lookup table from xl/sharedStrings.xml for string only cell values
-    :return: yields a dict of cell data {cellAddress: cellVal}
-    """
-
-    data = {}
-
-    sharedString = sharedString if sharedString != None else {}
-
-    text = file.read().decode()
-
-    tag_sheetdata = re.compile(r'(?<=<sheetData>)(.*)(?=</sheetData>)')
-    sheetdata_section = tag_sheetdata.findall(text)[0]
-    tag_cr = re.compile(r'<c r=')
-    tag_cr_lines = tag_cr.split(sheetdata_section)[1:]
-    # this will find something like:
-    # ['"A1"><v>1</v></c>', '"B1"><v>10.1</v></c></row><row r="2" spans="1:2" x14ac:dyDescent="0.25">',...]
-    # the [1:] at the end is to remove the starting split on '<c r=' that would otherwise give a <row r...
-    #   text as index 0 (which does not have an address in it) so we simply remove it
-
-    for tag_cr_line in tag_cr_lines:
-        # pull out cell address and test if it's a string cell that needs lookup
-        re_cell_address = re.compile(r'[^<r c="][^"]+')
-        finding_cell_address = re_cell_address.findall(tag_cr_line)
-        cell_address = finding_cell_address[0]
-        cell_string = True if 't="s"' in tag_cr_line else False
-
-        re_cell_val = re.compile(r'(?<=<v>)(.*)(?=</v>)')
-        cell_val = re_cell_val.findall(tag_cr_line)[0]
-
-        if cell_string is True:
-            cell_val = sharedString[int(cell_val)]
-
-        data.update({cell_address: cell_val})
-
-    return data
 
 

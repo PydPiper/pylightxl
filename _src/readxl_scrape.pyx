@@ -1,12 +1,19 @@
 import re
 
 def scrape(f, dict sharedString):
+    """
+    Takes a file-handle of xl/worksheets/sheet#.xml and returns a dict of cell data
+    :param open-filehandle file: xl/worksheets/sheet#.xml file-handle
+    :param dict sharedString: shared string dict lookup table from xl/sharedStrings.xml for string only cell values
+    :return: yields a dict of cell data {cellAddress: cellVal}
+    """
+
 
     cdef int sample_size
     cdef str text_buff
     cdef dict data
     cdef list match
-    cdef str first_match, cell_address, cell_val, next_buff
+    cdef str first_match, cell_address, next_buff
 
     data = {}
 
@@ -39,12 +46,18 @@ def scrape(f, dict sharedString):
             if match:
                 first_match = match.pop(0)
                 cell_address = first_match.split('"')[1]
-                val_common_str = True if 't="s"' in first_match else False
+                is_commonString = True if 't="s"' in first_match else False
+                is_string = True if 't="str"' in first_match else False
 
                 cell_val = re_cell_val.findall(first_match)[0]
 
-                if val_common_str:
+                if is_commonString:
                     cell_val = sharedString[int(cell_val)]
+                elif not is_commonString and not is_string:
+                    if cell_val.isdigit():
+                        cell_val = int(cell_val)
+                    else:
+                        cell_val = float(cell_val)
 
                 data.update({cell_address: cell_val})
             else:

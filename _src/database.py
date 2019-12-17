@@ -60,8 +60,10 @@ class Worksheet:
 
         if self._data != {}:
             list_of_addresses = list(self._data.keys())
-            largest_col_address = list_of_addresses[-1]
-            self.maxcol = self.address2index(largest_col_address)[1]
+            self.maxcol = 0
+            for address in list_of_addresses:
+                current_col = self.address2index(address)[1]
+                self.maxcol = current_col if current_col > self.maxcol else self.maxcol
 
             strVSnum = re.compile(r'[A-Z]+')
             list_of_rows = [int(strVSnum.split(address)[1]) for address in list_of_addresses]
