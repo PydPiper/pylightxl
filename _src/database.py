@@ -60,14 +60,18 @@ class Worksheet:
 
         if self._data != {}:
             list_of_addresses = list(self._data.keys())
-            self.maxcol = 0
-            for address in list_of_addresses:
-                current_col = self.address2index(address)[1]
-                self.maxcol = current_col if current_col > self.maxcol else self.maxcol
 
-            strVSnum = re.compile(r'[A-Z]+')
-            list_of_rows = [int(strVSnum.split(address)[1]) for address in list_of_addresses]
-            self.maxrow = max(list_of_rows)
+            list_of_chars = []
+            list_of_nums = []
+            for address in list_of_addresses:
+                list_of_chars.append(''.join(filter(lambda x: x.isalpha(), address)))
+                list_of_nums.append(int(''.join(filter(lambda x: x.isnumeric(), address))))
+            self.maxrow = int(max(list_of_nums))
+            # of all chars are the same length
+            list_of_chars.sort(reverse=True)
+            # if chars are different length
+            list_of_chars.sort(key=len, reverse=True)
+            self.maxcol = self.address2index(list_of_chars[0]+"1")[1]
         else:
             self.maxrow = 0
             self.maxcol = 0

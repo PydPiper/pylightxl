@@ -1,8 +1,12 @@
 from unittest import TestCase
 from _src.readxl import readxl
 
-
-DB = readxl('_test/testbook.xlsx')
+try:
+    # running from top level
+    DB = readxl('_test/testbook.xlsx')
+except ValueError:
+    # running within _test folder or in debug
+    DB = readxl('testbook.xlsx')
 
 class test_readxl_bad_input(TestCase):
 
@@ -18,7 +22,10 @@ class test_readxl_bad_input(TestCase):
 
     def test_bad_fn_ext(self):
         with self.assertRaises(ValueError) as e:
-            db = readxl('_test/test_readxl.py')
+            try:
+                db = readxl('_test/test_readxl.py')
+            except ValueError:
+                db = readxl('test_readxl.py')
             self.assertEqual(e, 'Error - Incorrect Excel file extension ({}). '
                                 'File extension supported: .xlsx .xlsm'.format('py'))
 
@@ -29,7 +36,10 @@ class test_readxl_integration(TestCase):
         self.assertEqual(DB.ws_names,['empty','types','scatter','length','sheet_not_to_read'])
 
     def test_SelectedSheetReading(self):
-        db = readxl('_test/testbook.xlsx',('empty','types'))
+        try:
+            db = readxl('_test/testbook.xlsx',('empty','types'))
+        except ValueError:
+            db = readxl('testbook.xlsx',('empty','types'))
         self.assertEqual(db.ws_names,['empty','types'])
 
     def test_commondString(self):
@@ -61,7 +71,6 @@ class test_readxl_integration(TestCase):
         self.assertEqual(DB.ws('types').index(5,2),'')
 
         self.assertEqual(DB.ws('types').index(1,3),'')
-        print(DB.ws('types')._data.keys())
         self.assertEqual(DB.ws('types').size, [5,2])
 
         self.assertEqual(DB.ws('types').row(1),[11,12.1])
@@ -75,5 +84,23 @@ class test_readxl_integration(TestCase):
         self.assertEqual(DB.ws('types').col(2),[12.1,'"22"','ThreeTwo','copy',''])
         self.assertEqual(DB.ws('types').col(3),['','','','',''])
 
+        for i, row in enumerate(DB.ws('types').rows,start=1):
+            self.assertEqual(row,DB.ws('types').row(i))
+        for i, col in enumerate(DB.ws('types').cols,start=1):
+            self.assertEqual(col,DB.ws('types').col(i))
+
+    def test_ws_scatter(self):
+        self.assertEqual(DB.ws('scatter').index(1,1),'')
+        self.assertEqual(DB.ws('scatter').index(2,2),22)
+        self.assertEqual(DB.ws('scatter').index(3,3),33)
+        self.assertEqual(DB.ws('scatter').index(3,4),34)
+        self.assertEqual(DB.ws('scatter').index(6,6),66)
+        self.assertEqual(DB.ws('scatter').index(5,6),'')
+
+        self.assertEqual(DB.ws('scatter').size,[6,6])
+
+
+    def test_ws_length(self):
+        self.assertEqual(DB.ws('length').size,[1048576,16384])
 
 
