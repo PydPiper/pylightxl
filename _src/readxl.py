@@ -2,7 +2,7 @@
 import zipfile
 import re
 from os.path import isfile
-from time import time
+#from time import time
 # local lib imports
 from .database import Database
 # c-python functions

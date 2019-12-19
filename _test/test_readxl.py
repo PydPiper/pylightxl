@@ -1,5 +1,8 @@
+# standard lib imports
 from unittest import TestCase
+# local lib imports
 from _src.readxl import readxl
+from _src.database import Database, Worksheet
 
 try:
     # running from top level
@@ -7,6 +10,7 @@ try:
 except ValueError:
     # running within _test folder or in debug
     DB = readxl('testbook.xlsx')
+
 
 class test_readxl_bad_input(TestCase):
 
@@ -99,8 +103,100 @@ class test_readxl_integration(TestCase):
 
         self.assertEqual(DB.ws('scatter').size,[6,6])
 
-
     def test_ws_length(self):
         self.assertEqual(DB.ws('length').size,[1048576,16384])
+
+
+class test_Database(TestCase):
+    db = Database()
+
+    def test_db_init(self):
+        # locally defined to return an empty ws
+        db = Database()
+        self.assertEqual(db._ws, {})
+
+    def test_db_repr(self):
+        self.assertEqual(str(self.db), 'pylightxl.Database')
+
+    def test_db_ws_arg(self):
+        self.assertEqual(self.db.ws.__code__.co_varnames,('self','sheetname'))
+
+    def test_db_ws_names(self):
+        # locally defined to return an empty list
+        db = Database()
+        self.assertEqual(db.ws_names, [])
+
+    def test_db_add_ws(self):
+        self.assertEqual(self.db.add_ws.__code__.co_varnames, ('self', 'sheetname', 'data'))
+        self.db.add_ws('test1', {})
+        self.assertEqual(str(self.db.ws('test1')), 'pylightxl.Database.Worksheet')
+        self.assertEqual(self.db.ws_names, ['test1'])
+        self.db.add_ws('test2', {})
+        self.assertEqual(self.db.ws_names, ['test1', 'test2'])
+
+
+class test_Worksheet(TestCase):
+
+    def test_ws_init(self):
+        self.assertEqual(Worksheet.__init__.__code__.co_varnames, ('self', 'data'))
+        ws = Worksheet({})
+        self.assertEqual(ws._data, {})
+        self.assertEqual(ws.maxrow, 0)
+        self.assertEqual(ws.maxcol, 0)
+
+    def test_ws_repr(self):
+        ws = Worksheet({})
+        self.assertEqual(str(ws), 'pylightxl.Database.Worksheet')
+
+    def test_ws_calc_size(self):
+        ws = Worksheet({})
+        # force calc size
+        ws._calc_size()
+        self.assertEqual(ws.maxrow, 0)
+        self.assertEqual(ws.maxcol, 0)
+
+        ws._data={'A1': 11}
+        ws._calc_size()
+        self.assertEqual(ws.maxrow, 1)
+        self.assertEqual(ws.maxcol, 1)
+
+        ws._data={'A1': 11, 'A2': 21}
+        ws._calc_size()
+        self.assertEqual(ws.maxrow, 2)
+        self.assertEqual(ws.maxcol, 1)
+
+        ws._data={'A1': 11, 'A2': 21, 'B1': 12}
+        ws._calc_size()
+        self.assertEqual(ws.maxrow, 2)
+        self.assertEqual(ws.maxcol, 2)
+
+        ws._data={'A1': 11, 'A2': 21, 'B1': 12, 'B2': 22}
+        ws._calc_size()
+        self.assertEqual(ws.maxrow, 2)
+        self.assertEqual(ws.maxcol, 2)
+
+        ws._data={'A1': 1, 'AA1': 27, 'AAA1': 703}
+        ws._calc_size()
+        self.assertEqual(ws.maxrow, 1)
+        self.assertEqual(ws.maxcol, 703)
+
+        ws._data={'A1': 1, 'A1000': 1000, 'A1048576': 1048576}
+        ws._calc_size()
+        self.assertEqual(ws.maxrow, 1048576)
+        self.assertEqual(ws.maxcol, 1)
+
+        ws._data={'A1': 1, 'AA1': 27, 'AAA1': 703, 'XFD1': 16384, 'A1048576': 1048576}
+        ws._calc_size()
+        self.assertEqual(ws.maxrow, 1048576)
+        self.assertEqual(ws.maxcol, 16384)
+
+    def test_size(self):
+        ws = Worksheet({})
+        self.assertEqual(ws.size,[0,0])
+        ws._data={'A1': 11, 'A2': 21}
+        ws._calc_size()
+        self.assertEqual(ws.size, [2,1])
+
+
 
 
