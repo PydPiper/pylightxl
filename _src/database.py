@@ -71,7 +71,7 @@ class Worksheet:
             list_of_chars.sort(reverse=True)
             # if chars are different length
             list_of_chars.sort(key=len, reverse=True)
-            self.maxcol = self.address2index(list_of_chars[0]+"1")[1]
+            self.maxcol = address2index(list_of_chars[0]+"1")[1]
         else:
             self.maxrow = 0
             self.maxcol = 0
@@ -108,7 +108,7 @@ class Worksheet:
         :return: cell value
         """
 
-        address = self.index2address(row,col)
+        address = index2address(row,col)
         try:
             rv = self._data[address]
         except KeyError:
@@ -175,59 +175,61 @@ class Worksheet:
 
         return iter(rv)
 
-    def address2index(self, address):
-        """
-        Convert excel address to row/col index
-        :param str address: Excel address (ex: "A1")
-        :return: list of [row, col]
-        """
-        if type(address) is not str:
-            raise ValueError('Error - Address ({}) must be a string.'.format(address))
-        if address == '':
-            raise ValueError('Error - Address ({}) cannot be an empty str.'.format(address))
 
-        address = address.upper()
+def address2index(address):
+    """
+    Convert excel address to row/col index
+    :param str address: Excel address (ex: "A1")
+    :return: list of [row, col]
+    """
+    if type(address) is not str:
+        raise ValueError('Error - Address ({}) must be a string.'.format(address))
+    if address == '':
+        raise ValueError('Error - Address ({}) cannot be an empty str.'.format(address))
 
-        strVSnum = re.compile(r'[A-Z]+')
-        try:
-            colstr = strVSnum.findall(address)[0]
-        except IndexError:
-            raise ValueError('Error - Incorrect address ({}) entry. Address must be an alphanumeric '
-                             'where the starting character(s) are alpha characters a-z'.format(address))
+    address = address.upper()
 
-        if not colstr.isalpha():
-            raise ValueError('Error - Incorrect address ({}) entry. Address must be an alphanumeric '
-                             'where the starting character(s) are alpha characters a-z'.format(address))
+    strVSnum = re.compile(r'[A-Z]+')
+    try:
+        colstr = strVSnum.findall(address)[0]
+    except IndexError:
+        raise ValueError('Error - Incorrect address ({}) entry. Address must be an alphanumeric '
+                         'where the starting character(s) are alpha characters a-z'.format(address))
 
-        col = columnletter2num(colstr)
+    if not colstr.isalpha():
+        raise ValueError('Error - Incorrect address ({}) entry. Address must be an alphanumeric '
+                         'where the starting character(s) are alpha characters a-z'.format(address))
 
-        try:
-            row = int(strVSnum.split(address)[1])
-        except (IndexError, ValueError):
-            raise ValueError('Error - Incorrect address ({}) entry. Address must be an alphanumeric '
-                             'where the trailing character(s) are numeric characters 1-9'.format(address))
+    col = columnletter2num(colstr)
 
-        return [row, col]
+    try:
+        row = int(strVSnum.split(address)[1])
+    except (IndexError, ValueError):
+        raise ValueError('Error - Incorrect address ({}) entry. Address must be an alphanumeric '
+                         'where the trailing character(s) are numeric characters 1-9'.format(address))
 
-    def index2address(self, row, col):
-        """
-        Converts index row/col to excel address
-        :param int row: row index (starting at 1)
-        :param int col: col index (start at 1 that corresponds to column "A")
-        :return: str excel address
-        """
-        if type(row) is not int and type(row) is not float:
-            raise ValueError('Error - Incorrect row ({}) entry. Row must either be a int or float'.format(row))
-        if type(col) is not int and type(col) is not float:
-            raise ValueError('Error - Incorrect col ({}) entry. Col must either be a int or float'.format(col))
-        if row <= 0 or col <= 0:
-            raise ValueError('Error - Row ({}) and Col ({}) entry cannot be less than 1'.format(row, col))
+    return [row, col]
 
-        # values over 26 are outside the A-Z range, reduce them
-        val = col % 26 if col % 26 != 0 else 26
 
-        colname = chr(val+64)
-        return colname + str(row)
+def index2address(row, col):
+    """
+    Converts index row/col to excel address
+    :param int row: row index (starting at 1)
+    :param int col: col index (start at 1 that corresponds to column "A")
+    :return: str excel address
+    """
+    if type(row) is not int and type(row) is not float:
+        raise ValueError('Error - Incorrect row ({}) entry. Row must either be a int or float'.format(row))
+    if type(col) is not int and type(col) is not float:
+        raise ValueError('Error - Incorrect col ({}) entry. Col must either be a int or float'.format(col))
+    if row <= 0 or col <= 0:
+        raise ValueError('Error - Row ({}) and Col ({}) entry cannot be less than 1'.format(row, col))
+
+    # values over 26 are outside the A-Z range, reduce them
+    val = col % 26 if col % 26 != 0 else 26
+
+    colname = chr(val+64)
+    return colname + str(row)
 
 
 def columnletter2num(text):

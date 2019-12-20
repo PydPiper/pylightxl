@@ -2,7 +2,7 @@
 from unittest import TestCase
 # local lib imports
 from _src.readxl import readxl
-from _src.database import Database, Worksheet
+from _src.database import Database, Worksheet, address2index, index2address, columnletter2num
 
 try:
     # running from top level
@@ -190,13 +190,53 @@ class test_Worksheet(TestCase):
         self.assertEqual(ws.maxrow, 1048576)
         self.assertEqual(ws.maxcol, 16384)
 
-    def test_size(self):
+    def test_ws_size(self):
         ws = Worksheet({})
         self.assertEqual(ws.size,[0,0])
         ws._data={'A1': 11, 'A2': 21}
         ws._calc_size()
         self.assertEqual(ws.size, [2,1])
 
+    def test_ws_address(self):
+        ws = Worksheet({'A1':1})
+        self.assertEqual(ws.address.__code__.co_varnames,('self','address'))
+        self.assertEqual(ws.address('A1'), 1)
+        self.assertEqual(ws.address('A2'), '')
+
+    def test_ws_index(self):
+        ws = Worksheet({'A1':1})
+        self.assertEqual(ws.index.__code__.co_varnames,('self','row','col'))
+        self.assertEqual(ws.index(1,1), 1)
+        self.assertEqual(ws.index(1,2), '')
+
+    def test_ws_row(self):
+        ws = Worksheet({'A1': 11, 'A2': 21, 'B1': 12})
+        self.assertEqual(ws.row.__code__.co_varnames, ('self','row'))
+        self.assertEqual(ws.row(1),[11,12])
+        self.assertEqual(ws.row(2),[21,''])
+        self.assertEqual(ws.row(3),['',''])
+
+    def test_ws_col(self):
+        ws = Worksheet({'A1': 11, 'A2': 21, 'B1': 12})
+        self.assertEqual(ws.col.__code__.co_varnames, ('self','col'))
+        self.assertEqual(ws.col(1),[11,21])
+        self.assertEqual(ws.col(2),[12,''])
+        self.assertEqual(ws.col(3),['',''])
+
+    def test_ws_rows(self):
+        ws = Worksheet({'A1': 11, 'A2': 21, 'B1': 12})
+        correct_list = [[11,12],[21,'']]
+        for i, row in enumerate(ws.rows):
+            self.assertEqual(row,correct_list[i])
+
+    def test_ws_cols(self):
+        ws = Worksheet({'A1': 11, 'A2': 21, 'B1': 12})
+        correct_list = [[11,21],[12,'']]
+        for i, col in enumerate(ws.cols):
+            self.assertEqual(col,correct_list[i])
 
 
+class test_conversion(TestCase):
 
+    def test_address2index(self):
+        self.assertEqual(address2index.__code__.co_varnames, ('address',))
