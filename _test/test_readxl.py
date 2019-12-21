@@ -2,7 +2,8 @@
 from unittest import TestCase
 # local lib imports
 from _src.readxl import readxl
-from _src.database import Database, Worksheet, address2index, index2address, columnletter2num
+from _src.database import Database, Worksheet, address2index, index2address, \
+    columnletter2num, num2columnletters
 
 try:
     # running from top level
@@ -311,3 +312,13 @@ class test_conversion(TestCase):
         self.assertEqual(columnletter2num('QGK'),11685)
         self.assertEqual(columnletter2num('XFD'),16384)
 
+    def test_num2col(self):
+        self.assertEqual(num2columnletters(1),'A')
+        self.assertEqual(num2columnletters(26),'Z')
+        self.assertEqual(num2columnletters(27),'AA')
+        self.assertEqual(num2columnletters(53),'BA')
+        self.assertEqual(num2columnletters(667),'YQ')
+        self.assertEqual(num2columnletters(702),'ZZ')
+        self.assertEqual(num2columnletters(703),'AAA')
+        self.assertEqual(num2columnletters(11685),'QGK')
+        self.assertEqual(num2columnletters(16384),'XFD')

@@ -253,11 +253,20 @@ def num2columnletters(num, power=0):
         return chr(num % 27 + 64)
     elif num > 26**(power+1):
         power += 1
+        next_num = num-26**power
         # this will return the higher (right most char) first
-        char = num2columnletters(num=num-26**power, power=power)
+        char = num2columnletters(num=next_num, power=power)
         # then call func again on reminder
-        char_next = chr(int(num/26) + 64) if int(num/26) < 26 else 'A'
-        char_all = char_next + char
+        remainder = next_num - (int(next_num / (26**power)) * (26 ** power))
+        # for roll over case a 26/26 is supposed to be a Z, not a 0 that is not a char
+        char_num = int(remainder/(26**(power-1)))+1 if remainder != 0 else 27
+        char_next = chr(char_num + 64) if power-1 > 0 else chr(char_num-1 + 64)
+        char_all = char + char_next
     else:
-        return chr(num % 26 + 64)
+        # +1 because this else loop already rolled over the <= 26 value and ex: 27/26 should give you B
+        #  but if we did not +1 it would give you an A, however the back end must be conditioned for Z
+        #  for a condition when all chars roll over ex: 702-26=676 676/26=26 should still give a Z
+        #  but a +1 would throw it over
+        char_num = int(num / (26**power)) + 1 if int(num / (26**power)) != 26 else 26
+        return chr(char_num + 64)
     return char_all
