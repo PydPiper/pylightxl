@@ -110,6 +110,12 @@ class test_readxl_integration(TestCase):
 class test_Database(TestCase):
     db = Database()
 
+    def test_db_badsheet(self):
+        db = Database()
+        with self.assertRaises(ValueError) as e:
+            db.ws('not a sheet')
+            self.assertEqual(e, 'Error - Sheetname (not a sheet) is not in the database')
+
     def test_db_init(self):
         # locally defined to return an empty ws
         db = Database()
@@ -118,18 +124,14 @@ class test_Database(TestCase):
     def test_db_repr(self):
         self.assertEqual(str(self.db), 'pylightxl.Database')
 
-    def test_db_ws_arg(self):
-        self.assertEqual(self.db.ws.__code__.co_varnames,('self','sheetname'))
-
     def test_db_ws_names(self):
         # locally defined to return an empty list
         db = Database()
         self.assertEqual(db.ws_names, [])
 
     def test_db_add_ws(self):
-        self.assertEqual(self.db.add_ws.__code__.co_varnames, ('self', 'sheetname', 'data'))
-        self.db.add_ws('test1', {})
-        self.assertEqual(str(self.db.ws('test1')), 'pylightxl.Database.Worksheet')
+        self.db.add_ws(sheetname='test1', data={})
+        self.assertEqual(str(self.db.ws(sheetname='test1')), 'pylightxl.Database.Worksheet')
         self.assertEqual(self.db.ws_names, ['test1'])
         self.db.add_ws('test2', {})
         self.assertEqual(self.db.ws_names, ['test1', 'test2'])
@@ -138,8 +140,7 @@ class test_Database(TestCase):
 class test_Worksheet(TestCase):
 
     def test_ws_init(self):
-        self.assertEqual(Worksheet.__init__.__code__.co_varnames, ('self', 'data'))
-        ws = Worksheet({})
+        ws = Worksheet(data={})
         self.assertEqual(ws._data, {})
         self.assertEqual(ws.maxrow, 0)
         self.assertEqual(ws.maxcol, 0)
@@ -199,27 +200,23 @@ class test_Worksheet(TestCase):
 
     def test_ws_address(self):
         ws = Worksheet({'A1':1})
-        self.assertEqual(ws.address.__code__.co_varnames,('self','address'))
-        self.assertEqual(ws.address('A1'), 1)
+        self.assertEqual(ws.address(address='A1'), 1)
         self.assertEqual(ws.address('A2'), '')
 
     def test_ws_index(self):
         ws = Worksheet({'A1':1})
-        self.assertEqual(ws.index.__code__.co_varnames,('self','row','col'))
-        self.assertEqual(ws.index(1,1), 1)
+        self.assertEqual(ws.index(row=1,col=1), 1)
         self.assertEqual(ws.index(1,2), '')
 
     def test_ws_row(self):
         ws = Worksheet({'A1': 11, 'A2': 21, 'B1': 12})
-        self.assertEqual(ws.row.__code__.co_varnames, ('self','row'))
-        self.assertEqual(ws.row(1),[11,12])
+        self.assertEqual(ws.row(row=1),[11,12])
         self.assertEqual(ws.row(2),[21,''])
         self.assertEqual(ws.row(3),['',''])
 
     def test_ws_col(self):
         ws = Worksheet({'A1': 11, 'A2': 21, 'B1': 12})
-        self.assertEqual(ws.col.__code__.co_varnames, ('self','col'))
-        self.assertEqual(ws.col(1),[11,21])
+        self.assertEqual(ws.col(col=1),[11,21])
         self.assertEqual(ws.col(2),[12,''])
         self.assertEqual(ws.col(3),['',''])
 
@@ -238,5 +235,79 @@ class test_Worksheet(TestCase):
 
 class test_conversion(TestCase):
 
+    def test_address2index_baddata(self):
+        with self.assertRaises(ValueError) as e:
+            address2index(address=1)
+            self.assertEqual(e, 'Error - Address (1) must be a string.')
+
+        with self.assertRaises(ValueError) as e:
+            address2index('')
+            self.assertEqual(e, 'Error - Address ('') cannot be an empty str.')
+
+        with self.assertRaises(ValueError) as e:
+            address2index('1')
+            self.assertEqual(e, 'Error - Incorrect address (1) entry. Address must be an alphanumeric '
+                                'where the starting character(s) are alpha characters a-z')
+
+        with self.assertRaises(ValueError) as e:
+            address2index('1A')
+            self.assertEqual(e, 'Error - Incorrect address (1A) entry. Address must be an alphanumeric '
+                                'where the starting character(s) are alpha characters a-z')
+
+        with self.assertRaises(ValueError) as e:
+            address2index('AA')
+            self.assertEqual(e, 'Error - Incorrect address (AA) entry. Address must be an alphanumeric '
+                                'where the trailing character(s) are numeric characters 1-9')
+
     def test_address2index(self):
-        self.assertEqual(address2index.__code__.co_varnames, ('address',))
+        self.assertEqual(address2index('A1'),[1,1])
+        self.assertEqual(address2index('A1000'),[1000,1])
+        self.assertEqual(address2index('A1048576'),[1048576,1])
+
+        self.assertEqual(address2index('Z1'),[1,26])
+        self.assertEqual(address2index('AA1'),[1,27])
+        self.assertEqual(address2index('BA1'),[1,53])
+        self.assertEqual(address2index('YQ1'),[1,667])
+        self.assertEqual(address2index('AAA1'),[1,703])
+        self.assertEqual(address2index('QGK1'),[1,11685])
+        self.assertEqual(address2index('XFD1'),[1,16384])
+
+        self.assertEqual(address2index('XFD1048576'),[1048576,16384])
+
+    def test_index2address_baddata(self):
+        with self.assertRaises(ValueError) as e:
+            index2address(row='',col=1)
+            self.assertEqual(e, 'Error - Incorrect row ('') entry. Row must either be a int or float')
+        with self.assertRaises(ValueError) as e:
+            index2address(1,'')
+            self.assertEqual(e, 'Error - Incorrect col ('') entry. Col must either be a int or float')
+        with self.assertRaises(ValueError) as e:
+            index2address(0,0)
+            self.assertEqual(e, 'Error - Row (0) and Col (0) entry cannot be less than 1')
+
+    def test_index2address(self):
+        self.assertEqual(index2address(1,1),'A1')
+        self.assertEqual(index2address(1000,1),'A1000')
+        self.assertEqual(index2address(1048576,1),'A1048576')
+
+        self.assertEqual(index2address(1,26),'Z1')
+        self.assertEqual(index2address(1,27),'AA1')
+        self.assertEqual(index2address(1,53),'BA1')
+        self.assertEqual(index2address(1,667),'YQ1')
+        self.assertEqual(index2address(1,703),'AAA1')
+        self.assertEqual(index2address(1,11685),'QGK1')
+        self.assertEqual(index2address(1,16384),'XFD1')
+
+        self.assertEqual(index2address(1048576,16384),'XFD1048576')
+
+    def test_col2num(self):
+        self.assertEqual(columnletter2num('A'),1)
+        self.assertEqual(columnletter2num('Z'),26)
+        self.assertEqual(columnletter2num('AA'),27)
+        self.assertEqual(columnletter2num('BA'),53)
+        self.assertEqual(columnletter2num('YQ'),667)
+        self.assertEqual(columnletter2num('ZZ'),702)
+        self.assertEqual(columnletter2num('AAA'),703)
+        self.assertEqual(columnletter2num('QGK'),11685)
+        self.assertEqual(columnletter2num('XFD'),16384)
+
