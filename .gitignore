@@ -1,8 +1,10 @@
 *.idea
 venv
+venv27
 *.pyc
 *.xml
 *.xlsx
 *.xlsm
 __pycache__
 build
+.pytest_cache

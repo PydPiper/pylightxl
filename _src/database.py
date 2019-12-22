@@ -65,7 +65,7 @@ class Worksheet:
             list_of_nums = []
             for address in list_of_addresses:
                 list_of_chars.append(''.join(filter(lambda x: x.isalpha(), address)))
-                list_of_nums.append(int(''.join(filter(lambda x: x.isnumeric(), address))))
+                list_of_nums.append(int(''.join(filter(lambda x: unicode(x).isnumeric(), address))))
             self.maxrow = int(max(list_of_nums))
             # of all chars are the same length
             list_of_chars.sort(reverse=True)
