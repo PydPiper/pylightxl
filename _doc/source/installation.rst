@@ -9,7 +9,7 @@ pip install
 ---------------
 Download via Python Package Installer:
 
-.. code-block::
+.. code-block:: shell
 
     pip install pylightxl
 
@@ -18,7 +18,7 @@ Git Clone
 -------------
 Download via gitbub clone:
 
-.. code-block::
+.. code-block:: shell
 
     git clone https://github.com/PydPiper/pylightxl.git
 
