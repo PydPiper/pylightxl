@@ -37,7 +37,7 @@ or into the python/lib/site-packages folder for general use.
 
 2.) Create the following files within the ``pylightxl`` folder:
 
-.. code-block::
+.. code-block:: text
 
     pylightxl
         1- __init__.py

@@ -4,20 +4,20 @@ database
 Database Class
 --------------
 
-.. autoclass:: _src.database.Database
+.. autoclass:: pylightxl.database.Database
     :members:
 
 Worksheet Class
 ---------------
 
-.. autoclass:: _src.database.Worksheet
+.. autoclass:: pylightxl.database.Worksheet
     :members:
 
 
 Support Functions
 -----------------
 
-.. automodule:: _src.database
+.. automodule:: pylightxl.database
     :members:
 
 
