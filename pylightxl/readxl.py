@@ -34,6 +34,8 @@ def readxl(fn, sheetnames=()):
         # get all of the zip'ed xml sheetnames, sort in because python27 reads these out of order
         zip_sheetnames = get_zipsheetnames(f_zip)
         zip_sheetnames.sort()
+        # sort again in case there are more than 9 sheets, otherwise sort will be 1,10,2,3,4
+        zip_sheetnames.sort(key=len)
 
         # remove all names not in entry sheetnames
         if sheetnames:
@@ -118,7 +120,8 @@ def get_zipsheetnames(zipfile):
     :return: list of zip xl sheetname paths
     """
 
-    return [name for name in zipfile.NameToInfo.keys() if 'sheet' in name]
+    # rels files will also be created by excel for printer settings, these should not be logged
+    return [name for name in zipfile.NameToInfo.keys() if 'sheet' in name and 'rels' not in name]
 
 
 def get_sharedStrings(file):
@@ -132,12 +135,18 @@ def get_sharedStrings(file):
     sharedStrings = {}
 
     text = file.read().decode()
+    # remove next lines that mess up re findall
+    text = text.replace('\r','')
+    text = text.replace('\n','')
 
-    tag_t = re.compile(r'<t>(.*?)</t>')
+    # allowed to search <t... because of <t xml:space="preserve"> call for keeping white spaces
+    tag_t = re.compile(r'<t(.*?)</t>')
     tag_t_vals = tag_t.findall(text)
     # this will find each string value already separated out as a list
 
     for i, val in enumerate(tag_t_vals):
+        # remove extras from re finding
+        val = val[1:] if val != 'xlm:space="preserve">' else val[22:]
         sharedStrings.update({i: val})
 
     return sharedStrings
