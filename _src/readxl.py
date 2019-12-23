@@ -12,6 +12,7 @@ from .database import Database
 def readxl(fn, sheetnames=()):
     """
     Reads an xlsx or xlsm file and returns a pylightxl database
+
     :param str fn: Excel file name
     :param tuple sheetnames: sheetnames to read into the database, if not specified - all sheets are read
     :return: pylightxl.Database class
@@ -63,6 +64,7 @@ def readxl(fn, sheetnames=()):
 def check_excelfile(fn):
     """
     Takes a file-path and raises error if the file is not found/unsupported.
+
     :param str fn: Excel file path
     :return: None
     """
@@ -83,6 +85,7 @@ def check_excelfile(fn):
 def get_sheetnames(file):
     """
     Takes a file-handle of xl/workbook.xml and returns a list of sheetnames
+
     :param open-filehanle file: xl/workbook.xml file-handle
     :return: list of sheetnames
     """
@@ -110,6 +113,7 @@ def get_sheetnames(file):
 def get_zipsheetnames(zipfile):
     """
     Takes a zip-file-handle and returns a list of default xl sheetnames (ie, Sheet1, Sheet2...)
+
     :param zip-filehandle zipfile: zip file-handle of the excel file
     :return: list of zip xl sheetname paths
     """
@@ -120,6 +124,7 @@ def get_zipsheetnames(zipfile):
 def get_sharedStrings(file):
     """
     Takes a file-handle of xl/sharedStrings.xml and returns a dictionary of commonly used strings
+
     :param open-filehandle file: xl/sharedString.xml file-handle
     :return: dict of commonly used strings
     """
@@ -141,6 +146,7 @@ def get_sharedStrings(file):
 def scrape(f, sharedString):
     """
     Takes a file-handle of xl/worksheets/sheet#.xml and returns a dict of cell data
+
     :param open-filehandle file: xl/worksheets/sheet#.xml file-handle
     :param dict sharedString: shared string dict lookup table from xl/sharedStrings.xml for string only cell values
     :return: yields a dict of cell data {cellAddress: cellVal}

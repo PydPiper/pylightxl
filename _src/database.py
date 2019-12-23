@@ -12,6 +12,7 @@ class Database:
     def ws(self, sheetname):
         """
         Indexes worksheets within the database
+
         :param str sheetname: worksheet name
         :return: pylightxl.Database.Worksheet class object
         """
@@ -25,6 +26,7 @@ class Database:
     def ws_names(self):
         """
         Returns a list of database stored worksheet names
+
         :return: list of worksheet names
         """
 
@@ -33,6 +35,7 @@ class Database:
     def add_ws(self, sheetname, data):
         """
         Logs worksheet name and its data in the database
+
         :param str sheetname: worksheet name
         :param data: dictionary of worksheet cell values (ex: {'A1': 10, 'A2': 20})
         :return: None
@@ -44,6 +47,11 @@ class Database:
 class Worksheet:
 
     def __init__(self, data):
+        """
+        Takes a data dict of worksheet cell data (ex: {'A1': 1})
+
+        :param dict data: worksheet cell data (ex: {'A1': 1})
+        """
         self._data = data
         self.maxrow = 0
         self.maxcol = 0
@@ -55,6 +63,7 @@ class Worksheet:
     def _calc_size(self):
         """
         Calculates the size of the worksheet row/col. This only occurs on initialization
+
         :return: None (but this creates instance attributes maxrow/maxcol)
         """
 
@@ -80,6 +89,7 @@ class Worksheet:
     def size(self):
         """
         Returns the size of the worksheet (row/col)
+
         :return: list of [maxrow, maxcol]
         """
 
@@ -88,6 +98,7 @@ class Worksheet:
     def address(self, address):
         """
         Takes an excel address and returns the worksheet stored value
+
         :param str address: Excel address (ex: "A1")
         :return: cell value
         """
@@ -103,6 +114,7 @@ class Worksheet:
     def index(self, row, col):
         """
         Takes an excel row and col starting at index 1 and returns the worksheet stored value
+
         :param int row: row index (starting at 1)
         :param int col: col index (start at 1 that corresponds to column "A")
         :return: cell value
@@ -120,6 +132,7 @@ class Worksheet:
     def row(self, row):
         """
         Takes a row index input and returns a list of cell data
+
         :param int row: row index (starting at 1)
         :return: list of cell data
         """
@@ -135,6 +148,7 @@ class Worksheet:
     def col(self, col):
         """
         Takes a col index input and returns a list of cell data
+
         :param int col: col index (start at 1 that corresponds to column "A")
         :return: list of cell data
         """
@@ -151,6 +165,7 @@ class Worksheet:
     def rows(self):
         """
         Returns a list of rows that can be iterated through
+
         :return: list of rows-lists (ex: [[11,12,13],[21,22,23]] for 2 rows with 3 columns of data
         """
 
@@ -165,6 +180,7 @@ class Worksheet:
     def cols(self):
         """
         Returns a list of cols that can be iterated through
+
         :return: list of cols-lists (ex: [[11,21],[12,22],[13,23]] for 2 rows with 3 columns of data
         """
 
@@ -179,6 +195,7 @@ class Worksheet:
 def address2index(address):
     """
     Convert excel address to row/col index
+
     :param str address: Excel address (ex: "A1")
     :return: list of [row, col]
     """
@@ -214,6 +231,7 @@ def address2index(address):
 def index2address(row, col):
     """
     Converts index row/col to excel address
+
     :param int row: row index (starting at 1)
     :param int col: col index (start at 1 that corresponds to column "A")
     :return: str excel address
@@ -234,6 +252,7 @@ def index2address(row, col):
 def columnletter2num(text):
     """
     Takes excel column header string and returns the equivalent column count
+
     :param str text: excel column (ex: 'AAA' will return 703)
     :return: int of column count
     """
@@ -249,6 +268,13 @@ def columnletter2num(text):
 
 
 def num2columnletters(num, power=0):
+    """
+    Takes a column number and converts it to the equivalent excel column letters
+
+    :param int num: column number
+    :param int power: internal power multiplier for recursion
+    :return str: excel column letters
+    """
     if num <= 26:
         return chr(num % 27 + 64)
     elif num > 26**(power+1):
@@ -269,4 +295,5 @@ def num2columnletters(num, power=0):
         #  but a +1 would throw it over
         char_num = int(num / (26**power)) + 1 if int(num / (26**power)) != 26 else 26
         return chr(char_num + 64)
+
     return char_all
