@@ -9,3 +9,5 @@ __pycache__
 build
 .pytest_cache
 build
+dist
+pylightxl.egg-info

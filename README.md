@@ -1,6 +1,6 @@
 # pylightxl
 A light weight, zero non-standard-lib dependency, minial functionality excel read 
-(writer coming soon) python library. See documentation: pylightxl.readthedocs.io/
+(writer coming soon) python library. See documentation: [docs](pylightxl.readthedocs.io/)
 
 Supports:
  - Supports .xlsx and .xlsm file extensions. 

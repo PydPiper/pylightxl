@@ -9,21 +9,21 @@ except NameError:
 
 # local lib imports
 try:
-    from _src.readxl import readxl
-    from _src.database import Database, Worksheet, address2index, index2address, \
+    from pylightxl.readxl import readxl
+    from pylightxl.database import Database, Worksheet, address2index, index2address, \
         columnletter2num, num2columnletters
 except ModuleNotFoundError:
     import os, sys
 
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname('test_readxl'), '..')))
 
-    from _src.readxl import readxl
-    from _src.database import Database, Worksheet, address2index, index2address, \
+    from pylightxl.readxl import readxl
+    from pylightxl.database import Database, Worksheet, address2index, index2address, \
         columnletter2num, num2columnletters
 
 try:
     # running from top level
-    DB = readxl('./_test/testbook.xlsx')
+    DB = readxl('./test/testbook.xlsx')
 except ValueError:
     # running within _test folder or in debug
     DB = readxl('./testbook.xlsx')
@@ -44,7 +44,7 @@ class test_readxl_bad_input(TestCase):
     def test_bad_fn_ext(self):
         with self.assertRaises(ValueError) as e:
             try:
-                db = readxl('_test/test_readxl.py')
+                db = readxl('test/test_readxl.py')
             except ValueError:
                 db = readxl('test_readxl.py')
             self.assertEqual(e, 'Error - Incorrect Excel file extension ({}). '
@@ -62,7 +62,7 @@ class test_readxl_integration(TestCase):
 
     def test_SelectedSheetReading(self):
         try:
-            db = readxl('_test/testbook.xlsx', ('empty', 'types'))
+            db = readxl('test/testbook.xlsx', ('empty', 'types'))
         except ValueError:
             db = readxl('testbook.xlsx', ('empty', 'types'))
         db_ws_names = db.ws_names
