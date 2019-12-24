@@ -12,7 +12,7 @@ on the following key features:
 - Zero non-standard library dependencies (standard libs used: ``zipfile``, ``re``, ``os``). |br|
   No compatibility/version control issues.
 
-- Single source code that supports both Pytohn37 and Python27.
+- Single source code that supports both Python37 and Python27.
   The light weight library is only 3 source files that can be easily copied directly into a project for
   those that have installation/download restrictions. In addition the library's size and zero dependency makes
   pyinstaller compilation small and easy!
