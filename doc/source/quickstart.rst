@@ -63,6 +63,22 @@ following cell content:
     db.ws('Sheet1').col(1)
     >>> [10,'']
 
+- get an entire row/col based on key-value (note: key is type sensitive)
+
+.. code-block:: python
+
+    # lets say we would like to return the column that has a cell value = 20 in row1
+    db.ws('Sheet1').keycol(key=20)
+    >>> [20,30]
+
+    # we can also specify a custom keyindex (not just row1), note that we now are matched based on row2
+    db.ws('Sheet1').keycol(key=30, keyindex=2)
+    >>> [20,30]
+
+    # similarly done for keyrow
+    db.ws('Sheet1').keyrow(key='')
+    >>> ['',30,40]
+
 - get the size of a worksheet
 
 .. code-block:: python

@@ -9,7 +9,7 @@ Welcome to pylightxl documentation. A light weight Microsoft Excel File reader. 
 several excellent read/write options out there (`python-excel.org <python-excel.org>`_) pylightxl focused
 on the following key features:
 
-- Zero non-standard library dependencies (standard libs used: ``zipfile``, ``re``, ``os``). |br|
+- Zero non-standard library dependencies (standard libs used: ``zipfile``, ``re``, ``os``, ``sys``). |br|
   No compatibility/version control issues.
 
 - Single source code that supports both Python37 and Python27.
@@ -52,6 +52,7 @@ Although every effort was made to support a variety of users, the following limi
    installation
    quickstart
    sourcecode/index
+   revlog
    license
 
 

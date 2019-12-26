@@ -1,5 +1,6 @@
 import re
 import sys
+# unicode is a python27 object that was merged into str in 3+, for compatibility it is redefined here
 if sys.version_info[0] >= 3:
     unicode = str
 
@@ -193,6 +194,44 @@ class Worksheet:
             rv.append(self.col(c))
 
         return iter(rv)
+
+    def keycol(self, key, keyindex=1):
+        """
+        Takes a column key value (value of any cell within keyindex row) and returns the entire column,
+        no match returns an empty list
+
+        :param str/int/float key: any cell value within keyindex row (type sensitive)
+        :param int keyindex: option keyrow override. Must be >0 and smaller than worksheet size
+        :return list: list of the entire matched key column data (only first match is returned)
+        """
+
+        if not keyindex > 0 and not keyindex <= self.size[0]:
+            raise ValueError('Error - keyindex ({}) entered must be >0 and <= worksheet size ({}.'.format(keyindex,self.size))
+
+        # find first key match, get its column index and return col list
+        for col_i in range(1, self.size[1] + 1):
+            if key == self.index(keyindex, col_i):
+                return self.col(col_i)
+        return []
+
+    def keyrow(self, key, keyindex=1):
+        """
+        Takes a row key value (value of any cell within keyindex col) and returns the entire row,
+        not match returns an empty list
+
+        :param str/int/float key: any cell value within keyindex col (type sensitive)
+        :param int keyrow: option keyrow override. Must be >0 and smaller than worksheet size
+        :return list: list of the entire matched key row data (only first match is returned)
+        """
+
+        if not keyindex > 0 and not keyindex <= self.size[1]:
+            raise ValueError('Error - keyindex ({}) entered must be >0 and <= worksheet size ({}.'.format(keyindex,self.size))
+
+        # find first key match, get its column index and return col list
+        for row_i in range(1, self.size[1] + 1):
+            if key == self.index(row_i, keyindex):
+                return self.row(row_i)
+        return []
 
 
 def address2index(address):

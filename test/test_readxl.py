@@ -121,6 +121,9 @@ class test_readxl_integration(TestCase):
         for i, col in enumerate(DB.ws('types').cols, start=1):
             self.assertEqual(col, DB.ws('types').col(i))
 
+        self.assertEqual(DB.ws('types').keycol(11),[11, 'copy', 31, 41, 'string from A2 copy'])
+        self.assertEqual(DB.ws('types').keyrow(11),[11, 12.1])
+
     def test_ws_scatter(self):
         self.assertEqual(DB.ws('scatter').index(1, 1), '')
         self.assertEqual(DB.ws('scatter').index(2, 2), 22)
@@ -259,6 +262,22 @@ class test_Worksheet(TestCase):
         correct_list = [[11, 21], [12, '']]
         for i, col in enumerate(ws.cols):
             self.assertEqual(col, correct_list[i])
+
+    def test_ws_keycol(self):
+        ws = Worksheet({'A1': 11, 'B1': 11, 'C1': 13,
+                        'A2': 21, 'B2': 22, 'C2': 23,
+                        'A3': 11, 'B3': 32, 'C3': 33})
+        self.assertEqual(ws.keycol(key=11),[11,21,11])
+        self.assertEqual(ws.keycol(key=11,keyindex=1),[11,21,11])
+        self.assertEqual(ws.keycol(key=11,keyindex=2),[])
+        self.assertEqual(ws.keycol(key=32,keyindex=3),[11,22,32])
+
+        self.assertEqual(ws.keyrow(key=11),[11,11,13])
+        self.assertEqual(ws.keyrow(key=11,keyindex=1),[11,11,13])
+        self.assertEqual(ws.keyrow(key=11,keyindex=2),[11,11,13])
+        self.assertEqual(ws.keyrow(key=22,keyindex=2),[21,22,23])
+        self.assertEqual(ws.keyrow(key=22,keyindex=3),[])
+
 
 
 class test_conversion(TestCase):
