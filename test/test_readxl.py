@@ -25,7 +25,7 @@ try:
     # running from top level
     DB = readxl('./test/testbook.xlsx')
 except ValueError:
-    # running within _test folder or in debug
+    # running within /test folder or in debug
     DB = readxl('./testbook.xlsx')
 
 
@@ -56,7 +56,9 @@ class test_readxl_integration(TestCase):
     def test_AllSheetsRead(self):
         db_ws_names = DB.ws_names
         db_ws_names.sort()
-        true_ws_names = ['empty', 'types', 'scatter', 'length', 'sheet_not_to_read']
+        # test 10+ sheets to ensure sorting matches correctly
+        true_ws_names = ['empty', 'types', 'scatter', 'length', 'sheet_not_to_read',
+                         'Sheet1', 'Sheet2', 'Sheet3', 'Sheet4', 'Sheet5']
         true_ws_names.sort()
         self.assertEqual(db_ws_names, true_ws_names)
 
@@ -74,7 +76,8 @@ class test_readxl_integration(TestCase):
     def test_commondString(self):
         # all cells that contain strings (without equations are stored in a commondString.xlm)
         self.assertEqual(DB.ws('types').address('A2'), 'copy')
-        self.assertEqual(DB.ws('types').address('B3'), 'ThreeTwo')
+        # leading space comes out different in xml; <t xlm:space="preserve">
+        self.assertEqual(DB.ws('types').address('B3'), ' leadingspace')
         self.assertEqual(DB.ws('types').address('B4'), 'copy')
 
     def test_ws_empty(self):
@@ -95,7 +98,7 @@ class test_readxl_integration(TestCase):
 
         self.assertEqual(DB.ws('types').index(1, 2), 12.1)
         self.assertEqual(DB.ws('types').index(2, 2), '"22"')
-        self.assertEqual(DB.ws('types').index(3, 2), 'ThreeTwo')
+        self.assertEqual(DB.ws('types').index(3, 2), ' leadingspace')
         self.assertEqual(DB.ws('types').index(4, 2), 'copy')
         self.assertEqual(DB.ws('types').index(5, 2), '')
 
@@ -104,13 +107,13 @@ class test_readxl_integration(TestCase):
 
         self.assertEqual(DB.ws('types').row(1), [11, 12.1])
         self.assertEqual(DB.ws('types').row(2), ['copy', '"22"'])
-        self.assertEqual(DB.ws('types').row(3), [31, 'ThreeTwo'])
+        self.assertEqual(DB.ws('types').row(3), [31, ' leadingspace'])
         self.assertEqual(DB.ws('types').row(4), [41, 'copy'])
         self.assertEqual(DB.ws('types').row(5), ['string from A2 copy', ''])
         self.assertEqual(DB.ws('types').row(6), ['', ''])
 
         self.assertEqual(DB.ws('types').col(1), [11, 'copy', 31, 41, 'string from A2 copy'])
-        self.assertEqual(DB.ws('types').col(2), [12.1, '"22"', 'ThreeTwo', 'copy', ''])
+        self.assertEqual(DB.ws('types').col(2), [12.1, '"22"', ' leadingspace', 'copy', ''])
         self.assertEqual(DB.ws('types').col(3), ['', '', '', '', ''])
 
         for i, row in enumerate(DB.ws('types').rows, start=1):

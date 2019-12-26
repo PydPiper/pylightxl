@@ -146,7 +146,7 @@ def get_sharedStrings(file):
 
     for i, val in enumerate(tag_t_vals):
         # remove extras from re finding
-        val = val[1:] if val != 'xlm:space="preserve">' else val[22:]
+        val = val[1:] if 'xml:space="preserve">' not in val else val[22:]
         sharedStrings.update({i: val})
 
     return sharedStrings
