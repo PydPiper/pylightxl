@@ -11,8 +11,8 @@
 
 
 
-# /_rels/.rels
-# no inserts
+# location: /_rels/.rels
+# inserts: -
 xml_base_1 = \
 '''
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -23,8 +23,8 @@ xml_base_1 = \
 </Relationships>
 '''
 
-# /docProps/app.xml
-# num_sheets, tag_sheets
+# location: /docProps/app.xml
+# inserts: num_sheets, tag_sheets
 xml_base_2 = \
 '''
 <?xml version="1.0" encoding="UTF-8" standalone="true"?>
@@ -55,11 +55,12 @@ xml_base_2 = \
 </Properties>
 '''
 
-# template for base_2 sheet tag: sheet_name
+# location: single tag_sheet insert for xml_base_2
+# inserts: sheet_name
 xml_base_2_tag_sheet = '<vt:lpstr>{sheet_name}</vt:lpstr>\r\n'
 
-# /docProps/core.xml
-# no inserts
+# location: /docProps/core.xml
+# inserts: -
 xml_base_3 = \
 '''
 <?xml version="1.0" encoding="UTF-8" standalone="true"?>
@@ -71,19 +72,30 @@ xml_base_3 = \
 </cp:coreProperties>
 '''
 
-# /xl/_rels/workbook.xml.rels
-#
+# location: /xl/_rels/workbook.xml.rels
+# inserts: tag_sheets, tag_sharedStrings, tag_calcChain
+# sheets first for rId# then theme > styles > sharedStrings > calcChain
 xml_base_4 = \
 '''
 <?xml version="1.0" encoding="UTF-8" standalone="true"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-    <Relationship Target="styles.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Id="rId3"/>
+    {tag_sheets}
     <Relationship Target="theme/theme1.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Id="rId2"/>
-    <Relationship Target="worksheets/sheet1.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Id="rId1"/>
+    <Relationship Target="styles.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Id="rId3"/>
+    {tag_sharedStrings}
+    {tag_calcChain}
 </Relationships>
 '''
 
+# location: single tag_sheet insert for xml_base_4
+# inserts: sheet_num
+xml_base_4_1 = '<Relationship Target="worksheets/sheet{sheet_num}.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Id="rId{sheet_num}"/>\r\n'
 
+# location: sharedStrings insert for xml_base_4
+# inserts: ID
+xml_base_4_2 = '<Relationship Target="sharedStrings.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Id="rId{ID}"/>'
 
-
+# location: calcChain insert for xml_base_4
+# inserts: ID
+xml_base_4_3 = '<Relationship Target="calcChain.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/calcChain" Id="rId{ID}"/>'
 
