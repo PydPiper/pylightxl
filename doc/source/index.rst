@@ -53,6 +53,7 @@ Although every effort was made to support a variety of users, the following limi
    installation
    quickstart
    sourcecode/index
+   solutions
    revlog
    license
 

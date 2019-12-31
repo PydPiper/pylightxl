@@ -128,8 +128,11 @@ def new_app_text(db):
     # inserts: sheet_name
     tag_vt = '<vt:lpstr>{sheet_name}</vt:lpstr>\r\n'
 
-    # TODO: finish filling in
-    rv = xml_base.format(num_sheets='', many_tag_vt='')
+    num_sheets = len(db.ws_names)
+    many_tag_vt = ''
+    for sheet_name in db.ws_names:
+        many_tag_vt += tag_vt.format(sheet_name=sheet_name)
+    rv = xml_base.format(num_sheets=num_sheets, many_tag_vt=many_tag_vt)
 
     return rv
 
@@ -186,7 +189,7 @@ def new_workbookrels_text(db):
 
     # location: sharedStrings insert for xml_base
     # inserts: ID
-    xml_tag_sharedString = '<Relationship Target="sharedStrings.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Id="rId{ID}"/>\r\n'
+    xml_tag_sharedStrings = '<Relationship Target="sharedStrings.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Id="rId{ID}"/>\r\n'
 
     # location: calcChain insert for xml_base
     # inserts: ID
@@ -194,9 +197,17 @@ def new_workbookrels_text(db):
     # TODO: add support for formulas at a later time (after writer new/existing are working)
     xml_tag_calcChain = '<Relationship Target="calcChain.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/calcChain" Id="rId{ID}"/>\r\n'
 
-    # TODO: finish filling in
-    rv = xml_base.format(many_tag_sheets='',
-                         tag_sharedStrings='',
+    many_tag_sheets = ''
+    for wsID, _ in enumerate(db.ws_names, 1):
+        many_tag_sheets += xml_tag_sheet.format(sheet_num=wsID)
+    if db.sharedStrings:
+        # +1 to increment +1 from the last sheet ID
+        tag_sharedStrings = xml_tag_sharedStrings.format(ID=len(db.ws_names)+1)
+    else:
+        tag_sharedStrings = ''
+
+    rv = xml_base.format(many_tag_sheets=many_tag_sheets,
+                         tag_sharedStrings=tag_sharedStrings,
                          tag_calcChain='')
     return rv
 
