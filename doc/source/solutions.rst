@@ -5,7 +5,7 @@ Reading Semi Structured data
 ----------------------------
 - Question posted on `stackoverflow <https://stackoverflow.com/questions/59533824/python-extract-data-from-a-semi-structured-xlsx-file/59534919#59534919>`_
 
-- Problem: read groups of 2D data from a single sheet that is can begin at any row/col and has any
+- Problem: read groups of 2D data from a single sheet that can begin at any row/col and has any
   number of rows/columns per data group, see figure below.
 
 .. figure:: _static/ex_readsemistrdata.png

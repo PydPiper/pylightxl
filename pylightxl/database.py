@@ -9,6 +9,7 @@ class Database:
 
     def __init__(self):
         self._ws = {}
+        self._sharedStrings = []
 
     def __repr__(self):
         return 'pylightxl.Database'

@@ -16,7 +16,7 @@ Download via Python Package Installer:
 
 Git Clone
 -------------
-Download via gitbub clone:
+Download via github clone:
 
 .. code-block:: shell
 
