@@ -71,7 +71,9 @@ def new_writer(db, path):
         text_workbookrels = new_workbookrels_text(db)
         zf.writestr('xl/_rels/workbook.xml.rels', text_workbookrels)
 
-
+        # this has to come after new_worksheet_text for db._sharedStrings to be populated
+        text_content_types = new_content_types_text(db)
+        zf.writestr('[Content_Types].xml', text_content_types)
 
 
 def new_rels_text(db):
@@ -98,7 +100,7 @@ def new_app_text(db):
 
     # location: /docProps/app.xml
     # inserts: num_sheets, many_tag_vt
-    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="true"?>
+    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Properties xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes" xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">
 <Application>Microsoft Excel</Application>
 <DocSecurity>0</DocSecurity>
@@ -118,7 +120,7 @@ def new_app_text(db):
 {many_tag_vt}
 </vt:vector>
 </TitlesOfParts>
-<Company/>
+<Company></Company>
 <LinksUpToDate>false</LinksUpToDate>
 <SharedDoc>false</SharedDoc>
 <HyperlinksChanged>false</HyperlinksChanged>
@@ -148,7 +150,7 @@ def new_core_text(db):
 
     # location: /docProps/core.xml
     # inserts: -
-    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="true"?>
+    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cp:coreProperties xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties">
 <dc:creator>pylightxl</dc:creator>
 <cp:lastModifiedBy>pylightxl</cp:lastModifiedBy>
@@ -171,7 +173,7 @@ def new_workbookrels_text(db):
     # inserts: many_tag_sheets, tag_sharedStrings, tag_calcChain
     #   sheets first for rId# then theme > styles > sharedStrings > calcChain
     #   note that theme and style is not part of the stack. These don't need to be part of the base xml
-    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="true"?>
+    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
 {many_tag_sheets}
 {tag_sharedStrings}
@@ -262,11 +264,11 @@ def new_worksheet_text(db, sheet_name):
 <pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>
 </worksheet>'''.replace('\n', '\r\n')
 
-    # location: row tag for xml_base_6
+    # location: row tag for xml_base
     # inserts: row_num (ex: 1), row_span (ex: 1:5), many_tag_cr
     xml_tag_row = '<row r="{row_num}" x14ac:dyDescent="0.25" spans="{row_span}">{many_tag_cr}</row>\r\n'
 
-    # location: c r tag for xml_base_6_tag_row
+    # location: c r tag for xml_tag_row
     # inserts: address, str_option (t="s" for sharedStrings or t="str" for formulas), val
     #   currently formulas are unsupported
     # TODO: add support for formulas at a later time (after writer new/existing are working)
@@ -288,11 +290,12 @@ def new_worksheet_text(db, sheet_name):
             if type(val) is str and val != '':
                 str_option = 's'
                 try:
-                    # replace val with its sharedStrings index
-                    val = db._sharedStrings.index(val)
-                except IndexError:
+                    # replace val with its sharedStrings index, +1 since python starts at 0
+                    val = db._sharedStrings.index(val) + 1
+                except ValueError:
                     db._sharedStrings.append(val)
-                    val = db._sharedStrings.index(val)
+                    # +1 since python starts at 0
+                    val = db._sharedStrings.index(val) + 1
             else:
                 str_option = ''
             if val != '':
@@ -318,12 +321,12 @@ def new_sharedStrings_text(db):
 
     # location: xl/sharedStrings.xml
     # inserts: sharedString_len, many_tag_si
-    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="true"?>
-<sst uniqueCount="{sharedString_len}" count="sharedString_len" xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst uniqueCount="{sharedString_len}" count="{sharedString_len}" xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
 {many_tag_si}
 </sst>'''.replace('\n', '\r\n')
 
-    # location: si tag for xml_base_7
+    # location: si tag for xml_base
     # inserts: space_preserve (xml:space="preserve"), val
     #   note leading and trailing spaces requires preserve tag: <t xml:space="preserve"> leadingspace</t>
     xml_tag_si = '<si><t {space_preserve}>{val}</t></si>\r\n'
@@ -338,5 +341,54 @@ def new_sharedStrings_text(db):
             space_preserve = ''
         many_tag_si += xml_tag_si.format(space_preserve=space_preserve, val=val)
 
-    rv = xml_base.format(sharedString_len=sharedString_len, many_tag_si='')
+    rv = xml_base.format(sharedString_len=sharedString_len, many_tag_si=many_tag_si)
     return rv
+
+
+def new_content_types_text(db):
+    """
+    Returns [Content_Types].xml text
+
+    :param pylightxl.Database db: database contains sheetnames, and their data
+    :return str: [Content_Types].xml text
+    """
+
+    # location: [Content_Types].xml
+    # inserts: many_tag_sheets, tag_sharedStrings, tag_calcChain
+    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+{many_tag_sheets}
+{tag_sharedStrings}
+{tag_calcChain}
+<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+</Types>'''.replace('\n', '\r\n')
+
+
+    xml_tag_sheet = '<Override PartName="/xl/worksheets/sheet{shID}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>\r\n'
+
+    xml_tag_sharedStrings = '<Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>\r\n'
+
+    xml_tag_calcChain = '<Override PartName="/xl/calcChain.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.calcChain+xml"/>\r\n'
+
+    many_tag_sheets = ''
+    for shID, _ in enumerate(db.ws_names, 1):
+        many_tag_sheets += xml_tag_sheet.format(shID=shID)
+
+    if db._sharedStrings:
+        tag_sharedStrings = xml_tag_sharedStrings
+    else:
+        tag_sharedStrings = ''
+
+    # TODO: once formulas as supported, change this
+    tag_calcChain = ''
+
+    rv = xml_base.format(many_tag_sheets=many_tag_sheets,
+                         tag_sharedStrings=tag_sharedStrings,
+                         tag_calcChain=tag_calcChain)
+
+    return rv
+
