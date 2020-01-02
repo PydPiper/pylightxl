@@ -171,13 +171,12 @@ def new_workbookrels_text(db):
 
     # location: /xl/_rels/workbook.xml.rels
     # inserts: many_tag_sheets, tag_sharedStrings, tag_calcChain
-    #   sheets first for rId# then theme > styles > sharedStrings > calcChain
-    #   note that theme and style is not part of the stack. These don't need to be part of the base xml
+    #   sheets first for rId# then theme > styles > sharedStrings
+    #   note that theme, style, calcChain is not part of the stack. These don't need to be part of the base xml
     xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
 {many_tag_sheets}
 {tag_sharedStrings}
-{tag_calcChain}
 </Relationships>'''.replace('\n', '\r\n')
 
     # location: single tag_sheet insert for xml_base
@@ -187,12 +186,6 @@ def new_workbookrels_text(db):
     # location: sharedStrings insert for xml_base
     # inserts: ID
     xml_tag_sharedStrings = '<Relationship Target="sharedStrings.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Id="rId{ID}"/>\r\n'
-
-    # location: calcChain insert for xml_base
-    # inserts: ID
-    #   this will be un-used till cell formulas are supported
-    # TODO: add support for formulas at a later time (after writer new/existing are working)
-    xml_tag_calcChain = '<Relationship Target="calcChain.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/calcChain" Id="rId{ID}"/>\r\n'
 
     many_tag_sheets = ''
     for wsID, _ in enumerate(db.ws_names, 1):
@@ -204,8 +197,7 @@ def new_workbookrels_text(db):
         tag_sharedStrings = ''
 
     rv = xml_base.format(many_tag_sheets=many_tag_sheets,
-                         tag_sharedStrings=tag_sharedStrings,
-                         tag_calcChain='')
+                         tag_sharedStrings=tag_sharedStrings)
     return rv
 
 
@@ -265,14 +257,12 @@ def new_worksheet_text(db, sheet_name):
 </worksheet>'''.replace('\n', '\r\n')
 
     # location: row tag for xml_base
-    # inserts: row_num (ex: 1), row_span (ex: 1:5), many_tag_cr
-    xml_tag_row = '<row r="{row_num}" x14ac:dyDescent="0.25" spans="{row_span}">{many_tag_cr}</row>\r\n'
+    # inserts: row_num (ex: 1), num_of_cr_tags (ex: 1:5), many_tag_cr
+    xml_tag_row = '<row r="{row_num}" x14ac:dyDescent="0.25" spans="1:{num_of_cr_tags}">{many_tag_cr}</row>\r\n'
 
     # location: c r tag for xml_tag_row
-    # inserts: address, str_option (t="s" for sharedStrings or t="str" for formulas), val
-    #   currently formulas are unsupported
-    # TODO: add support for formulas at a later time (after writer new/existing are working)
-    xml_tag_cr = '<c r="{address}" {str_option}><v>{val}</v></c>'
+    # inserts: address, str_option (t="s" for sharedStrings or t="str" for formulas), tag_formula, val
+    xml_tag_cr = '<c r="{address}" {str_option}>{tag_formula}<v>{val}</v></c>'
 
     ws_size = db.ws(sheet_name).size
     if ws_size == [0,0] or ws_size == [1,1]:
@@ -284,29 +274,36 @@ def new_worksheet_text(db, sheet_name):
     for rowID, row in enumerate(db.ws(sheet_name).rows, 1):
         many_tag_cr = ''
         tag_cr = False
+        num_of_cr_tags_counter = 0
         for colID, val in enumerate(row, 1):
             address = index2address(rowID, colID)
-            # TODO: update str_option when formulas are supported
+            str_option = ''
+            tag_formula = ''
             if type(val) is str and val != '':
-                str_option = 's'
-                try:
-                    # replace val with its sharedStrings index, +1 since python starts at 0
-                    val = db._sharedStrings.index(val) + 1
-                except ValueError:
-                    db._sharedStrings.append(val)
-                    # +1 since python starts at 0
-                    val = db._sharedStrings.index(val) + 1
-            else:
-                str_option = ''
+                if val[0] == '=':
+                    # technically if the result of a formula is a str then str_option should be t="str"
+                    #   but this designation is not necessary for excel to open
+                    str_option = 't="str"'
+                    tag_formula = '<f>{f}</f>'.format(f=val[1:])
+                    tag_formula = tag_formula.replace('&', '&amp;')
+                    val = '"pylightxl - open excel file and save it for formulas to calculate"'
+                else:
+                    str_option = 't="s"'
+                    try:
+                        # replace val with its sharedStrings index, note sharedString index does start at 0
+                        val = db._sharedStrings.index(val)
+                    except ValueError:
+                        db._sharedStrings.append(val)
+                        val = db._sharedStrings.index(val)
             if val != '':
                 tag_cr = True
-                many_tag_cr += xml_tag_cr.format(address=address, str_option=str_option, val=val)
+                num_of_cr_tags_counter += 1
+                many_tag_cr += xml_tag_cr.format(address=address, str_option=str_option, tag_formula=tag_formula, val=val)
         if tag_cr:
-            many_tag_row += xml_tag_row.format(row_num=rowID,
-                                               row_span='1:'+str(ws_size[0]),
+            many_tag_row += xml_tag_row.format(row_num=rowID, num_of_cr_tags=str(num_of_cr_tags_counter),
                                                many_tag_cr=many_tag_cr)
 
-    # not 100% what uid does
+    # not 100% what uid does, but it is required for excel to open
     rv = xml_base.format(sizeAddress=sheet_size_address, uid='2C7EE24B-C535-494D-AA97-0A61EE84BA40', many_tag_row=many_tag_row)
     return rv
 
@@ -354,7 +351,8 @@ def new_content_types_text(db):
     """
 
     # location: [Content_Types].xml
-    # inserts: many_tag_sheets, tag_sharedStrings, tag_calcChain
+    # inserts: many_tag_sheets, tag_sharedStrings
+    #  note calcChain is part of this but it is not necessary for excel to open
     xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
 <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
@@ -362,7 +360,6 @@ def new_content_types_text(db):
 <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
 {many_tag_sheets}
 {tag_sharedStrings}
-{tag_calcChain}
 <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
 <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
 </Types>'''.replace('\n', '\r\n')
@@ -371,8 +368,6 @@ def new_content_types_text(db):
     xml_tag_sheet = '<Override PartName="/xl/worksheets/sheet{shID}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>\r\n'
 
     xml_tag_sharedStrings = '<Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>\r\n'
-
-    xml_tag_calcChain = '<Override PartName="/xl/calcChain.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.calcChain+xml"/>\r\n'
 
     many_tag_sheets = ''
     for shID, _ in enumerate(db.ws_names, 1):
@@ -383,12 +378,9 @@ def new_content_types_text(db):
     else:
         tag_sharedStrings = ''
 
-    # TODO: once formulas as supported, change this
-    tag_calcChain = ''
 
     rv = xml_base.format(many_tag_sheets=many_tag_sheets,
-                         tag_sharedStrings=tag_sharedStrings,
-                         tag_calcChain=tag_calcChain)
+                         tag_sharedStrings=tag_sharedStrings)
 
     return rv
 

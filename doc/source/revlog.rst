@@ -1,6 +1,11 @@
 Revision Log
 ============
 
+in-work version 1.4
+-------------------
+- new-feature: write new excel file from pylightxl.Database
+- new-feature: write to existing excel file from pylightxl.Database
+
 pypi version 1.3
 ----------------
 - new-feature: add the ability to call rows/cols via key-value ex: ``db.ws('Sheet1').keycol('my column header')``
