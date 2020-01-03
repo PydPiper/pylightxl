@@ -26,6 +26,11 @@ Sample - see [docs - quick start gudide](https://pylightxl.readthedocs.io/en/lat
   it easy to compile with pyinstaller and other packagers
 - **(user friendly +1)** pylightxl was written to be as pythonic and easy to use as possible. Core developers actively survey stackoverflow 
   questions on working with excel files to tailor the API for most common problems.
+- Note that xlrd library is very similar in values to pylightxl, but with much more functionality! 
+  Please take a look at [xlrd](https://xlrd.readthedocs.io/en/latest/) to see if it is a good fit for your project.
+  So why pick pylightxl over xlrd that has much more to offer? Currently, xlrd does not have any active developers. Pylightxl
+  is a new library aimed to help solve current excel data issues (as surveyed by stackoverflow), please submit your suggestions
+  to help improve this library together
 
 ---
 
