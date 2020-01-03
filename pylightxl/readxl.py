@@ -5,8 +5,6 @@ from os.path import isfile
 #from time import time
 # local lib imports
 from .database import Database
-# c-python functions
-#from .readxl_scrape import scrape
 
 
 def readxl(fn, sheetnames=()):

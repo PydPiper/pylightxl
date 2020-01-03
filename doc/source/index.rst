@@ -1,6 +1,9 @@
-Welcome to pylightxl's documentation!
-=====================================
-`pypi link <https://pypi.org/project/pylightxl/>`_ | `github link <https://github.com/PydPiper/pylightxl>`_
+.. figure:: _static/logo.png
+   :align: center
+
+   pylightxl
+   `pypi <https://pypi.org/project/pylightxl/>`_ | `github <https://github.com/PydPiper/pylightxl>`_
+
 
 .. |br| raw:: html
 

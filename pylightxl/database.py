@@ -4,6 +4,11 @@ import sys
 if sys.version_info[0] >= 3:
     unicode = str
 
+# future ideas:
+# - function to remove empty rows/cols
+# - custom row or col key specification that then working with new functions keyrow keycol to give pandas like dataframe dicts
+# - matrix function to output 2D data lists
+
 
 class Database:
 
