@@ -20,11 +20,11 @@ Sample - see [docs - quick start gudide](https://pylightxl.readthedocs.io/en/lat
 - new-feature: write to existing excel file from pylightxl.Database
 
 #### **Why pylightxl over pandas/openpyxl**
-- (compatability +1, small lib +1) pylightxl has no external dependencies (only uses python builtin standard libs)
-- (compatability +1) pylightxl was written to be compatible for python 2.7-3+, it does not impose rules on users to switch versions
-- (small lib +1) pylightxl was written to simply read/write, thereby making the library small without any bells or whiles which makes
+- **(compatability +1, small lib +1)** pylightxl has no external dependencies (only uses python builtin standard libs)
+- **(compatability +1)** pylightxl was written to be compatible for python 2.7-3+, it does not impose rules on users to switch versions
+- **(small lib +1)** pylightxl was written to simply read/write, thereby making the library small without any bells or whiles which makes
   it easy to compile with pyinstaller and other packagers
-- (user friendly +1) pylightxl was written to be as pythonic and easy to use as possible. Core developers actively survey stackoverflow 
+- **(user friendly +1)** pylightxl was written to be as pythonic and easy to use as possible. Core developers actively survey stackoverflow 
   questions on working with excel files to tailor the API for most common problems.
 
 ---
@@ -42,7 +42,7 @@ and/or download restrictions, see [docs - installation](https://pylightxl.readth
 If you have any questions or feedback, we would love to hear from you - send us 
 an [email](pylightxl@gmail.com) or post directly on [GitHub](https://github.com/PydPiper/pylightxl).
 
-We try to keep an active lookout or users trying to solve Microsoft Excel related problems with
+We try to keep an active lookout for users trying to solve Microsoft Excel related problems with
 python on StackoverFlow. Please help us build on the great community that python already is by
 helping others get up to speed with pylightxl!
 
