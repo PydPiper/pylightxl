@@ -45,7 +45,7 @@ and/or download restrictions, see [docs - installation](https://pylightxl.readth
 
 #### **Contact/Questions/Suggestions**
 If you have any questions or feedback, we would love to hear from you - send us 
-an [email](pylightxl@gmail.com) or post directly on [GitHub](https://github.com/PydPiper/pylightxl).
+an realpydpiper@gmail.com or post directly on [GitHub](https://github.com/PydPiper/pylightxl).
 
 We try to keep an active lookout for users trying to solve Microsoft Excel related problems with
 python on StackoverFlow. Please help us build on the great community that python already is by
