@@ -15,6 +15,8 @@ class Database:
     def __init__(self):
         self._ws = {}
         self._sharedStrings = []
+        # list to preserve insertion order <3.6 and easier to reorder for users than keys of dict
+        self._ws_names = []
 
     def __repr__(self):
         return 'pylightxl.Database'
@@ -40,7 +42,7 @@ class Database:
         :return: list of worksheet names
         """
 
-        return list(self._ws.keys())
+        return self._ws_names
 
     def add_ws(self, sheetname, data):
         """
@@ -52,8 +54,9 @@ class Database:
         """
 
         self._ws.update({sheetname: Worksheet(data)})
+        self._ws_names.append(sheetname)
 
-
+# TODO: commnet from Harald Massa: give option for users to pick their choice of empty cell value
 class Worksheet:
 
     def __init__(self, data):

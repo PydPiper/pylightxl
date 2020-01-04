@@ -80,12 +80,12 @@ def new_rels_text(db):
 
     # location: /_rels/.rels
     # inserts: -
-    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
-<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
-<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
-</Relationships>'''.replace('\n', '\r\n')
+    xml_base =  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
+                '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\r\n' \
+                    '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>\r\n' \
+                    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>\r\n' \
+                    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>\r\n' \
+                '</Relationships>'
 
     return xml_base
 
@@ -100,32 +100,32 @@ def new_app_text(db):
 
     # location: /docProps/app.xml
     # inserts: num_sheets, many_tag_vt
-    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Properties xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes" xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">
-<Application>Microsoft Excel</Application>
-<DocSecurity>0</DocSecurity>
-<ScaleCrop>false</ScaleCrop>
-<HeadingPairs>
-<vt:vector baseType="variant" size="2">
-<vt:variant>
-<vt:lpstr>Worksheets</vt:lpstr>
-</vt:variant>
-<vt:variant>
-<vt:i4>{num_sheets}</vt:i4>
-</vt:variant>
-</vt:vector>
-</HeadingPairs>
-<TitlesOfParts>
-<vt:vector baseType="lpstr" size="{num_sheets}">
-{many_tag_vt}
-</vt:vector>
-</TitlesOfParts>
-<Company></Company>
-<LinksUpToDate>false</LinksUpToDate>
-<SharedDoc>false</SharedDoc>
-<HyperlinksChanged>false</HyperlinksChanged>
-<AppVersion>16.0300</AppVersion>
-</Properties>'''.replace('\n', '\r\n')
+    xml_base =  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
+                '<Properties xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes" xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">\r\n' \
+                '<Application>Microsoft Excel</Application>\r\n' \
+                '<DocSecurity>0</DocSecurity>\r\n' \
+                '<ScaleCrop>false</ScaleCrop>\r\n' \
+                '<HeadingPairs>\r\n' \
+                    '<vt:vector baseType="variant" size="2">\r\n' \
+                        '<vt:variant>\r\n' \
+                            '<vt:lpstr>Worksheets</vt:lpstr>\r\n' \
+                        '</vt:variant>\r\n' \
+                        '<vt:variant>\r\n' \
+                            '<vt:i4>{num_sheets}</vt:i4>\r\n' \
+                        '</vt:variant>\r\n' \
+                    '</vt:vector>\r\n' \
+               '</HeadingPairs>\r\n' \
+               '<TitlesOfParts>\r\n' \
+                   '<vt:vector baseType="lpstr" size="{num_sheets}">\r\n' \
+                       '{many_tag_vt}\r\n' \
+                   '</vt:vector>\r\n' \
+               '</TitlesOfParts>\r\n' \
+               '<Company></Company>\r\n' \
+               '<LinksUpToDate>false</LinksUpToDate>\r\n' \
+               '<SharedDoc>false</SharedDoc>\r\n' \
+               '<HyperlinksChanged>false</HyperlinksChanged>\r\n' \
+               '<AppVersion>16.0300</AppVersion>\r\n' \
+               '</Properties>'
 
     # location: single tag_sheet insert for xml_base
     # inserts: sheet_name
@@ -150,13 +150,13 @@ def new_core_text(db):
 
     # location: /docProps/core.xml
     # inserts: -
-    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<cp:coreProperties xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties">
-<dc:creator>pylightxl</dc:creator>
-<cp:lastModifiedBy>pylightxl</cp:lastModifiedBy>
-<dcterms:created xsi:type="dcterms:W3CDTF">2019-12-27T01:35:28Z</dcterms:created>
-<dcterms:modified xsi:type="dcterms:W3CDTF">2019-12-27T01:35:39Z</dcterms:modified>
-</cp:coreProperties>'''.replace('\n', '\r\n')
+    xml_base =  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
+                '<cp:coreProperties xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties">\r\n' \
+                '<dc:creator>pylightxl</dc:creator>\r\n' \
+                '<cp:lastModifiedBy>pylightxl</cp:lastModifiedBy>\r\n' \
+                '<dcterms:created xsi:type="dcterms:W3CDTF">2019-12-27T01:35:28Z</dcterms:created>\r\n' \
+                '<dcterms:modified xsi:type="dcterms:W3CDTF">2019-12-27T01:35:39Z</dcterms:modified>\r\n' \
+                '</cp:coreProperties>'
 
     return xml_base
 
@@ -173,11 +173,11 @@ def new_workbookrels_text(db):
     # inserts: many_tag_sheets, tag_sharedStrings, tag_calcChain
     #   sheets first for rId# then theme > styles > sharedStrings
     #   note that theme, style, calcChain is not part of the stack. These don't need to be part of the base xml
-    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-{many_tag_sheets}
-{tag_sharedStrings}
-</Relationships>'''.replace('\n', '\r\n')
+    xml_base =  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
+                '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\r\n' \
+                    '{many_tag_sheets}\r\n' \
+                    '{tag_sharedStrings}\r\n' \
+                '</Relationships>'
 
     # location: single tag_sheet insert for xml_base
     # inserts: sheet_num
@@ -211,15 +211,15 @@ def new_workbook_text(db):
 
     # location: xl/workbook.xml
     # inserts: many_tag_sheets
-    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x15 xr xr6 xr10 xr2" xmlns:x15="http://schemas.microsoft.com/office/spreadsheetml/2010/11/main" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr6="http://schemas.microsoft.com/office/spreadsheetml/2016/revision6" xmlns:xr10="http://schemas.microsoft.com/office/spreadsheetml/2016/revision10" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2">
-<fileVersion appName="xl" lastEdited="7" lowestEdited="7" rupBuild="22228"/>
-<workbookPr defaultThemeVersion="166925"/>
-<sheets>
-{many_tag_sheets}
-</sheets>
-<calcPr calcId="181029"/>
-</workbook>'''.replace('\n', '\r\n')
+    xml_base =  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
+                '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x15 xr xr6 xr10 xr2" xmlns:x15="http://schemas.microsoft.com/office/spreadsheetml/2010/11/main" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr6="http://schemas.microsoft.com/office/spreadsheetml/2016/revision6" xmlns:xr10="http://schemas.microsoft.com/office/spreadsheetml/2016/revision10" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2">\r\n' \
+                '<fileVersion appName="xl" lastEdited="7" lowestEdited="7" rupBuild="22228"/>\r\n' \
+                '<workbookPr defaultThemeVersion="166925"/>\r\n' \
+                    '<sheets>\r\n' \
+                        '{many_tag_sheets}\r\n' \
+                    '</sheets>\r\n' \
+                    '<calcPr calcId="181029"/>\r\n' \
+                '</workbook>'
 
     # location: worksheet tag for xml_base
     # inserts: name, sheet_id, order_id
@@ -241,20 +241,23 @@ def new_worksheet_text(db, sheet_name):
     :return str: xl/worksheets/sheet#.xml text
     """
 
+    # dev note: the reason why db._sharedStrings is defined in here is to take advantage of single time
+    #  looping through all of the cell data
+
     # location: xl/worksheets/sheet#.xml
     # inserts: sizeAddress (ex: A1:B5, if empty then A1), many_tag_row
-    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac xr xr2 xr3" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2" xmlns:xr3="http://schemas.microsoft.com/office/spreadsheetml/2016/revision3" xr:uid="{uid}">
-<dimension ref="{sizeAddress}"/>
-<sheetViews>
-<sheetView tabSelected="1" workbookViewId="0"/>
-</sheetViews>
-<sheetFormatPr defaultRowHeight="15" x14ac:dyDescent="0.25"/>
-<sheetData>
-{many_tag_row}
-</sheetData>
-<pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>
-</worksheet>'''.replace('\n', '\r\n')
+    xml_base =  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
+                '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac xr xr2 xr3" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2" xmlns:xr3="http://schemas.microsoft.com/office/spreadsheetml/2016/revision3" xr:uid="{uid}">\r\n' \
+                    '<dimension ref="{sizeAddress}"/>\r\n' \
+                    '<sheetViews>\r\n' \
+                        '<sheetView tabSelected="1" workbookViewId="0"/>\r\n' \
+                    '</sheetViews>\r\n' \
+                    '<sheetFormatPr defaultRowHeight="15" x14ac:dyDescent="0.25"/>\r\n' \
+                    '<sheetData>\r\n' \
+                        '{many_tag_row}\r\n' \
+                    '</sheetData>\r\n' \
+                    '<pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>\r\n' \
+                '</worksheet>'
 
     # location: row tag for xml_base
     # inserts: row_num (ex: 1), num_of_cr_tags (ex: 1:5), many_tag_cr
@@ -318,10 +321,10 @@ def new_sharedStrings_text(db):
 
     # location: xl/sharedStrings.xml
     # inserts: sharedString_len, many_tag_si
-    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<sst uniqueCount="{sharedString_len}" count="{sharedString_len}" xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-{many_tag_si}
-</sst>'''.replace('\n', '\r\n')
+    xml_base =  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
+                '<sst uniqueCount="{sharedString_len}" count="{sharedString_len}" xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">\r\n' \
+                    '{many_tag_si}\r\n' \
+                '</sst>'
 
     # location: si tag for xml_base
     # inserts: space_preserve (xml:space="preserve"), val
@@ -353,31 +356,30 @@ def new_content_types_text(db):
     # location: [Content_Types].xml
     # inserts: many_tag_sheets, tag_sharedStrings
     #  note calcChain is part of this but it is not necessary for excel to open
-    xml_base = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-<Default Extension="xml" ContentType="application/xml"/>
-<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
-{many_tag_sheets}
-{tag_sharedStrings}
-<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
-<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
-</Types>'''.replace('\n', '\r\n')
+    xml_base =  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
+                '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">\r\n' \
+                    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>\r\n' \
+                    '<Default Extension="xml" ContentType="application/xml"/>\r\n' \
+                    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>\r\n' \
+                    '{many_tag_sheets}\r\n' \
+                    '{tag_sharedStrings}\r\n' \
+                    '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>\r\n' \
+                    '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>\r\n' \
+                '</Types>'
 
 
-    xml_tag_sheet = '<Override PartName="/xl/worksheets/sheet{shID}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>\r\n'
+    xml_tag_sheet = '<Override PartName="/xl/worksheets/sheet{sheet_id}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>\r\n'
 
     xml_tag_sharedStrings = '<Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>\r\n'
 
     many_tag_sheets = ''
-    for shID, _ in enumerate(db.ws_names, 1):
-        many_tag_sheets += xml_tag_sheet.format(shID=shID)
+    for sheet_id, _ in enumerate(db.ws_names, 1):
+        many_tag_sheets += xml_tag_sheet.format(sheet_id=sheet_id)
 
     if db._sharedStrings:
         tag_sharedStrings = xml_tag_sharedStrings
     else:
         tag_sharedStrings = ''
-
 
     rv = xml_base.format(many_tag_sheets=many_tag_sheets,
                          tag_sharedStrings=tag_sharedStrings)
