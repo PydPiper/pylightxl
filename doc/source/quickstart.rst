@@ -2,6 +2,10 @@ Quick Start Guide
 =================
 Get up and running in less than 5 minutes with pylightxl!
 
+.. figure:: _static/readme_demo.gif
+   :align: center
+
+
 
 Read Excel File
 ---------------

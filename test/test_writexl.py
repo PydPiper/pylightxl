@@ -147,18 +147,18 @@ class test_write_new(TestCase):
                    '<calcPr calcId="181029"/>\r\n' \
                    '</workbook>'
 
-        xml_tag_sheet = '<sheet name="{sheet_name}" sheetId="{sheet_id}" r:id="rId{order_id}"/>\r\n'
+        xml_tag_sheet = '<sheet name="{sheet_name}" sheetId="{ref_id}" r:id="rId{ref_id}"/>\r\n'
 
-        many_tag_sheets = xml_tag_sheet.format(sheet_name='Sheet1',sheet_id=1,order_id=1) + \
-                          xml_tag_sheet.format(sheet_name='Sheet2',sheet_id=2,order_id=2) + \
-                          xml_tag_sheet.format(sheet_name='Sheet3',sheet_id=3,order_id=3) + \
-                          xml_tag_sheet.format(sheet_name='Sheet4',sheet_id=4,order_id=4) + \
-                          xml_tag_sheet.format(sheet_name='Sheet5',sheet_id=5,order_id=5) + \
-                          xml_tag_sheet.format(sheet_name='Sheet6',sheet_id=6,order_id=6) + \
-                          xml_tag_sheet.format(sheet_name='Sheet7',sheet_id=7,order_id=7) + \
-                          xml_tag_sheet.format(sheet_name='Sheet8',sheet_id=8,order_id=8) + \
-                          xml_tag_sheet.format(sheet_name='Sheet9',sheet_id=9,order_id=9) + \
-                          xml_tag_sheet.format(sheet_name='Sheet10',sheet_id=10,order_id=10)
+        many_tag_sheets = xml_tag_sheet.format(sheet_name='Sheet1',order_id=1,ref_id=1) + \
+                          xml_tag_sheet.format(sheet_name='Sheet2',order_id=2,ref_id=2) + \
+                          xml_tag_sheet.format(sheet_name='Sheet3',order_id=3,ref_id=3) + \
+                          xml_tag_sheet.format(sheet_name='Sheet4',order_id=4,ref_id=4) + \
+                          xml_tag_sheet.format(sheet_name='Sheet5',order_id=5,ref_id=5) + \
+                          xml_tag_sheet.format(sheet_name='Sheet6',order_id=6,ref_id=6) + \
+                          xml_tag_sheet.format(sheet_name='Sheet7',order_id=7,ref_id=7) + \
+                          xml_tag_sheet.format(sheet_name='Sheet8',order_id=8,ref_id=8) + \
+                          xml_tag_sheet.format(sheet_name='Sheet9',order_id=9,ref_id=9) + \
+                          xml_tag_sheet.format(sheet_name='Sheet10',order_id=10,ref_id=10)
 
         db = Database()
         db.add_ws('Sheet1',{})

@@ -1,7 +1,6 @@
 # standard lib imports
 import zipfile
 from os.path import isfile
-from os import rename
 # local lib imports
 from .database import index2address
 
@@ -20,6 +19,7 @@ def writexl(db, path):
         new_writer(db, path)
     else:
         # write to existing excel
+        # TODO: handle for when the file is opened by user
         alter_writer(db, path)
 
 
@@ -33,6 +33,15 @@ def alter_writer(db, path):
     """
 
     # TODO: finish alter excel file
+
+    # core.xml: number of sheets and sheet names
+    # xl/_rels/.rels: rId# order doesnt matter just needs to match on workbook.xml and sheet location
+    # workbook.xml: rId# match .rels, order_id, sheet name
+    # sharedStrings.xml: count/uniqueCount, strings (this has to be parsed before sheet#.xml are worked to populate string IDs
+    #   if one doesnt exist, create one
+    # sheet#.xml: cell values
+    # [Content_Types].xml: add/remove sheet#.xml locations and sharedStrings.xml
+
     pass
 
 
@@ -54,7 +63,6 @@ def new_writer(db, path):
 
         text_core = new_core_text(db)
         zf.writestr('docProps/core.xml', text_core)
-
 
         text_workbook = new_workbook_text(db)
         zf.writestr('xl/workbook.xml', text_workbook)
@@ -100,6 +108,7 @@ def new_app_text(db):
 
     # location: /docProps/app.xml
     # inserts: num_sheets, many_tag_vt
+    #  note: sheet name order does not matter
     xml_base =  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
                 '<Properties xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes" xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">\r\n' \
                 '<Application>Microsoft Excel</Application>\r\n' \
@@ -181,6 +190,7 @@ def new_workbookrels_text(db):
 
     # location: single tag_sheet insert for xml_base
     # inserts: sheet_num
+    #  note: rId is not the order of sheets, it just needs to match workbook.xml
     xml_tag_sheet = '<Relationship Target="worksheets/sheet{sheet_num}.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Id="rId{sheet_num}"/>\r\n'
 
     # location: sharedStrings insert for xml_base
@@ -223,12 +233,13 @@ def new_workbook_text(db):
 
     # location: worksheet tag for xml_base
     # inserts: name, sheet_id, order_id
-    #   note id=rId# is the worksheet order, while sheetId is the worksheet true ID, name= is the custom name
-    xml_tag_sheet = '<sheet name="{sheet_name}" sheetId="{sheet_id}" r:id="rId{order_id}"/>\r\n'
+    #   note id=rId# is referenced by .rels that points to the file locations of each sheet,
+    #        while sheetId is sheet order number, name= is the custom name
+    xml_tag_sheet = '<sheet name="{sheet_name}" sheetId="{order_id}" r:id="rId{ref_id}"/>\r\n'
 
     many_tag_sheets = ''
     for shID, sheet_name in enumerate(db.ws_names, 1):
-        many_tag_sheets += xml_tag_sheet.format(sheet_name=sheet_name, sheet_id=shID, order_id=shID)
+        many_tag_sheets += xml_tag_sheet.format(sheet_name=sheet_name, order_id=shID, ref_id=shID)
     rv = xml_base.format(many_tag_sheets=many_tag_sheets)
     return rv
 
