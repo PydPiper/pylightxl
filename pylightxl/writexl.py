@@ -1,6 +1,8 @@
 # standard lib imports
 import zipfile
 from os.path import isfile
+import re
+from xml.etree import cElementTree as ET
 # local lib imports
 from .database import index2address
 
@@ -20,10 +22,10 @@ def writexl(db, path):
     else:
         # write to existing excel
         # TODO: handle for when the file is opened by user
-        alter_writer(db, path)
+        alt_writer(db, path)
 
 
-def alter_writer(db, path):
+def alt_writer(db, path):
     """
     Writes to an existing excel file. Only injects cell overwrites or new/removed sheets
 
@@ -34,7 +36,7 @@ def alter_writer(db, path):
 
     # TODO: finish alter excel file
 
-    # core.xml: number of sheets and sheet names
+    # app.xml: number of sheets and sheet names
     # xl/_rels/.rels: rId# order doesnt matter just needs to match on workbook.xml and sheet location
     # workbook.xml: rId# match .rels, order_id, sheet name
     # sharedStrings.xml: count/uniqueCount, strings (this has to be parsed before sheet#.xml are worked to populate string IDs
@@ -42,8 +44,33 @@ def alter_writer(db, path):
     # sheet#.xml: cell values
     # [Content_Types].xml: add/remove sheet#.xml locations and sharedStrings.xml
 
+    # have to extract all first to modify
+    with zipfile.ZipFile(path, 'r') as f:
+        f.extractall('pylightxl_temp')
+
     pass
 
+def alt_app_text(db, file):
+
+    tree = ET.parse(file)
+    root = tree.getroot()
+    text = ET.tostring(root)
+    # remove next lines that mess up re findall
+    text = text.replace('\r','')
+    text = text.replace('\n','')
+
+    re_xmlns = re.compile(r'xmlns="(.*?)"')
+    re_xmlns_vt = re.compile(r'xmlns:vt="(.*?)"')
+
+    prefix = {'tag_base': re_xmlns.search(text).group(1),
+              'tag_vt': re_xmlns_vt.search(text).group(1)}
+
+
+    root.findall('.//tag_vt:i4', prefix).text = len(db.ws_names)
+
+    text = ET.tostring(root)
+
+    return text
 
 def new_writer(db, path):
     """
