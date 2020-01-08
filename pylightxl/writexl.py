@@ -1,11 +1,23 @@
 # standard lib imports
 import zipfile
-from os.path import isfile
+import os
 import re
 from xml.etree import cElementTree as ET
 # local lib imports
 from .database import index2address
 
+
+def zipfile_remover(filename, *files):
+    zin = zipfile.ZipFile(filename, 'r')
+    zout = zipfile.ZipFile('_pylightxl', 'w')
+
+    for item in zin.infolist():
+        if item.filename not in files:
+            zout.writestr(item, zin.read(item))
+    zin.close()
+    zout.close()
+    os.remove(filename)
+    os.rename('_pylightxl', filename)
 
 def writexl(db, path):
     """
@@ -16,7 +28,7 @@ def writexl(db, path):
     :return: None
     """
 
-    if not isfile(path):
+    if not os.path.isfile(path):
         # write to new excel
         new_writer(db, path)
     else:
