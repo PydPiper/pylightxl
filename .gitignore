@@ -9,3 +9,4 @@ build
 build
 dist
 pylightxl.egg-info
+test.py

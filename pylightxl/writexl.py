@@ -60,13 +60,22 @@ def alt_writer(db, path):
     with zipfile.ZipFile(path, 'r') as f:
         f.extractall('pylightxl_temp')
 
+    text = alt_app_text(db, 'pylightxl_temp/docProps/app.xml')
+    with open('pylightxl_temp/docProps/app.xml', 'w') as f:
+        f.write(text)
+
+
     pass
 
 def alt_app_text(db, file):
 
+
+    # extract text from existing app.xml
     tree = ET.parse(file)
     root = tree.getroot()
     text = ET.tostring(root)
+
+
     # remove next lines that mess up re findall
     text = text.replace('\r','')
     text = text.replace('\n','')
@@ -77,9 +86,23 @@ def alt_app_text(db, file):
     prefix = {'tag_base': re_xmlns.search(text).group(1),
               'tag_vt': re_xmlns_vt.search(text).group(1)}
 
+    # overwrite new xml text
 
-    root.findall('.//tag_vt:i4', prefix).text = len(db.ws_names)
+    # sheet sizes
+    tag_i4 = root.findall('./tag_base:HeadingPairs//tag_vt:i4', prefix)[0]
+    tag_i4.text = str(len(db.ws_names))
+    tag_titles_vector = root.findall('./tag_base:TitlesOfParts/tag_vt:vector', prefix)[0]
+    tag_titles_vector.set('size', str(len(db.ws_names)))
+    # sheet names, remove them then add new ones
+    for sheet in root.findall('./tag_base:TitlesOfParts//tag_vt:lpstr', prefix):
+        root.find('./tag_base:TitlesOfParts/tag_vt:vector', prefix).remove(sheet)
+    for sheet_name in db.ws_names:
+        e = ET.Element("vt:lpstr")
+        e.text = sheet_name
 
+        root.find('./tag_base:TitlesOfParts/tag_vt:vector', prefix).append(e)
+
+    # roll up entire xml file as text
     text = ET.tostring(root)
 
     return text
