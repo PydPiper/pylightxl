@@ -64,14 +64,15 @@ def alt_writer(db, path):
     with open('pylightxl_temp/docProps/app.xml', 'w') as f:
         f.write(text)
 
+    text = alt_workbookrels_text(db, 'pylightxl_temp/xl/_rels/workbook.xml.rels')
+    with open('pylightxl_temp/docProps/app.xml', 'w') as f:
+        f.write(text)
 
-    pass
 
-def alt_app_text(db, file):
-
+def alt_app_text(db, filepath):
 
     # extract text from existing app.xml
-    tree = ET.parse(file)
+    tree = ET.parse(filepath)
     root = tree.getroot()
     text = ET.tostring(root)
 
@@ -97,15 +98,59 @@ def alt_app_text(db, file):
     for sheet in root.findall('./tag_base:TitlesOfParts//tag_vt:lpstr', prefix):
         root.find('./tag_base:TitlesOfParts/tag_vt:vector', prefix).remove(sheet)
     for sheet_name in db.ws_names:
-        e = ET.Element("vt:lpstr")
-        e.text = sheet_name
+        element = ET.Element("vt:lpstr")
+        element.text = sheet_name
 
-        root.find('./tag_base:TitlesOfParts/tag_vt:vector', prefix).append(e)
+        root.find('./tag_base:TitlesOfParts/tag_vt:vector', prefix).append(element)
 
     # roll up entire xml file as text
     text = ET.tostring(root)
 
     return text
+
+
+def alt_workbookrels_text(db, filepath):
+
+    # extract text from existing app.xml
+    tree = ET.parse(filepath)
+    root = tree.getroot()
+    text = ET.tostring(root)
+
+    # remove next lines that mess up re findall
+    text = text.replace('\r','')
+    text = text.replace('\n','')
+
+    re_xmlns = re.compile(r'xmlns="(.*?)"')
+
+    prefix = {'tag_base': re_xmlns.search(text).group(1)}
+
+    # overwrite new xml text
+
+    elements_nonsheet = []
+    element_sheet_type = ''
+
+    for element in root.findall('./tag_base:Relationship', prefix):
+        if 'worksheets/sheet' not in element.get('Target'):
+            # log existing non-sheet elements to append at the end of rId#s after sheets
+            elements_nonsheet.append(element)
+        else:
+            # sheet names, remove them then add new ones
+            element_sheet_type = element.get('Type')
+            root.find('./tag_base:Relationship', prefix).remove(element)
+
+    for sheet_num, sheet_name in enumerate(db.ws_names):
+        element = ET.Element("Relationship")
+        element.set('Target', '"worksheets/sheet{sheet_num}.xml"'.format(sheet_num=sheet_num))
+        element.set('Type', element_sheet_type)
+        element.set('Id', '"rId{sheet_num}"'.format(sheet_num=sheet_num))
+
+        root.append(element)
+
+    # roll up entire xml file as text
+    text = ET.tostring(root)
+
+    return text
+
 
 def new_writer(db, path):
     """
