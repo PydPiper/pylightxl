@@ -65,7 +65,11 @@ def alt_writer(db, path):
         f.write(text)
 
     text = alt_workbookrels_text(db, 'pylightxl_temp/xl/_rels/workbook.xml.rels')
-    with open('pylightxl_temp/docProps/app.xml', 'w') as f:
+    with open('pylightxl_temp/xl/_rels/workbook.xml.rels', 'w') as f:
+        f.write(text)
+
+    text = alt_workbookrels_text(db, 'pylightxl_temp/xl/workbook.xml')
+    with open('pylightxl_temp/xl/workbook.xml', 'w') as f:
         f.write(text)
 
 
@@ -138,13 +142,46 @@ def alt_workbookrels_text(db, filepath):
             element_sheet_type = element.get('Type')
             root.find('./tag_base:Relationship', prefix).remove(element)
 
-    for sheet_num, sheet_name in enumerate(db.ws_names):
+    for sheet_num, sheet_name in enumerate(db.ws_names, 1):
         element = ET.Element("Relationship")
         element.set('Target', '"worksheets/sheet{sheet_num}.xml"'.format(sheet_num=sheet_num))
         element.set('Type', element_sheet_type)
         element.set('Id', '"rId{sheet_num}"'.format(sheet_num=sheet_num))
 
         root.append(element)
+
+    # roll up entire xml file as text
+    text = ET.tostring(root)
+    # TODO: if sharedStrings doesnt exist we need to add it
+    return text
+
+
+def alt_workbook_text(db, filepath):
+
+    # extract text from existing app.xml
+    tree = ET.parse(filepath)
+    root = tree.getroot()
+    text = ET.tostring(root)
+
+    # remove next lines that mess up re findall
+    text = text.replace('\r','')
+    text = text.replace('\n','')
+
+    re_xmlns = re.compile(r'xmlns="(.*?)"')
+    re_xmlns_r = re.compile(r'xmlns:r="(.*?)"')
+
+    prefix = {'tag_base': re_xmlns.search(text).group(1),
+              'tag_r': re_xmlns_r.search(text).group(1)}
+
+    # overwrite new xml text
+
+    for sheet_num, sheet_name in enumerate(db.ws_names, 1):
+        element = ET.Element("sheet")
+        element.set('r:id', '"rId{sheet_num}"'.format(sheet_num=sheet_num))
+        element.set('sheetId', '"{sheet_num}"'.format(sheet_num=sheet_num))
+        element.set('name', '"{sheet_name}"'.format(sheet_name=sheet_name))
+
+        root.findall('./tag_base:sheets', prefix)[0].append(element)
 
     # roll up entire xml file as text
     text = ET.tostring(root)
