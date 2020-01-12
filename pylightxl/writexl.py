@@ -132,16 +132,22 @@ def alt_workbookrels_text(db, filepath):
 
     elements_nonsheet = []
     element_sheet_type = ''
+    bool_sharedStrings = False
 
     for element in root.findall('./tag_base:Relationship', prefix):
         if 'worksheets/sheet' not in element.get('Target'):
+            if 'sharedStrings.xml' == element.get('Target'):
+                # there already is a sharedStrings.xml tag in this rels file, dont add another
+                bool_sharedStrings = True
             # log existing non-sheet elements to append at the end of rId#s after sheets
             elements_nonsheet.append(element)
+            root.find('./tag_base:Relationship', prefix).remove(element)
         else:
             # sheet names, remove them then add new ones
             element_sheet_type = element.get('Type')
             root.find('./tag_base:Relationship', prefix).remove(element)
 
+    # these rId's have to match rId's on workbook.xml
     for sheet_num, sheet_name in enumerate(db.ws_names, 1):
         element = ET.Element("Relationship")
         element.set('Target', '"worksheets/sheet{sheet_num}.xml"'.format(sheet_num=sheet_num))
@@ -150,9 +156,23 @@ def alt_workbookrels_text(db, filepath):
 
         root.append(element)
 
+    # these rId's are not referenced on any of the xml files, they are incremented after sheets
+    for i, element in enumerate(elements_nonsheet, 1):
+        rId = len(db.ws_names) + i
+        element.set('Id', '"rId{rId}'.format(rId=rId))
+
+        root.append(element)
+
+    if bool_sharedStrings is False and db._sharderStrings:
+        element = ET.Element("Relationship")
+        element.set('Target', '"sharedStrings.xml"')
+        element.set('Type', '"http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"')
+        element.set('Id', '"rId{rId}"'.format(rId = len(db.ws_names) + len(elements_nonsheet) + 1))
+
+
     # roll up entire xml file as text
     text = ET.tostring(root)
-    # TODO: if sharedStrings doesnt exist we need to add it
+
     return text
 
 
