@@ -7,17 +7,21 @@ from xml.etree import cElementTree as ET
 from .database import index2address
 
 
-def zipfile_remover(filename, *files):
-    zin = zipfile.ZipFile(filename, 'r')
-    zout = zipfile.ZipFile('_pylightxl', 'w')
+def xml_namespace(file):
 
-    for item in zin.infolist():
-        if item.filename not in files:
-            zout.writestr(item, zin.read(item))
-    zin.close()
-    zout.close()
-    os.remove(filename)
-    os.rename('_pylightxl', filename)
+    events = "start", "start-ns", "end-ns"
+
+    ns_map = []
+
+    for event, elem in ET.iterparse(file, events):
+        if event == "start-ns":
+            elem = ('default', elem[1]) if elem[0] == '' else elem
+            ns_map.append(elem)
+        elif event == "end-ns":
+            ns_map.pop()
+            return dict(ns_map)
+        elif event == "start":
+            return dict(ns_map)
 
 def writexl(db, path):
     """
@@ -64,11 +68,13 @@ def alt_writer(db, path):
     with open('pylightxl_temp/docProps/app.xml', 'w') as f:
         f.write(text)
 
+    sheetref = alt_getsheetref()
+
     text = alt_workbookrels_text(db, 'pylightxl_temp/xl/_rels/workbook.xml.rels')
     with open('pylightxl_temp/xl/_rels/workbook.xml.rels', 'w') as f:
         f.write(text)
 
-    text = alt_workbookrels_text(db, 'pylightxl_temp/xl/workbook.xml')
+    text = alt_workbook_text(db, 'pylightxl_temp/xl/workbook.xml')
     with open('pylightxl_temp/xl/workbook.xml', 'w') as f:
         f.write(text)
 
@@ -76,39 +82,31 @@ def alt_writer(db, path):
 def alt_app_text(db, filepath):
 
     # extract text from existing app.xml
+    ns = xml_namespace(filepath)
     tree = ET.parse(filepath)
     root = tree.getroot()
-    text = ET.tostring(root)
-
-
-    # remove next lines that mess up re findall
-    text = text.replace('\r','')
-    text = text.replace('\n','')
-
-    re_xmlns = re.compile(r'xmlns="(.*?)"')
-    re_xmlns_vt = re.compile(r'xmlns:vt="(.*?)"')
-
-    prefix = {'tag_base': re_xmlns.search(text).group(1),
-              'tag_vt': re_xmlns_vt.search(text).group(1)}
 
     # overwrite new xml text
 
     # sheet sizes
-    tag_i4 = root.findall('./tag_base:HeadingPairs//tag_vt:i4', prefix)[0]
+    tag_i4 = root.findall('./default:HeadingPairs//vt:i4', ns)[0]
     tag_i4.text = str(len(db.ws_names))
-    tag_titles_vector = root.findall('./tag_base:TitlesOfParts/tag_vt:vector', prefix)[0]
+    tag_titles_vector = root.findall('./default:TitlesOfParts/vt:vector', ns)[0]
     tag_titles_vector.set('size', str(len(db.ws_names)))
     # sheet names, remove them then add new ones
-    for sheet in root.findall('./tag_base:TitlesOfParts//tag_vt:lpstr', prefix):
-        root.find('./tag_base:TitlesOfParts/tag_vt:vector', prefix).remove(sheet)
+    for sheet in root.findall('./default:TitlesOfParts//vt:lpstr', ns):
+        root.find('./default:TitlesOfParts/vt:vector', ns).remove(sheet)
     for sheet_name in db.ws_names:
         element = ET.Element("vt:lpstr")
         element.text = sheet_name
 
-        root.find('./tag_base:TitlesOfParts/tag_vt:vector', prefix).append(element)
+        root.find('./default:TitlesOfParts/vt:vector', ns).append(element)
+
+    # reset default namespace
+    ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = ET.tostring(root)
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + ET.tostring(root)
 
     return text
 
@@ -195,6 +193,9 @@ def alt_workbook_text(db, filepath):
 
     # overwrite new xml text
 
+    for element in root.findall('./tag_base:sheets', prefix):
+        root.find('./tag_base:sheets', prefix).remove(element)
+
     for sheet_num, sheet_name in enumerate(db.ws_names, 1):
         element = ET.Element("sheet")
         element.set('r:id', '"rId{sheet_num}"'.format(sheet_num=sheet_num))
@@ -207,6 +208,53 @@ def alt_workbook_text(db, filepath):
     text = ET.tostring(root)
 
     return text
+
+
+def alt_getsheetref():
+
+    sheetref = {}
+
+    # -------------------------------------------------------------
+    # get worksheet filenames and Ids
+
+    tree = ET.parse('pylightxl_temp/xl/_rels/workbook.xml.rels')
+    root = tree.getroot()
+    text = ET.tostring(root)
+
+    # remove next lines that mess up re findall
+    text = text.replace('\r','')
+    text = text.replace('\n','')
+
+    re_xmlns = re.compile(r'xmlns="(.*?)"')
+
+    prefix = {'tag_base': re_xmlns.search(text).group(1)}
+
+    for element in root.findall('./tag_base:Relationship', prefix):
+        if 'worksheets/sheet' in element.get('Target'):
+            Id = element.get('Id')
+            filename = element.get('Target').split('/')[1].replace('"', '')
+            sheetref.update({Id: {'name': '', 'filename': filename}})
+
+    # -------------------------------------------------------------
+    # get custom worksheet names
+
+    tree = ET.parse('pylightxl_temp/xl/_rels/workbook.xml.rels')
+    root = tree.getroot()
+    text = ET.tostring(root)
+
+    # remove next lines that mess up re findall
+    text = text.replace('\r','')
+    text = text.replace('\n','')
+
+    re_xmlns = re.compile(r'xmlns="(.*?)"')
+
+    prefix = {'tag_base': re_xmlns.search(text).group(1)}
+
+    for element in root.findall('./tag_base:sheets', prefix):
+        Id = element.get('id')
+        sheetref[Id]['name'] = element.get('name').replace('"', '')
+
+    return sheetref
 
 
 def new_writer(db, path):
