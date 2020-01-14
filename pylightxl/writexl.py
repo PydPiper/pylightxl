@@ -86,8 +86,6 @@ def alt_app_text(db, filepath):
     tree = ET.parse(filepath)
     root = tree.getroot()
 
-    # overwrite new xml text
-
     # sheet sizes
     tag_i4 = root.findall('./default:HeadingPairs//vt:i4', ns)[0]
     tag_i4.text = str(len(db.ws_names))
@@ -114,36 +112,30 @@ def alt_app_text(db, filepath):
 def alt_workbookrels_text(db, filepath):
 
     # extract text from existing app.xml
+    ns = xml_namespace(filepath)
     tree = ET.parse(filepath)
     root = tree.getroot()
-    text = ET.tostring(root)
 
-    # remove next lines that mess up re findall
-    text = text.replace('\r','')
-    text = text.replace('\n','')
-
-    re_xmlns = re.compile(r'xmlns="(.*?)"')
-
-    prefix = {'tag_base': re_xmlns.search(text).group(1)}
-
-    # overwrite new xml text
-
+    # hold existing non-sheet relations (calcChain, sharedStrings, etc.)
     elements_nonsheet = []
-    element_sheet_type = ''
+    # sheet type that is replaced by actual xml read sheet type
+    element_sheet_type = '"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"'
+    # book keeping to check if a sharedStrings was read in the elements_nonsheet
+    #   (if no and db has sharedStrings then we need to add a sharedStrings in)
     bool_sharedStrings = False
 
-    for element in root.findall('./tag_base:Relationship', prefix):
+    for element in root.findall('./default:Relationship', ns):
         if 'worksheets/sheet' not in element.get('Target'):
             if 'sharedStrings.xml' == element.get('Target'):
                 # there already is a sharedStrings.xml tag in this rels file, dont add another
                 bool_sharedStrings = True
             # log existing non-sheet elements to append at the end of rId#s after sheets
             elements_nonsheet.append(element)
-            root.find('./tag_base:Relationship', prefix).remove(element)
+            root.find('./default:Relationship', ns).remove(element)
         else:
             # sheet names, remove them then add new ones
             element_sheet_type = element.get('Type')
-            root.find('./tag_base:Relationship', prefix).remove(element)
+            root.find('./default:Relationship', ns).remove(element)
 
     # these rId's have to match rId's on workbook.xml
     for sheet_num, sheet_name in enumerate(db.ws_names, 1):
@@ -167,9 +159,11 @@ def alt_workbookrels_text(db, filepath):
         element.set('Type', '"http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"')
         element.set('Id', '"rId{rId}"'.format(rId = len(db.ws_names) + len(elements_nonsheet) + 1))
 
+    # reset default namespace
+    ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = ET.tostring(root)
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + ET.tostring(root)
 
     return text
 
@@ -177,35 +171,27 @@ def alt_workbookrels_text(db, filepath):
 def alt_workbook_text(db, filepath):
 
     # extract text from existing app.xml
+    ns = xml_namespace(filepath)
     tree = ET.parse(filepath)
     root = tree.getroot()
-    text = ET.tostring(root)
 
-    # remove next lines that mess up re findall
-    text = text.replace('\r','')
-    text = text.replace('\n','')
-
-    re_xmlns = re.compile(r'xmlns="(.*?)"')
-    re_xmlns_r = re.compile(r'xmlns:r="(.*?)"')
-
-    prefix = {'tag_base': re_xmlns.search(text).group(1),
-              'tag_r': re_xmlns_r.search(text).group(1)}
-
-    # overwrite new xml text
-
-    for element in root.findall('./tag_base:sheets', prefix):
-        root.find('./tag_base:sheets', prefix).remove(element)
-
+    # remove existing sheets
+    for element in root.findall('./default:sheets', ns):
+        root.find('./default:sheets', ns).remove(element)
+    # write new sheets from db
     for sheet_num, sheet_name in enumerate(db.ws_names, 1):
         element = ET.Element("sheet")
         element.set('r:id', '"rId{sheet_num}"'.format(sheet_num=sheet_num))
         element.set('sheetId', '"{sheet_num}"'.format(sheet_num=sheet_num))
         element.set('name', '"{sheet_name}"'.format(sheet_name=sheet_name))
 
-        root.findall('./tag_base:sheets', prefix)[0].append(element)
+        root.findall('./default:sheets', ns)[0].append(element)
+
+    # reset default namespace
+    ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = ET.tostring(root)
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + ET.tostring(root)
 
     return text
 
@@ -216,20 +202,11 @@ def alt_getsheetref():
 
     # -------------------------------------------------------------
     # get worksheet filenames and Ids
-
+    ns = xml_namespace('pylightxl_temp/xl/_rels/workbook.xml.rels')
     tree = ET.parse('pylightxl_temp/xl/_rels/workbook.xml.rels')
     root = tree.getroot()
-    text = ET.tostring(root)
 
-    # remove next lines that mess up re findall
-    text = text.replace('\r','')
-    text = text.replace('\n','')
-
-    re_xmlns = re.compile(r'xmlns="(.*?)"')
-
-    prefix = {'tag_base': re_xmlns.search(text).group(1)}
-
-    for element in root.findall('./tag_base:Relationship', prefix):
+    for element in root.findall('./default:Relationship', ns):
         if 'worksheets/sheet' in element.get('Target'):
             Id = element.get('Id')
             filename = element.get('Target').split('/')[1].replace('"', '')
@@ -237,20 +214,11 @@ def alt_getsheetref():
 
     # -------------------------------------------------------------
     # get custom worksheet names
-
-    tree = ET.parse('pylightxl_temp/xl/_rels/workbook.xml.rels')
+    ns = xml_namespace('pylightxl_temp/xl/workbook.xml')
+    tree = ET.parse('pylightxl_temp/xl/workbook.xml')
     root = tree.getroot()
-    text = ET.tostring(root)
 
-    # remove next lines that mess up re findall
-    text = text.replace('\r','')
-    text = text.replace('\n','')
-
-    re_xmlns = re.compile(r'xmlns="(.*?)"')
-
-    prefix = {'tag_base': re_xmlns.search(text).group(1)}
-
-    for element in root.findall('./tag_base:sheets', prefix):
+    for element in root.findall('./default:sheets', ns):
         Id = element.get('id')
         sheetref[Id]['name'] = element.get('name').replace('"', '')
 
