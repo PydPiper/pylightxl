@@ -8,6 +8,12 @@ from .database import index2address
 
 
 def xml_namespace(file):
+    """
+    Takes an xml file and returns the root namespace as a dict
+
+    :param str file: xml file path
+    :return dict: dictionary of root namespace
+    """
 
     events = "start", "start-ns", "end-ns"
 
@@ -68,7 +74,8 @@ def alt_writer(db, path):
     with open('pylightxl_temp/docProps/app.xml', 'w') as f:
         f.write(text)
 
-    sheetref = alt_getsheetref()
+    dir_path = '/'.join(path.split('/')[:-1])
+    sheetref = alt_getsheetref(dir_path)
 
     text = alt_workbookrels_text(db, 'pylightxl_temp/xl/_rels/workbook.xml.rels')
     with open('pylightxl_temp/xl/_rels/workbook.xml.rels', 'w') as f:
@@ -80,6 +87,13 @@ def alt_writer(db, path):
 
 
 def alt_app_text(db, filepath):
+    """
+    Takes a docProps/app.xml and returns a db altered text version of the xml
+
+    :param pylightxl.Database db: pylightxl database that contains data to update xml file
+    :param str filepath: file path for docProps/app.xml
+    :return str: returns the updated xml text
+    """
 
     # extract text from existing app.xml
     ns = xml_namespace(filepath)
@@ -110,6 +124,13 @@ def alt_app_text(db, filepath):
 
 
 def alt_workbookrels_text(db, filepath):
+    """
+    Takes a xl/_rels/workbook.xml.rels and returns a db altered text version of the xml
+
+    :param pylightxl.Database db: pylightxl database that contains data to update xml file
+    :param str filepath: file path for xl/_rels/workbook.xml.rels
+    :return str: returns the updated xml text
+    """
 
     # extract text from existing app.xml
     ns = xml_namespace(filepath)
@@ -169,6 +190,13 @@ def alt_workbookrels_text(db, filepath):
 
 
 def alt_workbook_text(db, filepath):
+    """
+    Takes a xl/workbook.xml and returns a db altered text version of the xml
+
+    :param pylightxl.Database db: pylightxl database that contains data to update xml file
+    :param str filepath: file path for xl/workbook.xml
+    :return str: returns the updated xml text
+    """
 
     # extract text from existing app.xml
     ns = xml_namespace(filepath)
@@ -196,14 +224,21 @@ def alt_workbook_text(db, filepath):
     return text
 
 
-def alt_getsheetref():
+def alt_getsheetref(path):
+    """
+    Takes a file path for the temp pylightxl uncompressed excel xml files and returns the un-altered
+    filenames and rIds
+
+    :param str path: file path to pylightxl_temp
+    :return dict: dictionary of filenames {rId: {name: '', filename: ''}}
+    """
 
     sheetref = {}
 
     # -------------------------------------------------------------
     # get worksheet filenames and Ids
-    ns = xml_namespace('pylightxl_temp/xl/_rels/workbook.xml.rels')
-    tree = ET.parse('pylightxl_temp/xl/_rels/workbook.xml.rels')
+    ns = xml_namespace(path + 'pylightxl_temp/xl/_rels/workbook.xml.rels')
+    tree = ET.parse(path + 'pylightxl_temp/xl/_rels/workbook.xml.rels')
     root = tree.getroot()
 
     for element in root.findall('./default:Relationship', ns):
