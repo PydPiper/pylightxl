@@ -29,6 +29,7 @@ def xml_namespace(file):
         elif event == "start":
             return dict(ns_map)
 
+
 def writexl(db, path):
     """
     Writes an excel file from pylightxl.Database
@@ -56,8 +57,6 @@ def alt_writer(db, path):
     :return: None
     """
 
-    # TODO: finish alter excel file
-
     # app.xml: number of sheets and sheet names
     # xl/_rels/.rels: rId# order doesnt matter just needs to match on workbook.xml and sheet location
     # workbook.xml: rId# match .rels, order_id, sheet name
@@ -76,6 +75,7 @@ def alt_writer(db, path):
 
     dir_path = '/'.join(path.split('/')[:-1])
     sheetref = alt_getsheetref(dir_path)
+    existing_sheetnames = [d['name'] for d in sheetref.values()]
 
     text = alt_workbookrels_text(db, 'pylightxl_temp/xl/_rels/workbook.xml.rels')
     with open('pylightxl_temp/xl/_rels/workbook.xml.rels', 'w') as f:
@@ -84,6 +84,22 @@ def alt_writer(db, path):
     text = alt_workbook_text(db, 'pylightxl_temp/xl/workbook.xml')
     with open('pylightxl_temp/xl/workbook.xml', 'w') as f:
         f.write(text)
+
+    for shID, sheet_name in enumerate(db.ws_names, 1):
+        if sheet_name in existing_sheetnames:
+            # TODO: alter existing sheet
+            pass
+        else:
+            # this sheet is new, create a new sheet
+            text = new_worksheet_text(db, sheet_name)
+            with open('pylightxl_temp/xl/worksheets/sheet{shID}.xml'.format(shID=shID), 'w') as f:
+                f.write(text)
+
+    # TODO: sharedStrings.xml
+
+    # TODO: content_types.xml
+
+    # TODO: rezip and rename
 
 
 def alt_app_text(db, filepath):
