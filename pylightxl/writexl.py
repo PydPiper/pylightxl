@@ -276,6 +276,50 @@ def alt_getsheetref(path):
     return sheetref
 
 
+def alt_worksheet_text(db, filepath, sheet_name):
+    """
+    Takes a xl/worksheets/sheet#.xml and returns a db altered text version of the xml
+
+    :param pylightxl.Database db: pylightxl database that contains data to update xml file
+    :param str filepath: file path for xl/worksheets/sheet#.xml
+    :return str: returns the updated xml text
+    """
+
+    # extract text from existing app.xml
+    ns = xml_namespace(filepath)
+    tree = ET.parse(filepath)
+    root = tree.getroot()
+
+
+    ws_size = db.ws(sheet_name).size
+    if ws_size == [0,0] or ws_size == [1,1]:
+        sheet_size_address = 'A1'
+    else:
+        sheet_size_address = 'A1:' + index2address(ws_size[0],ws_size[1])
+
+
+    # go through row by row of db data
+        # log which data rows have data on it
+        # at the end, cycle through xml rows and delete all that were not in list
+
+    # if new row, use new xml row text
+        # use existing new writer logic here
+    # if existing row - update spans="1:#"
+        # step through each cell in db row data and log which columns were used
+        # at the end, cycle through the xml <c r="A1" addresses and delete all that were not in the list
+
+
+    pass
+
+
+def alt_sharedStrings_text(db, filepath):
+    pass
+
+
+def alt_content_types_text(db, filepath):
+    pass
+
+
 def new_writer(db, path):
     """
     Writes to a new excel file. The minimum xml parts are zipped together and converted to an .xlsx
