@@ -31,7 +31,7 @@ High-Level Feature Summary
 --------------------------
 - Read excel files (``.xlsx``, ``.xlsm``), all sheets or selective few for speed/memory management
 
-- Index cells data by row/col number or address
+- Index cell data by row/col number or address
 
 - Calling an entire row/col of data returns an easy to use list output: |br| ``db.ws('Sheet1').row(1)`` or ``db.ws('Sheet1').rows``
 
