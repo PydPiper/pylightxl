@@ -298,9 +298,41 @@ def alt_worksheet_text(db, filepath, sheet_name):
         sheet_size_address = 'A1:' + index2address(ws_size[0],ws_size[1])
 
 
+    for e_row in root.findall('./default:sheetData/default:row', ns):
+        for e_c in e_row.findall('./default:c', ns):
+            e_row.remove(e_c)
+
     # go through row by row of db data
         # log which data rows have data on it
         # at the end, cycle through xml rows and delete all that were not in list
+    for row_i, row in enumerate(db.ws[sheet_name].rows(),1):
+        empty_row = ''.join(row)
+        if empty_row:
+            # xml has data for this but the db does not, remove it
+            try:
+                e_row = root.findall('./default:sheetData/default:row[@r={}]'.format(row_i), ns)[0]
+            except IndexError:
+                # existing xml did not have data for this row either
+                pass
+            else:
+                e_sheetData = root.findall('./default:sheetData', ns)
+                e_sheetData.remove(e_row)
+        else:
+            # db data exists, write xml elements
+            for col_i, cell in enumerate(row):
+                e_c = ET.Element('c')
+                e_c.set('r', '"{}"'.format(index2address(row_i, col_i)))
+                e_v = ET.SubElement(e_c, 'v')
+                # TODO: test for string, eq, formula
+                e_v.text = str(cell)
+                try:
+                    e_row = root.findall('./default:sheetData/default:row[@r={}]'.format(row_i), ns)[0]
+                    # TODO: adjust the row size=
+                    e_row.append(e_c)
+                except IndexError:
+                    # existing xml did not have data for this row, create one
+                    # TODO: create row
+                    pass
 
     # if new row, use new xml row text
         # use existing new writer logic here
