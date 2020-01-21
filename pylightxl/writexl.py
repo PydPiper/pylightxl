@@ -290,13 +290,11 @@ def alt_worksheet_text(db, filepath, sheet_name):
     tree = ET.parse(filepath)
     root = tree.getroot()
 
-
     ws_size = db.ws(sheet_name).size
     if ws_size == [0,0] or ws_size == [1,1]:
         sheet_size_address = 'A1'
     else:
         sheet_size_address = 'A1:' + index2address(ws_size[0],ws_size[1])
-
 
     for e_row in root.findall('./default:sheetData/default:row', ns):
         for e_c in e_row.findall('./default:c', ns):
