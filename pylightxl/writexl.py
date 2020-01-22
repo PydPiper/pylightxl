@@ -285,6 +285,8 @@ def alt_worksheet_text(db, filepath, sheet_name):
     :return str: returns the updated xml text
     """
 
+    # TODO: python 2 does not preserve list index in terms of appended values sharedStrings needs to be fixed, here and in write new
+
     # extract text from existing app.xml
     ns = xml_namespace(filepath)
     tree = ET.parse(filepath)
@@ -316,21 +318,41 @@ def alt_worksheet_text(db, filepath, sheet_name):
                 e_sheetData = root.findall('./default:sheetData', ns)
                 e_sheetData.remove(e_row)
         else:
+            # db has data in this row, check if there is already an xml row element, else create one
+            try:
+                e_row = root.findall('./default:sheetData/default:row[@r={}]'.format(len(row)), ns)[0]
+            except IndexError:
+                # existing xml did not have data for this row, create one
+                e_row = ET.Element('row')
+
             # db data exists, write xml elements
             for col_i, cell in enumerate(row):
                 e_c = ET.Element('c')
                 e_c.set('r', '"{}"'.format(index2address(row_i, col_i)))
                 e_v = ET.SubElement(e_c, 'v')
-                # TODO: test for string, eq, formula
-                e_v.text = str(cell)
-                try:
-                    e_row = root.findall('./default:sheetData/default:row[@r={}]'.format(row_i), ns)[0]
-                    # TODO: adjust the row size=
-                    e_row.append(e_c)
-                except IndexError:
-                    # existing xml did not have data for this row, create one
-                    # TODO: create row
-                    pass
+                if type(cell) is str and cell != '':
+                    if cell[0] == '=':
+                        # formula
+                        e_c.set('t', '"str"')
+                        e_f = ET.SubElement(e_c, 'f')
+                        e_f.text = cell[1:]
+                        e_v.text = '"pylightxl - open excel file and save it for formulas to calculate"'
+                    else:
+                        # string, add it to sharedStrings
+                        e_c.set('t', '"s"')
+                        # check if str is already part of the sharedStrings index, else add it
+                        try:
+                            sharedStrings_index = db._sharedStrings.index(cell)
+                        except ValueError:
+                            db._sharedStrings.append(cell)
+                            sharedStrings_index = db._sharedStrings.index(cell)
+                        # sharedStrings index becomes the value of the cell (sharedStrings starts from 0)
+                        e_v.text = str(sharedStrings_index)
+                elif cell != '':
+                    # int or real write it directly to cell value
+                    e_v.text = str(cell)
+
+                e_row.append(e_c)
 
     # if new row, use new xml row text
         # use existing new writer logic here
@@ -559,6 +581,8 @@ def new_worksheet_text(db, sheet_name):
 
     # dev note: the reason why db._sharedStrings is defined in here is to take advantage of single time
     #  looping through all of the cell data
+
+    # row size and dyDescent are optional values
 
     # location: xl/worksheets/sheet#.xml
     # inserts: sizeAddress (ex: A1:B5, if empty then A1), many_tag_row
