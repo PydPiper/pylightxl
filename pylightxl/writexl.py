@@ -77,23 +77,34 @@ def alt_writer(db, path):
     sheetref = alt_getsheetref(dir_path)
     existing_sheetnames = [d['name'] for d in sheetref.values()]
 
-    text = alt_workbookrels_text(db, 'pylightxl_temp/xl/_rels/workbook.xml.rels')
-    with open('pylightxl_temp/xl/_rels/workbook.xml.rels', 'w') as f:
-        f.write(text)
-
     text = alt_workbook_text(db, 'pylightxl_temp/xl/workbook.xml')
     with open('pylightxl_temp/xl/workbook.xml', 'w') as f:
         f.write(text)
 
     for shID, sheet_name in enumerate(db.ws_names, 1):
         if sheet_name in existing_sheetnames:
-            # TODO: alter existing sheet
-            pass
+            # get the original sheet
+            for subdict in sheetref.values():
+                if subdict['name'] == sheet_name:
+                    filename = subdict['filename']
+
+            # access the original sheet#.xml and alter its data based on db
+            text = alt_worksheet_text(db, 'pylightxl_temp/xl/{}'.format(filename), sheet_name)
+            # feed altered text to new sheet based on db indexing order
+            # TODO: this could overwrite a sheet that hasnt been iterated through yet
+            with open('pylightxl_temp/xl/sheet{}'.format(shID), 'w') as f:
+                f.write(text)
         else:
             # this sheet is new, create a new sheet
             text = new_worksheet_text(db, sheet_name)
             with open('pylightxl_temp/xl/worksheets/sheet{shID}.xml'.format(shID=shID), 'w') as f:
                 f.write(text)
+
+    # this has to come after sheets for db._sharedStrings to be populated
+    text = alt_workbookrels_text(db, 'pylightxl_temp/xl/_rels/workbook.xml.rels')
+    with open('pylightxl_temp/xl/_rels/workbook.xml.rels', 'w') as f:
+        f.write(text)
+
 
     # TODO: sharedStrings.xml
 
@@ -296,16 +307,20 @@ def alt_worksheet_text(db, filepath, sheet_name):
     if ws_size == [0,0] or ws_size == [1,1]:
         sheet_size_address = 'A1'
     else:
-        sheet_size_address = 'A1:' + index2address(ws_size[0],ws_size[1])
+        sheet_size_address = 'A1:' + index2address(ws_size[0], ws_size[1])
 
+    # update size of sheet
+    e_dim = root.findall('./default:dimension', ns)[0]
+    e_dim.set('ref', "{}".format(sheet_size_address))
+
+    # remove the existing element under "row" elements
+    #   (row elements are kept to keep existing formatting)
     for e_row in root.findall('./default:sheetData/default:row', ns):
         for e_c in e_row.findall('./default:c', ns):
             e_row.remove(e_c)
 
-    # go through row by row of db data
-        # log which data rows have data on it
-        # at the end, cycle through xml rows and delete all that were not in list
-    for row_i, row in enumerate(db.ws[sheet_name].rows(),1):
+    # unload the db
+    for row_i, row in enumerate(db.ws[sheet_name].rows(), 1):
         empty_row = ''.join(row)
         if empty_row:
             # xml has data for this but the db does not, remove it
@@ -354,14 +369,13 @@ def alt_worksheet_text(db, filepath, sheet_name):
 
                 e_row.append(e_c)
 
-    # if new row, use new xml row text
-        # use existing new writer logic here
-    # if existing row - update spans="1:#"
-        # step through each cell in db row data and log which columns were used
-        # at the end, cycle through the xml <c r="A1" addresses and delete all that were not in the list
+    # reset default namespace
+    ET.register_namespace('', ns['default'])
 
+    # roll up entire xml file as text
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + ET.tostring(root)
 
-    pass
+    return text
 
 
 def alt_sharedStrings_text(db, filepath):
