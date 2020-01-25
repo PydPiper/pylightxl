@@ -73,13 +73,20 @@ def alt_writer(db, path):
     with open('pylightxl_temp/docProps/app.xml', 'w') as f:
         f.write(text)
 
-    dir_path = '/'.join(path.split('/')[:-1])
-    sheetref = alt_getsheetref(dir_path)
-    existing_sheetnames = [d['name'] for d in sheetref.values()]
-
     text = alt_workbook_text(db, 'pylightxl_temp/xl/workbook.xml')
     with open('pylightxl_temp/xl/workbook.xml', 'w') as f:
         f.write(text)
+
+    # rename sheet#.xml to temp to prevent overwriting
+    for file in os.listdir('./pylightxl_temp/xl/worksheets'):
+        if '.xml' in file:
+            old_name = './pylightxl_temp/xl/worksheets/' + file
+            new_name = './pylightxl_temp/xl/worksheets/' + 'temp_' + file
+            os.rename(old_name, new_name)
+    # get filename to xml rId associations
+    dir_path = '/'.join(path.split('/')[:-1])
+    sheetref = alt_getsheetref(dir_path)
+    existing_sheetnames = [d['name'] for d in sheetref.values()]
 
     for shID, sheet_name in enumerate(db.ws_names, 1):
         if sheet_name in existing_sheetnames:
@@ -89,11 +96,12 @@ def alt_writer(db, path):
                     filename = subdict['filename']
 
             # access the original sheet#.xml and alter its data based on db
-            text = alt_worksheet_text(db, 'pylightxl_temp/xl/{}'.format(filename), sheet_name)
+            text = alt_worksheet_text(db, 'pylightxl_temp/xl/worksheets/{}'.format(filename), sheet_name)
             # feed altered text to new sheet based on db indexing order
-            # TODO: this could overwrite a sheet that hasnt been iterated through yet
             with open('pylightxl_temp/xl/sheet{}'.format(shID), 'w') as f:
                 f.write(text)
+            # remove temp xml sheet file
+            os.remove('./pylightxl_temp/xl/worksheets/{}'.format(filename))
         else:
             # this sheet is new, create a new sheet
             text = new_worksheet_text(db, sheet_name)
