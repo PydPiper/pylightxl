@@ -78,10 +78,10 @@ def alt_writer(db, path):
         f.write(text)
 
     # rename sheet#.xml to temp to prevent overwriting
-    for file in os.listdir('./pylightxl_temp/xl/worksheets'):
+    for file in os.listdir('pylightxl_temp/xl/worksheets'):
         if '.xml' in file:
-            old_name = './pylightxl_temp/xl/worksheets/' + file
-            new_name = './pylightxl_temp/xl/worksheets/' + 'temp_' + file
+            old_name = 'pylightxl_temp/xl/worksheets/' + file
+            new_name = 'pylightxl_temp/xl/worksheets/' + 'temp_' + file
             os.rename(old_name, new_name)
     # get filename to xml rId associations
     dir_path = '/'.join(path.split('/')[:-1])
@@ -101,7 +101,7 @@ def alt_writer(db, path):
             with open('pylightxl_temp/xl/sheet{}'.format(shID), 'w') as f:
                 f.write(text)
             # remove temp xml sheet file
-            os.remove('./pylightxl_temp/xl/worksheets/{}'.format(filename))
+            os.remove('pylightxl_temp/xl/worksheets/{}'.format(filename))
         else:
             # this sheet is new, create a new sheet
             text = new_worksheet_text(db, sheet_name)
@@ -113,12 +113,24 @@ def alt_writer(db, path):
     with open('pylightxl_temp/xl/_rels/workbook.xml.rels', 'w') as f:
         f.write(text)
 
+    if os.path.isfile('pylightxl_temp/xl/sharedStrings.xml'):
+        # sharedStrings is always recreated from db._sharedStrings since all sheets are rewritten
+        os.remove('pylightxl_temp/xl/sharedStrings.xml')
+    text = new_sharedStrings_text(db)
+    with open('pylightxl_temp/xl/sharedStrings.xml', 'w') as f:
+        f.write(text)
 
-    # TODO: sharedStrings.xml
+    text = alt_workbook_text(db, 'pylightxl_temp/xl/workbook.xml')
+    with open('pylightxl_temp/xl/workbook.xml', 'w') as f:
+        f.write(text)
 
-    # TODO: content_types.xml
+    # remove existing file
+    os.remove(path)
 
-    # TODO: rezip and rename
+    filename = path.split('/')[-1]
+
+    with zipfile.ZipFile(filename, 'w') as f:
+        f.write('pylightxl_temp')
 
 
 def alt_app_text(db, filepath):
@@ -144,7 +156,7 @@ def alt_app_text(db, filepath):
     for sheet in root.findall('./default:TitlesOfParts//vt:lpstr', ns):
         root.find('./default:TitlesOfParts/vt:vector', ns).remove(sheet)
     for sheet_name in db.ws_names:
-        element = ET.Element("vt:lpstr")
+        element = ET.Element('vt:lpstr')
         element.text = sheet_name
 
         root.find('./default:TitlesOfParts/vt:vector', ns).append(element)
@@ -175,7 +187,7 @@ def alt_workbookrels_text(db, filepath):
     # hold existing non-sheet relations (calcChain, sharedStrings, etc.)
     elements_nonsheet = []
     # sheet type that is replaced by actual xml read sheet type
-    element_sheet_type = '"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"'
+    element_sheet_type = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet'
     # book keeping to check if a sharedStrings was read in the elements_nonsheet
     #   (if no and db has sharedStrings then we need to add a sharedStrings in)
     bool_sharedStrings = False
@@ -196,24 +208,24 @@ def alt_workbookrels_text(db, filepath):
     # these rId's have to match rId's on workbook.xml
     for sheet_num, sheet_name in enumerate(db.ws_names, 1):
         element = ET.Element("Relationship")
-        element.set('Target', '"worksheets/sheet{sheet_num}.xml"'.format(sheet_num=sheet_num))
+        element.set('Target', 'worksheets/sheet{sheet_num}.xml'.format(sheet_num=sheet_num))
         element.set('Type', element_sheet_type)
-        element.set('Id', '"rId{sheet_num}"'.format(sheet_num=sheet_num))
+        element.set('Id', 'rId{sheet_num}'.format(sheet_num=sheet_num))
 
         root.append(element)
 
     # these rId's are not referenced on any of the xml files, they are incremented after sheets
     for i, element in enumerate(elements_nonsheet, 1):
         rId = len(db.ws_names) + i
-        element.set('Id', '"rId{rId}'.format(rId=rId))
+        element.set('Id', 'rId{rId}'.format(rId=rId))
 
         root.append(element)
 
     if bool_sharedStrings is False and db._sharderStrings:
-        element = ET.Element("Relationship")
-        element.set('Target', '"sharedStrings.xml"')
-        element.set('Type', '"http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"')
-        element.set('Id', '"rId{rId}"'.format(rId = len(db.ws_names) + len(elements_nonsheet) + 1))
+        element = ET.Element('Relationship')
+        element.set('Target', 'sharedStrings.xml')
+        element.set('Type', 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings')
+        element.set('Id', 'rId{rId}'.format(rId = len(db.ws_names) + len(elements_nonsheet) + 1))
 
     # reset default namespace
     ET.register_namespace('', ns['default'])
@@ -239,14 +251,14 @@ def alt_workbook_text(db, filepath):
     root = tree.getroot()
 
     # remove existing sheets
-    for element in root.findall('./default:sheets', ns):
+    for element in root.findall('./default:sheets/default:sheet', ns):
         root.find('./default:sheets', ns).remove(element)
     # write new sheets from db
     for sheet_num, sheet_name in enumerate(db.ws_names, 1):
-        element = ET.Element("sheet")
-        element.set('r:id', '"rId{sheet_num}"'.format(sheet_num=sheet_num))
-        element.set('sheetId', '"{sheet_num}"'.format(sheet_num=sheet_num))
-        element.set('name', '"{sheet_name}"'.format(sheet_name=sheet_name))
+        element = ET.Element('sheet')
+        element.set('r:id', 'rId{sheet_num}'.format(sheet_num=sheet_num))
+        element.set('sheetId', '{sheet_num}'.format(sheet_num=sheet_num))
+        element.set('name', '{sheet_name}'.format(sheet_name=sheet_name))
 
         root.findall('./default:sheets', ns)[0].append(element)
 
@@ -319,7 +331,7 @@ def alt_worksheet_text(db, filepath, sheet_name):
 
     # update size of sheet
     e_dim = root.findall('./default:dimension', ns)[0]
-    e_dim.set('ref', "{}".format(sheet_size_address))
+    e_dim.set('ref', '{}'.format(sheet_size_address))
 
     # remove the existing element under "row" elements
     #   (row elements are kept to keep existing formatting)
@@ -351,18 +363,18 @@ def alt_worksheet_text(db, filepath, sheet_name):
             # db data exists, write xml elements
             for col_i, cell in enumerate(row):
                 e_c = ET.Element('c')
-                e_c.set('r', '"{}"'.format(index2address(row_i, col_i)))
+                e_c.set('r', '{}'.format(index2address(row_i, col_i)))
                 e_v = ET.SubElement(e_c, 'v')
                 if type(cell) is str and cell != '':
                     if cell[0] == '=':
                         # formula
-                        e_c.set('t', '"str"')
+                        e_c.set('t', 'str')
                         e_f = ET.SubElement(e_c, 'f')
                         e_f.text = cell[1:]
-                        e_v.text = '"pylightxl - open excel file and save it for formulas to calculate"'
+                        e_v.text = 'pylightxl - open excel file and save it for formulas to calculate'
                     else:
                         # string, add it to sharedStrings
-                        e_c.set('t', '"s"')
+                        e_c.set('t', 's')
                         # check if str is already part of the sharedStrings index, else add it
                         try:
                             sharedStrings_index = db._sharedStrings.index(cell)
@@ -386,12 +398,48 @@ def alt_worksheet_text(db, filepath, sheet_name):
     return text
 
 
-def alt_sharedStrings_text(db, filepath):
-    pass
-
-
 def alt_content_types_text(db, filepath):
-    pass
+    """
+    Takes a [Content_Types].xml and returns a db altered text version of the xml
+
+    :param pylightxl.Database db: pylightxl database that contains data to update xml file
+    :param str filepath: file path for [Content_Types].xml
+    :return str: returns the updated xml text
+    """
+
+    # extract text from existing app.xml
+    ns = xml_namespace(filepath)
+    tree = ET.parse(filepath)
+    root = tree.getroot()
+
+    # remove existing sheet content types since numbers might be off
+    for e in root.findall('./default:Override', ns):
+        if '/xl/worksheets/sheet' in e.get('ContentType'):
+            root.remove(e)
+
+    # add new db sheet content types
+    for sh_count in enumerate(db.ws_names, 1):
+        e = ET.Element("Override")
+        e.set('ContentType', 'application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml')
+        e.set('PartName', '/xl/worksheets/sheet{}.xml'.format(sh_count))
+        root.append(e)
+
+    # check if sharedStrings was added, if not add it
+    try:
+        e = root.findall('./default:Override[@PartName="/xl/sharedStrings.xml"', ns)[0]
+    except IndexError:
+        e = ET.Element('Override')
+        e.set('ContentType', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml')
+        e.set('PartName', '/xl/sharedStrings.xml')
+        root.append(e)
+
+    # reset default namespace
+    ET.register_namespace('', ns['default'])
+
+    # roll up entire xml file as text
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + ET.tostring(root)
+
+    return text
 
 
 def new_writer(db, path):
