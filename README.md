@@ -3,7 +3,7 @@
 A light weight, zero dependency (only standard libs used), to the point (no bells and whistles) 
 Microsoft Excel reader/writer(coming soon) python 2.7-3+ library. See documentation: [docs](https://pylightxl.readthedocs.io)
 
-Sample - see [docs - quick start gudide](https://pylightxl.readthedocs.io/en/latest/quickstart.html) for more examples:
+Sample - see [docs - quick start guide](https://pylightxl.readthedocs.io/en/latest/quickstart.html) for more examples:
 ![Example Code](doc/source/_static/readme_demo.gif)
 
 ---
@@ -13,7 +13,7 @@ Sample - see [docs - quick start gudide](https://pylightxl.readthedocs.io/en/lat
 
 #### **Limitations**:
  - Does not support .xls (excel 97-2003 worksheet).
- - Does not support worksheet cell data more than 536,870,912 cells (32-bit list limitation)
+ - Does not support worksheet cell data more than 536,870,912 cells (32-bit list limitation).
 
 #### **In-work version 1.4**
 - new-feature: write new excel file from pylightxl.Database (done and tested)
@@ -21,11 +21,11 @@ Sample - see [docs - quick start gudide](https://pylightxl.readthedocs.io/en/lat
 
 #### **Why pylightxl over pandas/openpyxl**
 - **(compatibility +1, small lib +1)** pylightxl has no external dependencies (only uses python built-in 
-  standard libs)
+  standard libs).
 - **(compatibility +1)** pylightxl was written to be compatible for python 2.7-3+ under one single
-  pylightxl version. It does not impose rules on users to switch versions 
+  pylightxl version. It does not impose rules on users to switch versions.
 - **(small lib +1)** pylightxl was written to simply read/write, thereby making the library small 
-  without any bells or whiles which makes it easy to compile with PyInstaller and other packagers
+  without any bells or whistles which makes it easy to compile with PyInstaller and other packagers
 - **(user friendly +1)** pylightxl was written to be as pythonic and easy to use as possible. Core 
   developers actively survey Stack Overflow questions on working with excel files to tailor the API 
   for most common problems.
@@ -34,7 +34,7 @@ Sample - see [docs - quick start gudide](https://pylightxl.readthedocs.io/en/lat
   at [xlrd](https://xlrd.readthedocs.io/en/latest/) to see if it is a good fit for your project.
   So why pick pylightxl over xlrd that has much more to offer? Currently, xlrd does not have any active
   developers. Pylightxl is a new library aimed to help solve current excel data issues (as surveyed 
-  by Stack Overflow), please submit your suggestions to help improve this library together
+  by Stack Overflow), please submit your suggestions to help improve this library together.
 
 ---
 
