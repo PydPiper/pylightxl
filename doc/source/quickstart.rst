@@ -15,10 +15,10 @@ Read Excel File
     import pylightxl as xl
 
     # readxl returns a pylightxl database that holds all worksheets and its data
-    db = xl.readlxl('folder1/folder2/excelfile.xlsx')
+    db = xl.readxl('folder1/folder2/excelfile.xlsx')
 
     # read only selective sheetnames
-    db = xl.readlxl('folder1/folder2/excelfile.xlsx', ('Sheet1','Sheet3'))
+    db = xl.readxl('folder1/folder2/excelfile.xlsx', ('Sheet1','Sheet3'))
 
     # return all sheetnames
     db.ws_names
