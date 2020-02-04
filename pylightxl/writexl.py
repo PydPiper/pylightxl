@@ -1,6 +1,7 @@
 # standard lib imports
 import zipfile
 import os
+import shutil
 import re
 from xml.etree import cElementTree as ET
 # local lib imports
@@ -23,12 +24,12 @@ def xml_namespace(file):
         if event == "start-ns":
             elem = ('default', elem[1]) if elem[0] == '' else elem
             ns_map.append(elem)
-        elif event == "end-ns":
-            ns_map.pop()
-            return dict(ns_map)
-        elif event == "start":
-            return dict(ns_map)
-
+        # elif event == "end-ns":
+        #     ns_map.pop()
+        #     return dict(ns_map)
+        # elif event == "start":
+        #     return dict(ns_map)
+    return dict(ns_map)
 
 def writexl(db, path):
     """
@@ -93,12 +94,12 @@ def alt_writer(db, path):
             # get the original sheet
             for subdict in sheetref.values():
                 if subdict['name'] == sheet_name:
-                    filename = subdict['filename']
+                    filename = 'temp_' + subdict['filename']
 
             # access the original sheet#.xml and alter its data based on db
             text = alt_worksheet_text(db, 'pylightxl_temp/xl/worksheets/{}'.format(filename), sheet_name)
             # feed altered text to new sheet based on db indexing order
-            with open('pylightxl_temp/xl/sheet{}'.format(shID), 'w') as f:
+            with open('pylightxl_temp/xl/worksheets/sheet{}.xml'.format(shID), 'w') as f:
                 f.write(text)
             # remove temp xml sheet file
             os.remove('pylightxl_temp/xl/worksheets/{}'.format(filename))
@@ -130,7 +131,11 @@ def alt_writer(db, path):
     filename = path.split('/')[-1]
 
     with zipfile.ZipFile(filename, 'w') as f:
-        f.write('pylightxl_temp')
+        for root, dirs, files in os.walk('pylightxl_temp/.'):
+            for file in files:
+                f.write(os.path.join(root, file))
+
+    shutil.rmtree('./pylightxl_temp')
 
 
 def alt_app_text(db, filepath):
@@ -144,6 +149,9 @@ def alt_app_text(db, filepath):
 
     # extract text from existing app.xml
     ns = xml_namespace(filepath)
+    for prefix, uri in ns.items():
+        ET.register_namespace(prefix,uri)
+
     tree = ET.parse(filepath)
     root = tree.getroot()
 
@@ -165,7 +173,7 @@ def alt_app_text(db, filepath):
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + ET.tostring(root)
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root)
 
     return text
 
@@ -181,6 +189,8 @@ def alt_workbookrels_text(db, filepath):
 
     # extract text from existing app.xml
     ns = xml_namespace(filepath)
+    for prefix, uri in ns.items():
+        ET.register_namespace(prefix,uri)
     tree = ET.parse(filepath)
     root = tree.getroot()
 
@@ -199,11 +209,11 @@ def alt_workbookrels_text(db, filepath):
                 bool_sharedStrings = True
             # log existing non-sheet elements to append at the end of rId#s after sheets
             elements_nonsheet.append(element)
-            root.find('./default:Relationship', ns).remove(element)
+            root.remove(element)
         else:
             # sheet names, remove them then add new ones
             element_sheet_type = element.get('Type')
-            root.find('./default:Relationship', ns).remove(element)
+            root.remove(element)
 
     # these rId's have to match rId's on workbook.xml
     for sheet_num, sheet_name in enumerate(db.ws_names, 1):
@@ -231,7 +241,7 @@ def alt_workbookrels_text(db, filepath):
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + ET.tostring(root)
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root)
 
     return text
 
@@ -247,16 +257,21 @@ def alt_workbook_text(db, filepath):
 
     # extract text from existing app.xml
     ns = xml_namespace(filepath)
+    for prefix, uri in ns.items():
+        ET.register_namespace(prefix,uri)
     tree = ET.parse(filepath)
     root = tree.getroot()
 
     # remove existing sheets
     for element in root.findall('./default:sheets/default:sheet', ns):
         root.find('./default:sheets', ns).remove(element)
+
+    # since all 'r' namespace tags are deleted, we have to properly use a linked namespace tag for r:id with qname
+    qname_r_id = ET.QName(ns['r'], 'id')
     # write new sheets from db
     for sheet_num, sheet_name in enumerate(db.ws_names, 1):
         element = ET.Element('sheet')
-        element.set('r:id', 'rId{sheet_num}'.format(sheet_num=sheet_num))
+        element.set(qname_r_id, 'rId{sheet_num}'.format(sheet_num=sheet_num))
         element.set('sheetId', '{sheet_num}'.format(sheet_num=sheet_num))
         element.set('name', '{sheet_name}'.format(sheet_name=sheet_name))
 
@@ -266,7 +281,7 @@ def alt_workbook_text(db, filepath):
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + ET.tostring(root)
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root)
 
     return text
 
@@ -285,6 +300,9 @@ def alt_getsheetref(path):
     # -------------------------------------------------------------
     # get worksheet filenames and Ids
     ns = xml_namespace(path + 'pylightxl_temp/xl/_rels/workbook.xml.rels')
+    for prefix, uri in ns.items():
+        ET.register_namespace(prefix,uri)
+
     tree = ET.parse(path + 'pylightxl_temp/xl/_rels/workbook.xml.rels')
     root = tree.getroot()
 
@@ -297,12 +315,14 @@ def alt_getsheetref(path):
     # -------------------------------------------------------------
     # get custom worksheet names
     ns = xml_namespace('pylightxl_temp/xl/workbook.xml')
+    for prefix, uri in ns.items():
+        ET.register_namespace(prefix,uri)
     tree = ET.parse('pylightxl_temp/xl/workbook.xml')
     root = tree.getroot()
 
-    for element in root.findall('./default:sheets', ns):
-        Id = element.get('id')
-        sheetref[Id]['name'] = element.get('name').replace('"', '')
+    for element in root.findall('./default:sheets/default:sheet', ns):
+        Id = 'rId' + element.get('sheetId')
+        sheetref[Id]['name'] = element.get('name')
 
     return sheetref
 
@@ -320,6 +340,9 @@ def alt_worksheet_text(db, filepath, sheet_name):
 
     # extract text from existing app.xml
     ns = xml_namespace(filepath)
+    for prefix, uri in ns.items():
+        ET.register_namespace(prefix,uri)
+
     tree = ET.parse(filepath)
     root = tree.getroot()
 
@@ -340,9 +363,8 @@ def alt_worksheet_text(db, filepath, sheet_name):
             e_row.remove(e_c)
 
     # unload the db
-    for row_i, row in enumerate(db.ws[sheet_name].rows(), 1):
-        empty_row = ''.join(row)
-        if empty_row:
+    for row_i, row in enumerate(db.ws(sheet_name).rows, 1):
+        if not row:
             # xml has data for this but the db does not, remove it
             try:
                 e_row = root.findall('./default:sheetData/default:row[@r={}]'.format(row_i), ns)[0]
@@ -355,13 +377,13 @@ def alt_worksheet_text(db, filepath, sheet_name):
         else:
             # db has data in this row, check if there is already an xml row element, else create one
             try:
-                e_row = root.findall('./default:sheetData/default:row[@r={}]'.format(len(row)), ns)[0]
+                e_row = root.findall('./default:sheetData/default:row[@r="{}"]'.format(row_i), ns)[0]
             except IndexError:
                 # existing xml did not have data for this row, create one
                 e_row = ET.Element('row')
 
             # db data exists, write xml elements
-            for col_i, cell in enumerate(row):
+            for col_i, cell in enumerate(row, 1):
                 e_c = ET.Element('c')
                 e_c.set('r', '{}'.format(index2address(row_i, col_i)))
                 e_v = ET.SubElement(e_c, 'v')
@@ -393,7 +415,7 @@ def alt_worksheet_text(db, filepath, sheet_name):
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + ET.tostring(root)
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root)
 
     return text
 
@@ -409,6 +431,9 @@ def alt_content_types_text(db, filepath):
 
     # extract text from existing app.xml
     ns = xml_namespace(filepath)
+    for prefix, uri in ns.items():
+        ET.register_namespace(prefix,uri)
+
     tree = ET.parse(filepath)
     root = tree.getroot()
 
@@ -437,7 +462,7 @@ def alt_content_types_text(db, filepath):
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + ET.tostring(root)
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root)
 
     return text
 
