@@ -31,6 +31,7 @@ def xml_namespace(file):
         #     return dict(ns_map)
     return dict(ns_map)
 
+
 def writexl(db, path):
     """
     Writes an excel file from pylightxl.Database
@@ -130,11 +131,22 @@ def alt_writer(db, path):
 
     filename = path.split('/')[-1]
 
+    # log old wd before changing it to temp folder for zipping
+    old_dir = os.getcwd()
+    # wd must be change to be within the temp folder to get zipfile to prevent the top level temp folder
+    #  from being zipped as well
+    os.chdir('pylightxl_temp')
     with zipfile.ZipFile(filename, 'w') as f:
-        for root, dirs, files in os.walk('pylightxl_temp/.'):
+        for root, dirs, files in os.walk('.'):
             for file in files:
-                f.write(os.path.join(root, file))
-
+                # top level "with" statement already creates a excel file that is seen by os.walk
+                #  this check skips that empty zip file from being zipped as well
+                if file != filename:
+                    f.write(os.path.join(root, file))
+    # move the zipped up file out of the temp folder
+    shutil.move(filename, old_dir)
+    os.chdir(old_dir)
+    # remove temp folder
     shutil.rmtree('./pylightxl_temp')
 
 
@@ -384,32 +396,34 @@ def alt_worksheet_text(db, filepath, sheet_name):
 
             # db data exists, write xml elements
             for col_i, cell in enumerate(row, 1):
-                e_c = ET.Element('c')
-                e_c.set('r', '{}'.format(index2address(row_i, col_i)))
-                e_v = ET.SubElement(e_c, 'v')
-                if type(cell) is str and cell != '':
-                    if cell[0] == '=':
-                        # formula
-                        e_c.set('t', 'str')
-                        e_f = ET.SubElement(e_c, 'f')
-                        e_f.text = cell[1:]
-                        e_v.text = 'pylightxl - open excel file and save it for formulas to calculate'
-                    else:
-                        # string, add it to sharedStrings
-                        e_c.set('t', 's')
-                        # check if str is already part of the sharedStrings index, else add it
-                        try:
-                            sharedStrings_index = db._sharedStrings.index(cell)
-                        except ValueError:
-                            db._sharedStrings.append(cell)
-                            sharedStrings_index = db._sharedStrings.index(cell)
-                        # sharedStrings index becomes the value of the cell (sharedStrings starts from 0)
-                        e_v.text = str(sharedStrings_index)
-                elif cell != '':
-                    # int or real write it directly to cell value
-                    e_v.text = str(cell)
+                # only add if cell is not empty
+                if cell != '':
+                    e_c = ET.Element('c')
+                    e_c.set('r', '{}'.format(index2address(row_i, col_i)))
+                    e_v = ET.SubElement(e_c, 'v')
+                    if type(cell) is str and cell != '':
+                        if cell[0] == '=':
+                            # formula
+                            e_c.set('t', 'str')
+                            e_f = ET.SubElement(e_c, 'f')
+                            e_f.text = cell[1:]
+                            e_v.text = 'pylightxl - open excel file and save it for formulas to calculate'
+                        else:
+                            # string, add it to sharedStrings
+                            e_c.set('t', 's')
+                            # check if str is already part of the sharedStrings index, else add it
+                            try:
+                                sharedStrings_index = db._sharedStrings.index(cell)
+                            except ValueError:
+                                db._sharedStrings.append(cell)
+                                sharedStrings_index = db._sharedStrings.index(cell)
+                            # sharedStrings index becomes the value of the cell (sharedStrings starts from 0)
+                            e_v.text = str(sharedStrings_index)
+                    elif cell != '':
+                        # int or real write it directly to cell value
+                        e_v.text = str(cell)
 
-                e_row.append(e_c)
+                    e_row.append(e_c)
 
     # reset default namespace
     ET.register_namespace('', ns['default'])
