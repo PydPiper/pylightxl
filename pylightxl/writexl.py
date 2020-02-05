@@ -122,8 +122,8 @@ def alt_writer(db, path):
     with open('pylightxl_temp/xl/sharedStrings.xml', 'w') as f:
         f.write(text)
 
-    text = alt_workbook_text(db, 'pylightxl_temp/xl/workbook.xml')
-    with open('pylightxl_temp/xl/workbook.xml', 'w') as f:
+    text = alt_content_types_text(db, 'pylightxl_temp/[Content_Types].xml')
+    with open('pylightxl_temp/[Content_Types].xml', 'w') as f:
         f.write(text)
 
     # remove existing file
