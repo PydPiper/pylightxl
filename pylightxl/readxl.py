@@ -41,7 +41,7 @@ def readxl(fn, sheetnames=()):
             for sn in sheetnames:
                 try:
                     pop_index = sh_names.index(sn)
-                    temp.append(zip_sheetnames.pop(pop_index))
+                    temp.append(zip_sheetnames[pop_index])
                 except ValueError:
                     raise ValueError('Error - Sheetname ({}) is not in the workbook.'.format(sn))
             zip_sheetnames = temp
