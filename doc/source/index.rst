@@ -24,7 +24,7 @@ on the following key features:
 - 100% test-driven development for highest reliability/maintainability with 100% coverage on all supported versions
 
 - API aimed to be user friendly, intuitive and to the point with no bells and whistles. Structure: database > worksheet > indexing |br|
-  example: ``db.ws('Sheet1').index(row=1,col=2)``  or ``db.ws('Sheet1').address(address='B1)``
+  example: ``db.ws('Sheet1').index(row=1,col=2)``  or ``db.ws('Sheet1').address(address='B1')``
 
 
 High-Level Feature Summary
