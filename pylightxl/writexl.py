@@ -8,6 +8,7 @@ from xml.etree import cElementTree as ET
 from .database import index2address
 
 
+
 def xml_namespace(file):
     """
     Takes an xml file and returns the root namespace as a dict
