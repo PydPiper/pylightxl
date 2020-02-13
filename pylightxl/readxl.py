@@ -166,6 +166,7 @@ def scrape(f, sharedString):
 
     re_cr_tag = re.compile(r'(?<=<c r=)(.+?)(?=</c>)')
     re_cell_val = re.compile(r'(?<=<v>)(.*)(?=</v>)')
+    re_cell_formula = re.compile(r'(?<=<f>)(.*)(?=</f>)')
 
     # read and dump data till "sheetData" is reached
     while True:
@@ -195,6 +196,11 @@ def scrape(f, sharedString):
                 is_string = True if 't="str"' in first_match else False
 
                 cell_val = str(re_cell_val.findall(first_match)[0])
+                try:
+                    cell_formula = str(re_cell_formula.findall(first_match)[0])
+                except IndexError:
+                    # current tag does not have a formula
+                    cell_formula = ''
 
                 if is_commonString:
                     cell_val = str(sharedString[int(cell_val)])
@@ -204,7 +210,7 @@ def scrape(f, sharedString):
                     else:
                         cell_val = float(cell_val)
 
-                data.update({cell_address: cell_val})
+                data.update({cell_address: {'v': cell_val, 'f': cell_formula, 's': ''}})
             else:
                 # only carry forward the reminder unmatched text
 

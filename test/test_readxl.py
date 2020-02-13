@@ -187,37 +187,37 @@ class test_Worksheet(TestCase):
         self.assertEqual(ws.maxrow, 0)
         self.assertEqual(ws.maxcol, 0)
 
-        ws._data = {'A1': 11}
+        ws._data = {'A1': {'v': 11}}
         ws._calc_size()
         self.assertEqual(ws.maxrow, 1)
         self.assertEqual(ws.maxcol, 1)
 
-        ws._data = {'A1': 11, 'A2': 21}
+        ws._data = {'A1': {'v': 11}, 'A2': {'v': 21}}
         ws._calc_size()
         self.assertEqual(ws.maxrow, 2)
         self.assertEqual(ws.maxcol, 1)
 
-        ws._data = {'A1': 11, 'A2': 21, 'B1': 12}
+        ws._data = {'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}}
         ws._calc_size()
         self.assertEqual(ws.maxrow, 2)
         self.assertEqual(ws.maxcol, 2)
 
-        ws._data = {'A1': 11, 'A2': 21, 'B1': 12, 'B2': 22}
+        ws._data = {'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}, 'B2': {'v': 22}}
         ws._calc_size()
         self.assertEqual(ws.maxrow, 2)
         self.assertEqual(ws.maxcol, 2)
 
-        ws._data = {'A1': 1, 'AA1': 27, 'AAA1': 703}
+        ws._data = {'A1': {'v': 1}, 'AA1': {'v': 27}, 'AAA1': {'v': 703}}
         ws._calc_size()
         self.assertEqual(ws.maxrow, 1)
         self.assertEqual(ws.maxcol, 703)
 
-        ws._data = {'A1': 1, 'A1000': 1000, 'A1048576': 1048576}
+        ws._data = {'A1': {'v': 1}, 'A1000': {'v': 1000}, 'A1048576': {'v': 1048576}}
         ws._calc_size()
         self.assertEqual(ws.maxrow, 1048576)
         self.assertEqual(ws.maxcol, 1)
 
-        ws._data = {'A1': 1, 'AA1': 27, 'AAA1': 703, 'XFD1': 16384, 'A1048576': 1048576}
+        ws._data = {'A1': {'v': 1}, 'AA1': {'v': 27}, 'AAA1': {'v': 703}, 'XFD1': {'v': 16384}, 'A1048576': {'v': 1048576}}
         ws._calc_size()
         self.assertEqual(ws.maxrow, 1048576)
         self.assertEqual(ws.maxcol, 16384)
@@ -225,48 +225,48 @@ class test_Worksheet(TestCase):
     def test_ws_size(self):
         ws = Worksheet({})
         self.assertEqual(ws.size, [0, 0])
-        ws._data = {'A1': 11, 'A2': 21}
+        ws._data = {'A1': {'v': 11}, 'A2': {'v': 21}}
         ws._calc_size()
         self.assertEqual(ws.size, [2, 1])
 
     def test_ws_address(self):
-        ws = Worksheet({'A1': 1})
+        ws = Worksheet({'A1': {'v': 1}})
         self.assertEqual(ws.address(address='A1'), 1)
         self.assertEqual(ws.address('A2'), '')
 
     def test_ws_index(self):
-        ws = Worksheet({'A1': 1})
+        ws = Worksheet({'A1': {'v': 1}})
         self.assertEqual(ws.index(row=1, col=1), 1)
         self.assertEqual(ws.index(1, 2), '')
 
     def test_ws_row(self):
-        ws = Worksheet({'A1': 11, 'A2': 21, 'B1': 12})
+        ws = Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
         self.assertEqual(ws.row(row=1), [11, 12])
         self.assertEqual(ws.row(2), [21, ''])
         self.assertEqual(ws.row(3), ['', ''])
 
     def test_ws_col(self):
-        ws = Worksheet({'A1': 11, 'A2': 21, 'B1': 12})
+        ws = Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
         self.assertEqual(ws.col(col=1), [11, 21])
         self.assertEqual(ws.col(2), [12, ''])
         self.assertEqual(ws.col(3), ['', ''])
 
     def test_ws_rows(self):
-        ws = Worksheet({'A1': 11, 'A2': 21, 'B1': 12})
+        ws = Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
         correct_list = [[11, 12], [21, '']]
         for i, row in enumerate(ws.rows):
             self.assertEqual(row, correct_list[i])
 
     def test_ws_cols(self):
-        ws = Worksheet({'A1': 11, 'A2': 21, 'B1': 12})
+        ws = Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
         correct_list = [[11, 21], [12, '']]
         for i, col in enumerate(ws.cols):
             self.assertEqual(col, correct_list[i])
 
     def test_ws_keycol(self):
-        ws = Worksheet({'A1': 11, 'B1': 11, 'C1': 13,
-                        'A2': 21, 'B2': 22, 'C2': 23,
-                        'A3': 11, 'B3': 32, 'C3': 33})
+        ws = Worksheet({'A1': {'v': 11}, 'B1': {'v': 11}, 'C1': {'v': 13},
+                        'A2': {'v': 21}, 'B2': {'v': 22}, 'C2': {'v': 23},
+                        'A3': {'v': 11}, 'B3': {'v': 32}, 'C3': {'v': 33}})
         self.assertEqual(ws.keycol(key=11),[11,21,11])
         self.assertEqual(ws.keycol(key=11,keyindex=1),[11,21,11])
         self.assertEqual(ws.keycol(key=11,keyindex=2),[])

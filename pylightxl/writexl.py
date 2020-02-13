@@ -98,8 +98,8 @@ def alt_writer(db, path):
                 if subdict['name'] == sheet_name:
                     filename = 'temp_' + subdict['filename']
 
-            # access the original sheet#.xml and alter its data based on db
-            text = alt_worksheet_text(db, 'pylightxl_temp/xl/worksheets/{}'.format(filename), sheet_name)
+            # rewrite the sheet as if it was new
+            text = new_worksheet_text(db, sheet_name)
             # feed altered text to new sheet based on db indexing order
             with open('pylightxl_temp/xl/worksheets/sheet{}.xml'.format(shID), 'w') as f:
                 f.write(text)
@@ -186,7 +186,7 @@ def alt_app_text(db, filepath):
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root)
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + str(ET.tostring(root))
 
     return text
 
@@ -254,7 +254,7 @@ def alt_workbookrels_text(db, filepath):
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root)
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + str(ET.tostring(root))
 
     return text
 
@@ -294,7 +294,7 @@ def alt_workbook_text(db, filepath):
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root)
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + str(ET.tostring(root))
 
     return text
 
@@ -430,7 +430,7 @@ def alt_worksheet_text(db, filepath, sheet_name):
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root)
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + str(ET.tostring(root))
 
     return text
 
@@ -466,7 +466,7 @@ def alt_content_types_text(db, filepath):
 
     # check if sharedStrings was added, if not add it
     try:
-        e = root.findall('./default:Override[@PartName="/xl/sharedStrings.xml"', ns)[0]
+        e = root.findall('./default:Override[@PartName="/xl/sharedStrings.xml"]', ns)[0]
     except IndexError:
         e = ET.Element('Override')
         e.set('ContentType', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml')
@@ -477,7 +477,7 @@ def alt_content_types_text(db, filepath):
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root)
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + str(ET.tostring(root))
 
     return text
 
@@ -732,7 +732,9 @@ def new_worksheet_text(db, sheet_name):
             address = index2address(rowID, colID)
             str_option = ''
             tag_formula = ''
+            readin_formula = db.ws(sheet_name)._data[index2address(rowID, colID)]['f']
             if type(val) is str and val != '':
+                # check user val formula entry (under 'v' signaled by [0] == '=') or under cell 'f'
                 if val[0] == '=':
                     # technically if the result of a formula is a str then str_option should be t="str"
                     #   but this designation is not necessary for excel to open
@@ -741,13 +743,19 @@ def new_worksheet_text(db, sheet_name):
                     tag_formula = tag_formula.replace('&', '&amp;')
                     val = '"pylightxl - open excel file and save it for formulas to calculate"'
                 else:
-                    str_option = 't="s"'
-                    try:
-                        # replace val with its sharedStrings index, note sharedString index does start at 0
-                        val = db._sharedStrings.index(val)
-                    except ValueError:
-                        db._sharedStrings.append(val)
-                        val = db._sharedStrings.index(val)
+                    if readin_formula != '':
+                        str_option = 't="str"'
+                        tag_formula = '<f>{f}</f>'.format(f=readin_formula)
+                        tag_formula = tag_formula.replace('&', '&amp;')
+                        val = '"pylightxl - open excel file and save it for formulas to calculate"'
+                    else:
+                        str_option = 't="s"'
+                        try:
+                            # replace val with its sharedStrings index, note sharedString index does start at 0
+                            val = db._sharedStrings.index(val)
+                        except ValueError:
+                            db._sharedStrings.append(val)
+                            val = db._sharedStrings.index(val)
             if val != '':
                 tag_cr = True
                 num_of_cr_tags_counter += 1

@@ -89,7 +89,7 @@ class Worksheet:
                 list_of_chars.append(''.join(filter(lambda x: x.isalpha(), address)))
                 list_of_nums.append(int(''.join(filter(lambda x: unicode(x).isnumeric(), address))))
             self.maxrow = int(max(list_of_nums))
-            # of all chars are the same length
+            # if all chars are the same length
             list_of_chars.sort(reverse=True)
             # if chars are different length
             list_of_chars.sort(key=len, reverse=True)
@@ -117,7 +117,7 @@ class Worksheet:
         """
 
         try:
-            rv = self._data[address]
+            rv = self._data[address]['v']
         except KeyError:
             # no data was parsed, return empty cell value
             rv = ""
@@ -133,9 +133,9 @@ class Worksheet:
         :return: cell value
         """
 
-        address = index2address(row,col)
+        address = index2address(row, col)
         try:
-            rv = self._data[address]
+            rv = self._data[address]['v']
         except KeyError:
             # no data was parsed, return empty cell value
             rv = ""
