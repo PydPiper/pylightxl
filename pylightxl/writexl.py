@@ -186,7 +186,7 @@ def alt_app_text(db, filepath):
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + str(ET.tostring(root))
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root, encoding='unicode')
 
     return text
 
@@ -254,7 +254,7 @@ def alt_workbookrels_text(db, filepath):
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + str(ET.tostring(root))
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root, encoding='unicode')
 
     return text
 
@@ -294,7 +294,7 @@ def alt_workbook_text(db, filepath):
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + str(ET.tostring(root))
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root, encoding='unicode')
 
     return text
 
@@ -430,7 +430,7 @@ def alt_worksheet_text(db, filepath, sheet_name):
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + str(ET.tostring(root))
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root, encoding='unicode')
 
     return text
 
@@ -477,7 +477,7 @@ def alt_content_types_text(db, filepath):
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + str(ET.tostring(root))
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root, encoding='unicode')
 
     return text
 
@@ -732,34 +732,40 @@ def new_worksheet_text(db, sheet_name):
             address = index2address(rowID, colID)
             str_option = ''
             tag_formula = ''
-            readin_formula = db.ws(sheet_name)._data[index2address(rowID, colID)]['f']
-            if type(val) is str and val != '':
-                # check user val formula entry (under 'v' signaled by [0] == '=') or under cell 'f'
-                if val[0] == '=':
+            try:
+                readin_formula = db.ws(sheet_name)._data[index2address(rowID, colID)]['f']
+            except KeyError:
+                readin_formula = ''
+
+            if val != '':
+                if type(val) is str:
+                    str_option = 't="s"'
+                    try:
+                        # replace val with its sharedStrings index, note sharedString index does start at 0
+                        val = db._sharedStrings.index(val)
+                    except ValueError:
+                        db._sharedStrings.append(val)
+                        val = db._sharedStrings.index(val)
+
+                if readin_formula != '':
+                    str_option = 't="str"'
+                    tag_formula = '<f>{f}</f>'.format(f=readin_formula)
+                    tag_formula = tag_formula.replace('&', '&amp;')
+                    val = '"pylightxl - open excel file and save it for formulas to calculate"'
+
+                # let val equation overwrite the readin_formula if it exist (this was a manual input equation)
+                if type(val) is str and val[0] == '=':
                     # technically if the result of a formula is a str then str_option should be t="str"
                     #   but this designation is not necessary for excel to open
                     str_option = 't="str"'
                     tag_formula = '<f>{f}</f>'.format(f=val[1:])
                     tag_formula = tag_formula.replace('&', '&amp;')
                     val = '"pylightxl - open excel file and save it for formulas to calculate"'
-                else:
-                    if readin_formula != '':
-                        str_option = 't="str"'
-                        tag_formula = '<f>{f}</f>'.format(f=readin_formula)
-                        tag_formula = tag_formula.replace('&', '&amp;')
-                        val = '"pylightxl - open excel file and save it for formulas to calculate"'
-                    else:
-                        str_option = 't="s"'
-                        try:
-                            # replace val with its sharedStrings index, note sharedString index does start at 0
-                            val = db._sharedStrings.index(val)
-                        except ValueError:
-                            db._sharedStrings.append(val)
-                            val = db._sharedStrings.index(val)
-            if val != '':
+
                 tag_cr = True
                 num_of_cr_tags_counter += 1
                 many_tag_cr += xml_tag_cr.format(address=address, str_option=str_option, tag_formula=tag_formula, val=val)
+
         if tag_cr:
             many_tag_row += xml_tag_row.format(row_num=rowID, num_of_cr_tags=str(num_of_cr_tags_counter),
                                                many_tag_cr=many_tag_cr)
