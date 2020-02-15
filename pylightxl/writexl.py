@@ -76,7 +76,7 @@ def alt_writer(db, path):
     with open('pylightxl_temp/docProps/app.xml', 'w') as f:
         f.write(text)
 
-    text = alt_workbook_text(db, 'pylightxl_temp/xl/workbook.xml')
+    text = new_workbook_text(db)
     with open('pylightxl_temp/xl/workbook.xml', 'w') as f:
         f.write(text)
 
@@ -112,7 +112,7 @@ def alt_writer(db, path):
                 f.write(text)
 
     # this has to come after sheets for db._sharedStrings to be populated
-    text = alt_workbookrels_text(db, 'pylightxl_temp/xl/_rels/workbook.xml.rels')
+    text = new_workbookrels_text(db)
     with open('pylightxl_temp/xl/_rels/workbook.xml.rels', 'w') as f:
         f.write(text)
 
@@ -123,9 +123,23 @@ def alt_writer(db, path):
     with open('pylightxl_temp/xl/sharedStrings.xml', 'w') as f:
         f.write(text)
 
-    text = alt_content_types_text(db, 'pylightxl_temp/[Content_Types].xml')
+    text = new_content_types_text(db)
     with open('pylightxl_temp/[Content_Types].xml', 'w') as f:
         f.write(text)
+
+    # cleanup files that would cause a "repair" workbook
+    try:
+        shutil.rmtree('./pylightxl_temp/xl/ctrlProps')
+    except FileNotFoundError:
+        pass
+    try:
+        shutil.rmtree('./pylightxl_temp/xl/drawings')
+    except FileNotFoundError:
+        pass
+    try:
+        shutil.rmtree('./pylightxl_temp/xl/printerSettings')
+    except FileNotFoundError:
+        pass
 
     # remove existing file
     os.remove(path)
