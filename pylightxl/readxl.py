@@ -7,6 +7,20 @@ from os.path import isfile
 from .database import Database
 
 
+def wrap_index_error(func):
+    def wrapped_func(*args, **kwargs):
+        try:
+            func_response = func(*args, **kwargs)
+        except IndexError:
+            func_response = None
+        return func_response
+    return wrapped_func
+
+@wrap_index_error
+def get_item_from_list(my_list, index):
+    return my_list[index]
+
+
 def readxl(fn, sheetnames=()):
     """
     Reads an xlsx or xlsm file and returns a pylightxl database
@@ -206,6 +220,16 @@ def scrape(f, sharedString):
                 except IndexError:
                     # current tag does not have a formula
                     cell_formula = ''
+
+
+                # cell_val = str(re_cell_val.findall(first_match)[0])
+                # try:
+                #     frmla = re_cell_formula.findall(first_match)
+                #     cell_formula = str(get_item_from_list(frmla, 0))
+                #     # cell_formula = str(re_cell_formula.findall(first_match)[0])
+                # except IndexError:
+                #     # current tag does not have a formula
+                #     cell_formula = ''
 
                 if is_commonString:
                     cell_val = str(sharedString[int(cell_val)])
