@@ -195,7 +195,12 @@ def scrape(f, sharedString):
                 is_commonString = True if 't="s"' in first_match else False
                 is_string = True if 't="str"' in first_match else False
 
-                cell_val = str(re_cell_val.findall(first_match)[0])
+                try:
+                    cell_val = str(re_cell_val.findall(first_match)[0])
+                except IndexError:
+                    # current cell doesn't have a value
+                    cell_val = ''
+
                 try:
                     cell_formula = str(re_cell_formula.findall(first_match)[0])
                 except IndexError:
