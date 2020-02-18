@@ -29,6 +29,8 @@ except ValueError:
     DB = readxl('./testbook.xlsx')
 
 
+# TODO: add test for formula returning empty string </v> tag
+
 class test_readxl_bad_input(TestCase):
 
     def test_bad_fn_type(self):

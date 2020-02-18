@@ -68,27 +68,32 @@ def alt_writer(db, path):
     # sheet#.xml: cell values
     # [Content_Types].xml: add/remove sheet#.xml locations and sharedStrings.xml
 
+
+    filename = path.split('/')[-1]
+    filename = filename if filename.split('.')[-1] == 'xlsx' else '.'.join(filename.split('.')[:-1] + ['xlsx'])
+    temp_folder = '_pylightxl_' + filename
+
+
     # have to extract all first to modify
     with zipfile.ZipFile(path, 'r') as f:
-        f.extractall('pylightxl_temp')
+        f.extractall(temp_folder)
 
-    text = alt_app_text(db, 'pylightxl_temp/docProps/app.xml')
-    with open('pylightxl_temp/docProps/app.xml', 'w') as f:
+    text = alt_app_text(db, temp_folder + '/docProps/app.xml')
+    with open(temp_folder + '/docProps/app.xml', 'w') as f:
         f.write(text)
 
     text = new_workbook_text(db)
-    with open('pylightxl_temp/xl/workbook.xml', 'w') as f:
+    with open(temp_folder + '/xl/workbook.xml', 'w') as f:
         f.write(text)
 
     # rename sheet#.xml to temp to prevent overwriting
-    for file in os.listdir('pylightxl_temp/xl/worksheets'):
+    for file in os.listdir(temp_folder + '/xl/worksheets'):
         if '.xml' in file:
-            old_name = 'pylightxl_temp/xl/worksheets/' + file
-            new_name = 'pylightxl_temp/xl/worksheets/' + 'temp_' + file
+            old_name = temp_folder + '/xl/worksheets/' + file
+            new_name = temp_folder + '/xl/worksheets/' + 'temp_' + file
             os.rename(old_name, new_name)
     # get filename to xml rId associations
-    dir_path = '/'.join(path.split('/')[:-1])
-    sheetref = alt_getsheetref(dir_path)
+    sheetref = alt_getsheetref(temp_folder)
     existing_sheetnames = [d['name'] for d in sheetref.values()]
 
     for shID, sheet_name in enumerate(db.ws_names, 1):
@@ -96,61 +101,70 @@ def alt_writer(db, path):
             # get the original sheet
             for subdict in sheetref.values():
                 if subdict['name'] == sheet_name:
-                    filename = 'temp_' + subdict['filename']
+                    fn = 'temp_' + subdict['filename']
 
             # rewrite the sheet as if it was new
             text = new_worksheet_text(db, sheet_name)
             # feed altered text to new sheet based on db indexing order
-            with open('pylightxl_temp/xl/worksheets/sheet{}.xml'.format(shID), 'w') as f:
+            with open(temp_folder + '/xl/worksheets/sheet{}.xml'.format(shID), 'w') as f:
                 f.write(text)
             # remove temp xml sheet file
-            os.remove('pylightxl_temp/xl/worksheets/{}'.format(filename))
+            os.remove(temp_folder + '/xl/worksheets/{}'.format(fn))
         else:
             # this sheet is new, create a new sheet
             text = new_worksheet_text(db, sheet_name)
-            with open('pylightxl_temp/xl/worksheets/sheet{shID}.xml'.format(shID=shID), 'w') as f:
+            with open(temp_folder + '/xl/worksheets/sheet{shID}.xml'.format(shID=shID), 'w') as f:
                 f.write(text)
 
     # this has to come after sheets for db._sharedStrings to be populated
     text = new_workbookrels_text(db)
-    with open('pylightxl_temp/xl/_rels/workbook.xml.rels', 'w') as f:
+    with open(temp_folder + '/xl/_rels/workbook.xml.rels', 'w') as f:
         f.write(text)
 
-    if os.path.isfile('pylightxl_temp/xl/sharedStrings.xml'):
+    if os.path.isfile(temp_folder + '/xl/sharedStrings.xml'):
         # sharedStrings is always recreated from db._sharedStrings since all sheets are rewritten
-        os.remove('pylightxl_temp/xl/sharedStrings.xml')
+        os.remove(temp_folder + '/xl/sharedStrings.xml')
     text = new_sharedStrings_text(db)
-    with open('pylightxl_temp/xl/sharedStrings.xml', 'w') as f:
+    with open(temp_folder + '/xl/sharedStrings.xml', 'w') as f:
         f.write(text)
 
     text = new_content_types_text(db)
-    with open('pylightxl_temp/[Content_Types].xml', 'w') as f:
+    with open(temp_folder + '/[Content_Types].xml', 'w') as f:
         f.write(text)
 
     # cleanup files that would cause a "repair" workbook
     try:
-        shutil.rmtree('./pylightxl_temp/xl/ctrlProps')
+        shutil.rmtree(temp_folder + '/xl/ctrlProps')
     except FileNotFoundError:
         pass
     try:
-        shutil.rmtree('./pylightxl_temp/xl/drawings')
+        shutil.rmtree(temp_folder + '/xl/drawings')
     except FileNotFoundError:
         pass
     try:
-        shutil.rmtree('./pylightxl_temp/xl/printerSettings')
+        shutil.rmtree(temp_folder + '/xl/printerSettings')
+    except FileNotFoundError:
+        pass
+    try:
+        os.remove(temp_folder + '/xl/vbaProject.bin')
     except FileNotFoundError:
         pass
 
     # remove existing file
-    os.remove(path)
+    try:
+        os.remove(path)
+    except PermissionError:
+        # file is open
+        shutil.rmtree(temp_folder)
+        raise UserWarning('Error - Cannot write to existing file ({}) that is already open.'.format(filename))
 
-    filename = path.split('/')[-1]
+
 
     # log old wd before changing it to temp folder for zipping
     old_dir = os.getcwd()
     # wd must be change to be within the temp folder to get zipfile to prevent the top level temp folder
     #  from being zipped as well
-    os.chdir('pylightxl_temp')
+    os.chdir(temp_folder)
     with zipfile.ZipFile(filename, 'w') as f:
         for root, dirs, files in os.walk('.'):
             for file in files:
@@ -162,7 +176,7 @@ def alt_writer(db, path):
     shutil.move(filename, old_dir)
     os.chdir(old_dir)
     # remove temp folder
-    shutil.rmtree('./pylightxl_temp')
+    shutil.rmtree(temp_folder)
 
 
 def alt_app_text(db, filepath):
@@ -313,7 +327,7 @@ def alt_workbook_text(db, filepath):
     return text
 
 
-def alt_getsheetref(path):
+def alt_getsheetref(temp_folder):
     """
     Takes a file path for the temp pylightxl uncompressed excel xml files and returns the un-altered
     filenames and rIds
@@ -326,11 +340,11 @@ def alt_getsheetref(path):
 
     # -------------------------------------------------------------
     # get worksheet filenames and Ids
-    ns = xml_namespace(path + 'pylightxl_temp/xl/_rels/workbook.xml.rels')
+    ns = xml_namespace(temp_folder + '/xl/_rels/workbook.xml.rels')
     for prefix, uri in ns.items():
         ET.register_namespace(prefix,uri)
 
-    tree = ET.parse(path + 'pylightxl_temp/xl/_rels/workbook.xml.rels')
+    tree = ET.parse(temp_folder + '/xl/_rels/workbook.xml.rels')
     root = tree.getroot()
 
     for element in root.findall('./default:Relationship', ns):
@@ -341,10 +355,10 @@ def alt_getsheetref(path):
 
     # -------------------------------------------------------------
     # get custom worksheet names
-    ns = xml_namespace('pylightxl_temp/xl/workbook.xml')
+    ns = xml_namespace(temp_folder + '/xl/workbook.xml')
     for prefix, uri in ns.items():
         ET.register_namespace(prefix,uri)
-    tree = ET.parse('pylightxl_temp/xl/workbook.xml')
+    tree = ET.parse(temp_folder + '/xl/workbook.xml')
     root = tree.getroot()
 
     for element in root.findall('./default:sheets/default:sheet', ns):
@@ -504,6 +518,10 @@ def new_writer(db, path):
     :param str path: file output path
     :return: None
     """
+
+    filename = path.split('/')[-1]
+    filename = filename if filename.split('.')[-1] == 'xlsx' else '.'.join(filename.split('.')[:-1] + ['xlsx'])
+    path = '/'.join(path.split('/')[:-1]) + filename
 
     with zipfile.ZipFile(path, 'w') as zf:
         text_rels = new_rels_text(db)
