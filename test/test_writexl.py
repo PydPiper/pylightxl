@@ -205,7 +205,11 @@ class test_write_new(TestCase):
         sizeAddress = 'A1:C3'
 
         db = Database()
-        db.add_ws('Sheet1', {'A1':1, 'B1':'text1', 'C1':'=A1+2', 'A3':'text1', 'C3':'text2'})
+        db.add_ws('Sheet1', {'A1':{'v': 1, 'f': '', 's': ''},
+                             'B1':{'v': 'text1', 'f': '', 's': ''},
+                             'C1':{'v': '=A1+2', 'f': '', 's': ''},
+                             'A3':{'v': 'text1', 'f': '', 's': ''},
+                             'C3':{'v': 'text2', 'f': '', 's': ''}})
 
         self.assertEqual(new_worksheet_text(db, 'Sheet1'), xml_base.format(sizeAddress=sizeAddress,
                                                                            uid=uid,
@@ -226,15 +230,15 @@ class test_write_new(TestCase):
                       xml_tag_si.format(space_preserve='xml:space="preserve"',val=' text6 ')
 
         db = Database()
-        db.add_ws('Sheet1', {'A1': 'text1',
-                             'A2': 'text2',
-                             'A3': ' text3',
-                             'A6': 'text4',
+        db.add_ws('Sheet1', {'A1': {'v': 'text1', 'f': '', 's': ''},
+                             'A2': {'v': 'text2', 'f': '', 's': ''},
+                             'A3': {'v': ' text3', 'f': '', 's': ''},
+                             'A6': {'v': 'text4', 'f': '', 's': ''},
                              })
 
-        db.add_ws('Sheet2', {'A4': 'text5 ',
-                             'A5': ' text6 ',
-                             'A6': 'text4',
+        db.add_ws('Sheet2', {'A4': {'v': 'text5 ', 'f': '', 's': ''},
+                             'A5': {'v': ' text6 ', 'f': '', 's': ''},
+                             'A6': {'v': 'text4', 'f': '', 's': ''},
                              })
 
         # process the sharedStrings, see dev note why this is done this way inside new_worksheet_text

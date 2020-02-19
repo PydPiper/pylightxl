@@ -47,7 +47,6 @@ def writexl(db, path):
         new_writer(db, path)
     else:
         # write to existing excel
-        # TODO: handle for when the file is opened by user
         alt_writer(db, path)
 
 
@@ -59,15 +58,6 @@ def alt_writer(db, path):
     :param str path: file output path
     :return: None
     """
-
-    # app.xml: number of sheets and sheet names
-    # xl/_rels/.rels: rId# order doesnt matter just needs to match on workbook.xml and sheet location
-    # workbook.xml: rId# match .rels, order_id, sheet name
-    # sharedStrings.xml: count/uniqueCount, strings (this has to be parsed before sheet#.xml are worked to populate string IDs
-    #   if one doesnt exist, create one
-    # sheet#.xml: cell values
-    # [Content_Types].xml: add/remove sheet#.xml locations and sharedStrings.xml
-
 
     filename = path.split('/')[-1]
     filename = filename if filename.split('.')[-1] == 'xlsx' else '.'.join(filename.split('.')[:-1] + ['xlsx'])
@@ -219,114 +209,6 @@ def alt_app_text(db, filepath):
     return text
 
 
-def alt_workbookrels_text(db, filepath):
-    """
-    Takes a xl/_rels/workbook.xml.rels and returns a db altered text version of the xml
-
-    :param pylightxl.Database db: pylightxl database that contains data to update xml file
-    :param str filepath: file path for xl/_rels/workbook.xml.rels
-    :return str: returns the updated xml text
-    """
-
-    # extract text from existing app.xml
-    ns = xml_namespace(filepath)
-    for prefix, uri in ns.items():
-        ET.register_namespace(prefix,uri)
-    tree = ET.parse(filepath)
-    root = tree.getroot()
-
-    # hold existing non-sheet relations (calcChain, sharedStrings, etc.)
-    elements_nonsheet = []
-    # sheet type that is replaced by actual xml read sheet type
-    element_sheet_type = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet'
-    # book keeping to check if a sharedStrings was read in the elements_nonsheet
-    #   (if no and db has sharedStrings then we need to add a sharedStrings in)
-    bool_sharedStrings = False
-
-    for element in root.findall('./default:Relationship', ns):
-        if 'worksheets/sheet' not in element.get('Target'):
-            if 'sharedStrings.xml' == element.get('Target'):
-                # there already is a sharedStrings.xml tag in this rels file, dont add another
-                bool_sharedStrings = True
-            # log existing non-sheet elements to append at the end of rId#s after sheets
-            elements_nonsheet.append(element)
-            root.remove(element)
-        else:
-            # sheet names, remove them then add new ones
-            element_sheet_type = element.get('Type')
-            root.remove(element)
-
-    # these rId's have to match rId's on workbook.xml
-    for sheet_num, sheet_name in enumerate(db.ws_names, 1):
-        element = ET.Element("Relationship")
-        element.set('Target', 'worksheets/sheet{sheet_num}.xml'.format(sheet_num=sheet_num))
-        element.set('Type', element_sheet_type)
-        element.set('Id', 'rId{sheet_num}'.format(sheet_num=sheet_num))
-
-        root.append(element)
-
-    # these rId's are not referenced on any of the xml files, they are incremented after sheets
-    for i, element in enumerate(elements_nonsheet, 1):
-        rId = len(db.ws_names) + i
-        element.set('Id', 'rId{rId}'.format(rId=rId))
-
-        root.append(element)
-
-    if bool_sharedStrings is False and db._sharderStrings:
-        element = ET.Element('Relationship')
-        element.set('Target', 'sharedStrings.xml')
-        element.set('Type', 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings')
-        element.set('Id', 'rId{rId}'.format(rId = len(db.ws_names) + len(elements_nonsheet) + 1))
-
-    # reset default namespace
-    ET.register_namespace('', ns['default'])
-
-    # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root, encoding='unicode')
-
-    return text
-
-
-def alt_workbook_text(db, filepath):
-    """
-    Takes a xl/workbook.xml and returns a db altered text version of the xml
-
-    :param pylightxl.Database db: pylightxl database that contains data to update xml file
-    :param str filepath: file path for xl/workbook.xml
-    :return str: returns the updated xml text
-    """
-
-    # extract text from existing app.xml
-    ns = xml_namespace(filepath)
-    for prefix, uri in ns.items():
-        ET.register_namespace(prefix,uri)
-    tree = ET.parse(filepath)
-    root = tree.getroot()
-
-    # remove existing sheets
-    for element in root.findall('./default:sheets/default:sheet', ns):
-        root.find('./default:sheets', ns).remove(element)
-
-    # since all 'r' namespace tags are deleted, we have to properly use a linked namespace tag for r:id with qname
-    qname_r_id = ET.QName(ns['r'], 'id')
-    # write new sheets from db
-    for sheet_num, sheet_name in enumerate(db.ws_names, 1):
-        element = ET.Element('sheet')
-        element.set(qname_r_id, 'rId{sheet_num}'.format(sheet_num=sheet_num))
-        element.set('sheetId', '{sheet_num}'.format(sheet_num=sheet_num))
-        element.set('name', '{sheet_name}'.format(sheet_name=sheet_name))
-
-        root.findall('./default:sheets', ns)[0].append(element)
-
-    # reset default namespace
-    ET.register_namespace('', ns['default'])
-
-    # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root, encoding='unicode')
-
-    return text
-
-
 def alt_getsheetref(temp_folder):
     """
     Takes a file path for the temp pylightxl uncompressed excel xml files and returns the un-altered
@@ -366,148 +248,6 @@ def alt_getsheetref(temp_folder):
         sheetref[Id]['name'] = element.get('name')
 
     return sheetref
-
-
-def alt_worksheet_text(db, filepath, sheet_name):
-    """
-    Takes a xl/worksheets/sheet#.xml and returns a db altered text version of the xml
-
-    :param pylightxl.Database db: pylightxl database that contains data to update xml file
-    :param str filepath: file path for xl/worksheets/sheet#.xml
-    :return str: returns the updated xml text
-    """
-
-    # TODO: python 2 does not preserve list index in terms of appended values sharedStrings needs to be fixed, here and in write new
-
-    # extract text from existing app.xml
-    ns = xml_namespace(filepath)
-    for prefix, uri in ns.items():
-        ET.register_namespace(prefix,uri)
-
-    tree = ET.parse(filepath)
-    root = tree.getroot()
-
-    ws_size = db.ws(sheet_name).size
-    if ws_size == [0,0] or ws_size == [1,1]:
-        sheet_size_address = 'A1'
-    else:
-        sheet_size_address = 'A1:' + index2address(ws_size[0], ws_size[1])
-
-    # update size of sheet
-    e_dim = root.findall('./default:dimension', ns)[0]
-    e_dim.set('ref', '{}'.format(sheet_size_address))
-
-    # remove the existing element under "row" elements
-    #   (row elements are kept to keep existing formatting)
-    for e_row in root.findall('./default:sheetData/default:row', ns):
-        for e_c in e_row.findall('./default:c', ns):
-            e_row.remove(e_c)
-
-    # unload the db
-    for row_i, row in enumerate(db.ws(sheet_name).rows, 1):
-        if not row:
-            # xml has data for this but the db does not, remove it
-            try:
-                e_row = root.findall('./default:sheetData/default:row[@r={}]'.format(row_i), ns)[0]
-            except IndexError:
-                # existing xml did not have data for this row either
-                pass
-            else:
-                e_sheetData = root.findall('./default:sheetData', ns)
-                e_sheetData.remove(e_row)
-        else:
-            # db has data in this row, check if there is already an xml row element, else create one
-            try:
-                e_row = root.findall('./default:sheetData/default:row[@r="{}"]'.format(row_i), ns)[0]
-            except IndexError:
-                # existing xml did not have data for this row, create one
-                e_row = ET.Element('row')
-
-            # db data exists, write xml elements
-            for col_i, cell in enumerate(row, 1):
-                # only add if cell is not empty
-                if cell != '':
-                    e_c = ET.Element('c')
-                    e_c.set('r', '{}'.format(index2address(row_i, col_i)))
-                    e_v = ET.SubElement(e_c, 'v')
-                    if type(cell) is str and cell != '':
-                        if cell[0] == '=':
-                            # formula
-                            e_c.set('t', 'str')
-                            e_f = ET.SubElement(e_c, 'f')
-                            e_f.text = cell[1:]
-                            e_v.text = 'pylightxl - open excel file and save it for formulas to calculate'
-                        else:
-                            # string, add it to sharedStrings
-                            e_c.set('t', 's')
-                            # check if str is already part of the sharedStrings index, else add it
-                            try:
-                                sharedStrings_index = db._sharedStrings.index(cell)
-                            except ValueError:
-                                db._sharedStrings.append(cell)
-                                sharedStrings_index = db._sharedStrings.index(cell)
-                            # sharedStrings index becomes the value of the cell (sharedStrings starts from 0)
-                            e_v.text = str(sharedStrings_index)
-                    elif cell != '':
-                        # int or real write it directly to cell value
-                        e_v.text = str(cell)
-
-                    e_row.append(e_c)
-
-    # reset default namespace
-    ET.register_namespace('', ns['default'])
-
-    # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root, encoding='unicode')
-
-    return text
-
-
-def alt_content_types_text(db, filepath):
-    """
-    Takes a [Content_Types].xml and returns a db altered text version of the xml
-
-    :param pylightxl.Database db: pylightxl database that contains data to update xml file
-    :param str filepath: file path for [Content_Types].xml
-    :return str: returns the updated xml text
-    """
-
-    # extract text from existing app.xml
-    ns = xml_namespace(filepath)
-    for prefix, uri in ns.items():
-        ET.register_namespace(prefix,uri)
-
-    tree = ET.parse(filepath)
-    root = tree.getroot()
-
-    # remove existing sheet content types since numbers might be off
-    for e in root.findall('./default:Override', ns):
-        if '/xl/worksheets/sheet' in e.get('ContentType'):
-            root.remove(e)
-
-    # add new db sheet content types
-    for sh_count in enumerate(db.ws_names, 1):
-        e = ET.Element("Override")
-        e.set('ContentType', 'application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml')
-        e.set('PartName', '/xl/worksheets/sheet{}.xml'.format(sh_count))
-        root.append(e)
-
-    # check if sharedStrings was added, if not add it
-    try:
-        e = root.findall('./default:Override[@PartName="/xl/sharedStrings.xml"]', ns)[0]
-    except IndexError:
-        e = ET.Element('Override')
-        e.set('ContentType', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml')
-        e.set('PartName', '/xl/sharedStrings.xml')
-        root.append(e)
-
-    # reset default namespace
-    ET.register_namespace('', ns['default'])
-
-    # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root, encoding='unicode')
-
-    return text
 
 
 def new_writer(db, path):
@@ -770,7 +510,7 @@ def new_worksheet_text(db, sheet_name):
                 readin_formula = ''
 
             if val != '':
-                if type(val) is str:
+                if type(val) is str and val[0] != '=':
                     str_option = 't="s"'
                     try:
                         # replace val with its sharedStrings index, note sharedString index does start at 0
