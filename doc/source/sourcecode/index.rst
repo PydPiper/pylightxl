@@ -5,4 +5,5 @@ Source Code Documentation
    :maxdepth: 2
 
    readxl
+   writexl
    database

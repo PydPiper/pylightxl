@@ -9,15 +9,18 @@ Sample - see [docs - quick start guide](https://pylightxl.readthedocs.io/en/late
 ---
 
 #### **Supports**:
- - Supports .xlsx and .xlsm file extensions. 
+ - Reader supports .xlsx and .xlsm file extensions.
+ - Writer only supports .xlsx (no macros/buttons/graphs/formatting) 
 
 #### **Limitations**:
  - Does not support .xls (excel 97-2003 worksheet).
  - Does not support worksheet cell data more than 536,870,912 cells (32-bit list limitation).
+ - Writer does not support anything other than writing values/formulas/strings.
+ - Writing to existing workbooks will remove any macros/buttons/graphs/formatting!
 
 #### **In-work version 1.4**
 - new-feature: write new excel file from pylightxl.Database (done and tested)
-- new-feature: write to existing excel file from pylightxl.Database (working on it)
+- new-feature: write to existing excel file from pylightxl.Database (done, currently writing docs/tests)
 
 #### **Why pylightxl over pandas/openpyxl**
 - **(compatibility +1, small lib +1)** pylightxl has no external dependencies (only uses python built-in 
