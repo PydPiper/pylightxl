@@ -37,7 +37,7 @@ High-Level Feature Summary
 
 - Worksheet data size is consistent for each row/col. Any data that is empty will return a ''
 
-- Writer coming soon!
+- Writer now working in v1.4
 
 
 Limitations

@@ -1,10 +1,17 @@
 Revision Log
 ============
 
-in-work version 1.4
+in-work version 1.5
+-------------------
+- additional database indexing features
+- performance
+
+pypi version 1.4
 -------------------
 - new-feature: write new excel file from pylightxl.Database
 - new-feature: write to existing excel file from pylightxl.Database
+- bug fix for reading user defined sheets
+- bug fix for mis-alignment of reading user defined sheets and xml files
 
 pypi version 1.3
 ----------------

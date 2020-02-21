@@ -1,7 +1,7 @@
 ![logo](doc/source/_static/header_logo.gif)
 # pylightxl - A Light Weight Excel Reader/Writer
 A light weight, zero dependency (only standard libs used), to the point (no bells and whistles) 
-Microsoft Excel reader/writer(coming soon) python 2.7-3+ library. See documentation: [docs](https://pylightxl.readthedocs.io)
+Microsoft Excel reader/writer python 2.7-3+ library. See documentation: [docs](https://pylightxl.readthedocs.io)
 
 Sample - see [docs - quick start guide](https://pylightxl.readthedocs.io/en/latest/quickstart.html) for more examples:
 ![Example Code](doc/source/_static/readme_demo.gif)
@@ -18,7 +18,7 @@ Sample - see [docs - quick start guide](https://pylightxl.readthedocs.io/en/late
  - Writer does not support anything other than writing values/formulas/strings.
  - Writing to existing workbooks will remove any macros/buttons/graphs/formatting!
 
-#### **In-work version 1.4**
+#### **In-work version 1.5**
 - new-feature: write new excel file from pylightxl.Database (done and tested)
 - new-feature: write to existing excel file from pylightxl.Database (done, currently writing docs/tests)
 
