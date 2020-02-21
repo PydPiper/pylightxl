@@ -19,8 +19,18 @@ Sample - see [docs - quick start guide](https://pylightxl.readthedocs.io/en/late
  - Writing to existing workbooks will remove any macros/buttons/graphs/formatting!
 
 #### **In-work version 1.5**
-- new-feature: write new excel file from pylightxl.Database (done and tested)
-- new-feature: write to existing excel file from pylightxl.Database (done, currently writing docs/tests)
+- additional database indexing features
+- performance
+
+#### pypi version 1.41
+----------------------
+- new-feature: write new excel file from pylightxl.Database
+- new-feature: write to existing excel file from pylightxl.Database
+- new-feature: db.update_index(row, col, val) for user defined cell values
+- new-feature: db.update_address(address, val) for user defined cell values
+- bug fix for reading user defined sheets
+- bug fix for mis-alignment of reading user defined sheets and xml files
+
 
 #### **Why pylightxl over pandas/openpyxl**
 - **(compatibility +1, small lib +1)** pylightxl has no external dependencies (only uses python built-in 

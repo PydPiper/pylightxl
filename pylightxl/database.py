@@ -49,7 +49,7 @@ class Database:
         Logs worksheet name and its data in the database
 
         :param str sheetname: worksheet name
-        :param data: dictionary of worksheet cell values (ex: {'A1': 10, 'A2': 20})
+        :param data: dictionary of worksheet cell values (ex: {'A1': {'v':10,'f':'','s':''}, 'A2': {'v':20,'f':'','s':''}})
         :return: None
         """
 
@@ -141,6 +141,13 @@ class Worksheet:
             rv = ""
 
         return rv
+
+    def update_index(self, row, col, val):
+        address = index2address(row, col)
+        self._data.update({address: {'v':val,'f':'','s':''}})
+
+    def update_address(self, address, val):
+        self._data.update({address: {'v':val,'f':'','s':''}})
 
     def row(self, row):
         """

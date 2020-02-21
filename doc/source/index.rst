@@ -37,7 +37,7 @@ High-Level Feature Summary
 
 - Worksheet data size is consistent for each row/col. Any data that is empty will return a ''
 
-- Writer now working in v1.4
+- Writer now working in v1.41 (please see limitations)
 
 
 Limitations
@@ -46,7 +46,11 @@ Although every effort was made to support a variety of users, the following limi
 
 - Does not support ``.xls`` files (Microsoft Excel 2003 and older files)
 
+- Writer does not support anything other than cell data (no graphs, images, macros, formatting will be saved)
+
 - Does not support worksheet cell data more than 536,870,912 cells (32-bit list limitation)
+
+
 
 
 .. toctree::

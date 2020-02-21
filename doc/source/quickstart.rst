@@ -108,3 +108,32 @@ following cell content:
     >>> [20,30]
     >>> ['',40]
 
+Write out a pylightxl.Database as an excel file
+-----------------------------------------------
+Pylightxl support excel writing without having excel installed on the machine. However it is not without
+its limitations. The writer only supports cell data writing (ie.: does not support graphs, formatting, images,
+macros, etc) simply just strings/numbers/equations in cells.
+
+Note that equations typed by the user will not calculate for its value until the excel sheet is opened in excel.
+
+.. code-block:: python
+
+   import pylightxl as xl
+
+   # read in an existing worksheet and change values of its cells (same worksheet as above)
+   db = xl.readxl('excelfile.xlsx')
+   # overwrite existing number value
+      db.ws('Sheet1').index(row=1, col=1)
+   >>> 10
+   db.ws('Sheet1').update_index(row=1, col=1, val=100)
+   db.ws('Sheet1').index(row=1, col=1)
+   >>> 100
+   # write text
+   db.ws('Sheet1').update_index(row=1, col=2, val='twenty')
+   # write equations
+   db.ws('Sheet1').update_address(address='A3', val='=A1')
+
+   xl.writexl(db, 'updated.xlsx')
+
+
+

@@ -6,10 +6,12 @@ in-work version 1.5
 - additional database indexing features
 - performance
 
-pypi version 1.4
+pypi version 1.41
 -------------------
 - new-feature: write new excel file from pylightxl.Database
 - new-feature: write to existing excel file from pylightxl.Database
+- new-feature: db.update_index(row, col, val) for user defined cell values
+- new-feature: db.update_address(address, val) for user defined cell values
 - bug fix for reading user defined sheets
 - bug fix for mis-alignment of reading user defined sheets and xml files
 
