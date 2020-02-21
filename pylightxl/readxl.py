@@ -36,7 +36,7 @@ def readxl(fn, sheetnames=()):
         zip_sheetnames.sort(key=len)
 
         # remove all names not in entry sheetnames
-        if sheetnames:
+        if sheetnames != ():
             temp = []
             for sn in sheetnames:
                 try:
@@ -54,9 +54,14 @@ def readxl(fn, sheetnames=()):
             sharedString = {}
 
         # scrape each sheet#.xml file
-        for i, zip_sheetname in enumerate(zip_sheetnames):
-            with f_zip.open(zip_sheetname, 'r') as f:
-                db.add_ws(sheetname=str(sh_names[i]), data=scrape(f, sharedString))
+        if sheetnames == ():
+            for i, zip_sheetname in enumerate(zip_sheetnames):
+                with f_zip.open(zip_sheetname, 'r') as f:
+                    db.add_ws(sheetname=str(sh_names[i]), data=scrape(f, sharedString))
+        else:
+            for sn, zip_sheetname in zip(sheetnames, zip_sheetnames):
+                with f_zip.open(zip_sheetname, 'r') as f:
+                    db.add_ws(sheetname=sn, data=scrape(f, sharedString))
 
     return db
 
