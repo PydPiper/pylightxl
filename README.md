@@ -22,8 +22,7 @@ Sample - see [docs - quick start guide](https://pylightxl.readthedocs.io/en/late
 - additional database indexing features
 - performance
 
-#### pypi version 1.41
-----------------------
+#### **pypi version 1.41**
 - new-feature: write new excel file from pylightxl.Database
 - new-feature: write to existing excel file from pylightxl.Database
 - new-feature: db.update_index(row, col, val) for user defined cell values
