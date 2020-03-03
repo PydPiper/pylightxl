@@ -56,8 +56,19 @@ class Database:
         self._ws.update({sheetname: Worksheet(data)})
         self._ws_names.append(sheetname)
 
+    def set_emptycell(self, val):
+        """
+        Custom definition for how pylightxl returns an empty cell
+
+        :param val: (default='') empty cell value
+        :return: None
+        """
+
+        for ws in self.ws_names:
+            self.ws(ws).set_emptycell(val)
+
 # TODO: commnet from Harald Massa: give option for users to pick their choice of empty cell value
-class Worksheet:
+class Worksheet():
 
     def __init__(self, data):
         """
@@ -69,6 +80,7 @@ class Worksheet:
         self.maxrow = 0
         self.maxcol = 0
         self._calc_size()
+        self.emptycell = ''
 
     def __repr__(self):
         return 'pylightxl.Database.Worksheet'
@@ -98,6 +110,16 @@ class Worksheet:
             self.maxrow = 0
             self.maxcol = 0
 
+    def set_emptycell(self, val):
+        """
+        Custom definition for how pylightxl returns an empty cell
+
+        :param val: (default='') empty cell value
+        :return: None
+        """
+
+        self.emptycell = val
+
     @property
     def size(self):
         """
@@ -120,7 +142,7 @@ class Worksheet:
             rv = self._data[address]['v']
         except KeyError:
             # no data was parsed, return empty cell value
-            rv = ""
+            rv = self.emptycell
 
         return rv
 
@@ -138,7 +160,7 @@ class Worksheet:
             rv = self._data[address]['v']
         except KeyError:
             # no data was parsed, return empty cell value
-            rv = ""
+            rv = self.emptycell
 
         return rv
 
