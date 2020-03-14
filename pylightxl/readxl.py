@@ -169,7 +169,7 @@ def scrape(f, sharedString):
 
     sample_size = 10000
 
-    re_cr_tag = re.compile(r'(?<=<c r=)(.+?)(?=</c>)')
+    re_cr_tag = re.compile(r'(?<=<c r=)(.+?)(?=</c>|/>)')
     re_cell_val = re.compile(r'(?<=<v>)(.*)(?=</v>)')
     re_cell_formula = re.compile(r'(?<=<f>)(.*)(?=</f>)')
 
@@ -205,6 +205,7 @@ def scrape(f, sharedString):
                 except IndexError:
                     # current cell doesn't have a value
                     cell_val = ''
+                    is_string = True
 
                 try:
                     cell_formula = str(re_cell_formula.findall(first_match)[0])
