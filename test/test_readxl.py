@@ -59,7 +59,7 @@ class test_readxl_integration(TestCase):
         db_ws_names = DB.ws_names
         db_ws_names.sort()
         # test 10+ sheets to ensure sorting matches correctly
-        true_ws_names = ['empty', 'types', 'scatter', 'length', 'sheet_not_to_read',
+        true_ws_names = ['empty', 'types', 'scatter', 'merged_cells', 'length', 'sheet_not_to_read',
                          'Sheet1', 'Sheet2', 'Sheet3', 'Sheet4', 'Sheet5']
         true_ws_names.sort()
         self.assertEqual(db_ws_names, true_ws_names)
@@ -135,6 +135,24 @@ class test_readxl_integration(TestCase):
         self.assertEqual(DB.ws('scatter').index(5, 6), '')
 
         self.assertEqual(DB.ws('scatter').size, [6, 6])
+
+    def test_ws_merged_cells(self):
+        self.assertEqual(DB.ws('merged_cells').index(1, 1), '')
+        self.assertEqual(DB.ws('merged_cells').index(1, 2), 12)
+        self.assertEqual(DB.ws('merged_cells').index(1, 3), 13)
+        self.assertEqual(DB.ws('merged_cells').index(2, 1), 21)
+        self.assertEqual(DB.ws('merged_cells').index(2, 2), 22)
+        self.assertEqual(DB.ws('merged_cells').index(2, 3), 23)
+        self.assertEqual(DB.ws('merged_cells').index(3, 2), 32)
+        self.assertEqual(DB.ws('merged_cells').index(4, 3), 43)
+        self.assertEqual(DB.ws('merged_cells').index(5, 2), 52)
+        self.assertEqual(DB.ws('merged_cells').index(6, 1), 61)
+        self.assertEqual(DB.ws('merged_cells').index(7, 2), 72)
+        self.assertEqual(DB.ws('merged_cells').index(7, 3), 73)
+        self.assertEqual(DB.ws('merged_cells').index(8, 3), 83)
+        self.assertEqual(DB.ws('merged_cells').index(9, 1), 91)
+        self.assertEqual(DB.ws('merged_cells').index(9, 3), 93)
+        self.assertEqual(DB.ws('merged_cells').index(10, 3), 103)
 
     def test_ws_length(self):
         self.assertEqual(DB.ws('length').size, [1048576, 16384])
