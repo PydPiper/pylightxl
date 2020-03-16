@@ -166,9 +166,14 @@ class Worksheet():
 
     def update_index(self, row, col, val):
         address = index2address(row, col)
+        self.maxcol = col if col > self.maxcol else self.maxcol
+        self.maxrow = row if row > self.maxrow else self.maxrow
         self._data.update({address: {'v':val,'f':'','s':''}})
 
     def update_address(self, address, val):
+        row, col = address2index(address)
+        self.maxcol = col if col > self.maxcol else self.maxcol
+        self.maxrow = row if row > self.maxrow else self.maxrow
         self._data.update({address: {'v':val,'f':'','s':''}})
 
     def row(self, row):

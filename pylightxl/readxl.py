@@ -99,8 +99,8 @@ def get_sheetnames(file):
 
     text = file.read().decode()
 
-    tag_sheets = re.compile(r'(?<=<sheets>)(.*)(?=</sheets>)')
-    sheet_section = tag_sheets.findall(text)[0]
+    tag_sheets = re.compile(r'(?<=<sheets>)([\s\S]*)(?=</sheets>)')
+    sheet_section = tag_sheets.findall(text)[0].strip()
     # this will find something like:
     # ['sheet name="Sheet1" sheetId="1" r:id="rId1"/><sheet name="sh2" sheetId="2" r:id']
 
