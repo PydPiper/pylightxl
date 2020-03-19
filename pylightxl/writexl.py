@@ -261,7 +261,8 @@ def new_writer(db, path):
 
     filename = path.split('/')[-1]
     filename = filename if filename.split('.')[-1] == 'xlsx' else '.'.join(filename.split('.')[:-1] + ['xlsx'])
-    path = '/'.join(path.split('/')[:-1]) + filename
+    path = '/'.join(path.split('/')[:-1])
+    path = path + '/' + filename if path else filename
 
     with zipfile.ZipFile(path, 'w') as zf:
         text_rels = new_rels_text(db)
