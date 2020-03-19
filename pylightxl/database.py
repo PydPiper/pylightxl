@@ -165,12 +165,27 @@ class Worksheet():
         return rv
 
     def update_index(self, row, col, val):
+        """
+        Update worksheet data via index
+
+        :param int row: row index
+        :param int col: column index
+        :param int/float/str val: value to change or add (if row/col data doesnt already exist)
+        :return: None
+        """
         address = index2address(row, col)
         self.maxcol = col if col > self.maxcol else self.maxcol
         self.maxrow = row if row > self.maxrow else self.maxrow
         self._data.update({address: {'v':val,'f':'','s':''}})
 
     def update_address(self, address, val):
+        """
+        Update worksheet data via address
+
+        :param str address: excel address (ex: "A1")
+        :param int/float/str val: value to change or add (if row/col data doesnt already exist)
+        :return: None
+        """
         row, col = address2index(address)
         self.maxcol = col if col > self.maxcol else self.maxcol
         self.maxrow = row if row > self.maxrow else self.maxrow
