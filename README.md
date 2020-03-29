@@ -1,3 +1,9 @@
+**Please help us spread the word about pylightxl to the community by voting for pylightxl to be added
+to python-awesome list. Follow the [LINK](https://github.com/vinta/awesome-python/pull/1449) and upvote
+the pull request in the top right corner (emoji)**
+![vote](doc/source/_static/awesomelist.png)
+
+
 ![logo](doc/source/_static/header_logo.gif)
 # pylightxl - A Light Weight Excel Reader/Writer
 A light weight, zero dependency (only standard libs used), to the point (no bells and whistles) 
