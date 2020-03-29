@@ -1,10 +1,16 @@
 Revision Log
 ============
 
-in-work version 1.5
+in-work version 1.42
 -------------------
 - additional database indexing features
 - performance
+- added support for pathlib file reading
+- bug fix: previous version did not handle merged cells properly
+- bug fix: database updates did not update maxcol maxrow if new data addition was larger than the initial
+  dataset
+- bug fix: writexl that use linefeeds did not read in properly into readxl (fixed regex)
+- bug fix: writexl filepath issues
 
 pypi version 1.41
 -------------------

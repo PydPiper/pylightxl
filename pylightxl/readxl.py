@@ -20,6 +20,9 @@ def readxl(fn, sheetnames=()):
     db = Database()
 
     # test that file entered was a valid excel file
+    if 'pathlib' in str(type(fn)):
+        fn = str(fn)
+
     check_excelfile(fn)
 
     # zip up the excel file to expose the xml files
@@ -82,7 +85,7 @@ def check_excelfile(fn):
 
     extension = fn.split('.')[-1]
 
-    if extension not in ['xlsx', 'xlsm']:
+    if extension.lower() not in ['xlsx', 'xlsm']:
         raise ValueError('Error - Incorrect Excel file extension ({}). '
                          'File extension supported: .xlsx .xlsm'.format(extension))
 
