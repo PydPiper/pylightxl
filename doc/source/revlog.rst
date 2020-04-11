@@ -1,10 +1,13 @@
 Revision Log
 ============
 
-in-work version 1.42
+in-work version 1.5
 -------------------
 - additional database indexing features
 - performance
+
+in-work version 1.42
+-------------------
 - added support for pathlib file reading
 - bug fix: previous version did not handle merged cells properly
 - bug fix: database updates did not update maxcol maxrow if new data addition was larger than the initial
