@@ -123,7 +123,7 @@ Note that equations typed by the user will not calculate for its value until the
    # read in an existing worksheet and change values of its cells (same worksheet as above)
    db = xl.readxl('excelfile.xlsx')
    # overwrite existing number value
-      db.ws('Sheet1').index(row=1, col=1)
+   db.ws('Sheet1').index(row=1, col=1)
    >>> 10
    db.ws('Sheet1').update_index(row=1, col=1, val=100)
    db.ws('Sheet1').index(row=1, col=1)

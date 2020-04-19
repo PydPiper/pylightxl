@@ -172,7 +172,7 @@ def scrape(f, sharedString):
 
     sample_size = 10000
 
-    re_cr_tag = re.compile(r'(?<=<c r=)(.+?)(?=</c>|/>)')
+    re_cr_tag = re.compile(r'(?<=<c r=)(.+?)(?=</c>)')
     re_cell_val = re.compile(r'(?<=<v>)(.*)(?=</v>)')
     re_cell_formula = re.compile(r'(?<=<f>)(.*)(?=</f>)')
 
@@ -196,12 +196,30 @@ def scrape(f, sharedString):
     while True:
         match = re_cr_tag.findall(text_buff)
 
+        # capture further breakdown of xml where <c r .... /> is used and re_cr_tag doesnt split it
+        # re.compile(r'(?<=<c r=)(.+?)(?=</c>|/>)') was removed since it was prematurely splitting c r tags
+        # when a formula is closed by a /> as well
+        match_splits = []
+
         while True:
-            if match:
-                first_match = match.pop(0)
+            if match or len(match_splits) != 0:
+                if len(match_splits) == 0:
+                    first_match = match.pop(0)
+                else:
+                    first_match = match_splits.pop(0)
+                    if '<c r' in first_match:
+                        temp = first_match.split('<c r')[0]
+                        match_splits += first_match.split('<c r')[1:]
+                        first_match = temp
+                if '<c r=' in first_match:
+                    match_splits = first_match.split('<c r=')
+                    continue
                 cell_address = str(first_match.split('"')[1])
                 is_commonString = True if 't="s"' in first_match else False
-                is_string = True if 't="str"' in first_match else False
+                # bool "FALSE" "TRUE" is not logged as a commonString in xml, 0 == FALSE, 1 == TRUE
+                is_bool = True if 't="b"' in first_match else False
+                # 't="e"' is for error cells "#N/A"
+                is_string = True if 't="str"' in first_match or 't="e"' in first_match else False
 
                 try:
                     cell_val = str(re_cell_val.findall(first_match)[0])
@@ -218,6 +236,8 @@ def scrape(f, sharedString):
 
                 if is_commonString:
                     cell_val = str(sharedString[int(cell_val)])
+                elif is_bool:
+                    cell_val = 'True' if cell_val == '1' else 'False'
                 elif not is_commonString and not is_string:
                     if cell_val.isdigit():
                         cell_val = int(cell_val)

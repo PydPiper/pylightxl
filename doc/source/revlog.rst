@@ -5,6 +5,10 @@ in-work version 1.5
 -------------------
 - additional database indexing features
 - performance
+- bug fix: accounted for reading errored out cell "#N/A"
+- bug fix: accounted for bool TRUE/FALSE cell values not registering on readxl
+- bug fix: accounted for edge case that was prematurely splitting cell tags <c r /> by formula closing
+  bracket <f />
 
 in-work version 1.42
 -------------------
