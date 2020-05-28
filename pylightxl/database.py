@@ -367,33 +367,39 @@ def columnletter2num(text):
     return val
 
 
-def num2columnletters(num, power=0):
+def num2columnletters(num):
     """
     Takes a column number and converts it to the equivalent excel column letters
 
     :param int num: column number
-    :param int power: internal power multiplier for recursion
     :return str: excel column letters
     """
     if num <= 26:
-        return chr(num % 27 + 64)
-    elif num > 26**(power+1):
-        power += 1
-        next_num = num-26**power
-        # this will return the higher (right most char) first
-        char = num2columnletters(num=next_num, power=power)
-        # then call func again on reminder
-        remainder = next_num - (int(next_num / (26**power)) * (26 ** power))
-        # for roll over case a 26/26 is supposed to be a Z, not a 0 that is not a char
-        char_num = int(remainder/(26**(power-1)))+1 if remainder != 0 else 27
-        char_next = chr(char_num + 64) if power-1 > 0 else chr(char_num-1 + 64)
-        char_all = char + char_next
-    else:
-        # +1 because this else loop already rolled over the <= 26 value and ex: 27/26 should give you B
-        #  but if we did not +1 it would give you an A, however the back end must be conditioned for Z
-        #  for a condition when all chars roll over ex: 702-26=676 676/26=26 should still give a Z
-        #  but a +1 would throw it over
-        char_num = int(num / (26**power)) + 1 if int(num / (26**power)) != 26 else 26
-        return chr(char_num + 64)
+        # num=1 is A, chr(65) == A
+        return chr(num + 64)
+    elif num > 26:
+        first_digit = num % 26
+        if first_digit == 0:
+            # 26 ** (any power) % 26 will yield 0, which actually should be "Z"
+            first_digit = 26
+        # this is a condition for 2+ characters
+        second_digit = num / 26
+        # check if next_digit_to_left rolled over to 3 characters
+        if second_digit == 27:
+            # num / 26 == 27 is a roll-over of 'Z' not the next character
+            second_digit = 26
+        if second_digit > 27:
+            third_digit = second_digit / 26
+            second_digit = int(second_digit) % 26
+            if second_digit == 0:
+                # 26 ** (any power) % 26 will yield 0, which actually should be "Z"
+                second_digit = 26
+                # subtract the roll-over from third_digit
+                third_digit = third_digit - 1
+            return chr(int(third_digit)+64) + chr(int(second_digit)+64) + chr(int(first_digit)+64)
+        else:
+            return chr(int(second_digit) + 64) + chr(int(first_digit) + 64)
 
-    return char_all
+# QGK
+a = num2columnletters(11496)
+pass

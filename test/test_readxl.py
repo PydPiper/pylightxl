@@ -336,6 +336,7 @@ class test_conversion(TestCase):
         self.assertEqual(address2index('BA1'), [1, 53])
         self.assertEqual(address2index('YQ1'), [1, 667])
         self.assertEqual(address2index('AAA1'), [1, 703])
+        self.assertEqual(address2index('PZD1'), [1, 11496])
         self.assertEqual(address2index('QGK1'), [1, 11685])
         self.assertEqual(address2index('XFD1'), [1, 16384])
 
@@ -362,6 +363,7 @@ class test_conversion(TestCase):
         self.assertEqual(index2address(1, 53), 'BA1')
         self.assertEqual(index2address(1, 667), 'YQ1')
         self.assertEqual(index2address(1, 703), 'AAA1')
+        self.assertEqual(index2address(1, 11496), 'PZD1')
         self.assertEqual(index2address(1, 11685), 'QGK1')
         self.assertEqual(index2address(1, 16384), 'XFD1')
 
@@ -375,6 +377,7 @@ class test_conversion(TestCase):
         self.assertEqual(columnletter2num('YQ'), 667)
         self.assertEqual(columnletter2num('ZZ'), 702)
         self.assertEqual(columnletter2num('AAA'), 703)
+        self.assertEqual(columnletter2num('PZD'), 11496)
         self.assertEqual(columnletter2num('QGK'), 11685)
         self.assertEqual(columnletter2num('XFD'), 16384)
 
@@ -386,5 +389,6 @@ class test_conversion(TestCase):
         self.assertEqual(num2columnletters(667), 'YQ')
         self.assertEqual(num2columnletters(702), 'ZZ')
         self.assertEqual(num2columnletters(703), 'AAA')
+        self.assertEqual(num2columnletters(11496), 'PZD')
         self.assertEqual(num2columnletters(11685), 'QGK')
         self.assertEqual(num2columnletters(16384), 'XFD')

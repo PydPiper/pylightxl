@@ -5,13 +5,17 @@ in-work version 1.5
 -------------------
 - additional database indexing features
 - performance
-- bug fix: accounted for reading errored out cell "#N/A"
+
+pypi version 1.43
+-----------------
+- bug fix: accounted for reading error'ed out cell "#N/A"
 - bug fix: accounted for bool TRUE/FALSE cell values not registering on readxl
 - bug fix: accounted for edge case that was prematurely splitting cell tags <c r /> by formula closing
   bracket <f />
+- bug fix: accounted for cell address roll-over
 
-in-work version 1.42
--------------------
+pypi version 1.42
+-----------------
 - added support for pathlib file reading
 - bug fix: previous version did not handle merged cells properly
 - bug fix: database updates did not update maxcol maxrow if new data addition was larger than the initial
