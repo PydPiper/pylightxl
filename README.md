@@ -28,13 +28,12 @@ Sample - see [docs - quick start guide](https://pylightxl.readthedocs.io/en/late
 - additional database indexing features
 - performance
 
-#### **pypi version 1.42**
-- added support for pathlib file reading
-- bug fix: previous version did not handle merged cells properly
-- bug fix: database updates did not update maxcol maxrow if new data addition was larger than the initial
-  dataset
-- bug fix: writexl that use linefeeds did not read in properly into readxl (fixed regex)
-- bug fix: writexl filepath issues
+#### **pypi version 1.43**
+- bug fix: accounted for reading error'ed out cell "#N/A"
+- bug fix: accounted for bool TRUE/FALSE cell values not registering on readxl
+- bug fix: accounted for edge case that was prematurely splitting cell tags <c r /> by formula closing
+  bracket <f />
+- bug fix: accounted for cell address roll-over
 
 
 #### **Why pylightxl over pandas/openpyxl**

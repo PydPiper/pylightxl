@@ -275,7 +275,7 @@ class Worksheet():
     def keyrow(self, key, keyindex=1):
         """
         Takes a row key value (value of any cell within keyindex col) and returns the entire row,
-        not match returns an empty list
+        no match returns an empty list
 
         :param str/int/float key: any cell value within keyindex col (type sensitive)
         :param int keyrow: option keyrow override. Must be >0 and smaller than worksheet size
@@ -291,6 +291,33 @@ class Worksheet():
                 return self.row(row_i)
         return []
 
+    def semistrucdata(self, keyrow='KEYROW', keycol='KEYCOL'):
+
+        # find the index of keyrow(s) and keycol(s) plural if there are multiple datasets
+        keyrows = [rowID for rowID, row in enumerate(self.rows, 1) if keyrow in row]
+        keycols = [colID for colID, col in enumerate(self.cols, 1) if keycol in col]
+
+        if len(keyrows) != len(keycols):
+            raise ValueError('Error - keyrows != keycols most likely due to miss keyword flag keycol IDs: {}, keyrow IDs: {}'.format(keycols, keyrows))
+
+        # datas structure: [{'keycol': ..., 'keycol': ..., 'data'},...]
+        datas = []
+        for dataset_i, kr, kc in enumerate(zip(keyrows, keycols)):
+            datas.append({'keycol': [], 'keyrow': [], 'data': []})
+            i = 1
+            while True:
+                col_header = self.index(kr, kc + i)
+                row_header = self.index(kr + i, kc)
+                if col_header == '' or row_header == '':
+                    break
+                data = self.index(kr + i, kc + i)
+                datas[dataset_i]['keycol'].append(row_header)
+                datas[dataset_i]['keyrow'].append(col_header)
+                datas[dataset_i]['data'].append(data)
+
+
+
+        pass
 
 def address2index(address):
     """
@@ -400,6 +427,3 @@ def num2columnletters(num):
         else:
             return chr(int(second_digit) + 64) + chr(int(first_digit) + 64)
 
-# QGK
-a = num2columnletters(11496)
-pass
