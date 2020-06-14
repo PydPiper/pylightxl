@@ -292,32 +292,53 @@ class Worksheet():
         return []
 
     def semistrucdata(self, keyrow='KEYROW', keycol='KEYCOL'):
+        """
+        Runs through the worksheet and looks for "KEYROW" and "KEYCOL" flags in each cell to identify
+        the start of a semi-structured data. A data table is read until an empty header is
+        found by row or column. KEYROW and The search supports multiple tables.
+
+        :param keyrow:
+        :param keycol:
+        :return:
+        """
 
         # find the index of keyrow(s) and keycol(s) plural if there are multiple datasets
-        keyrows = [rowID for rowID, row in enumerate(self.rows, 1) if keyrow in row]
-        keycols = [colID for colID, col in enumerate(self.cols, 1) if keycol in col]
+        keyrows = [rowID for rowID, row in enumerate(self.rows, 1) if keyrow in row or keyrow + keycol in row or keycol + keycol in row]
+        keycols = [colID for colID, col in enumerate(self.cols, 1) if keycol in col or keyrow + keycol in col or keycol + keycol in col]
 
         if len(keyrows) != len(keycols):
             raise ValueError('Error - keyrows != keycols most likely due to miss keyword flag keycol IDs: {}, keyrow IDs: {}'.format(keycols, keyrows))
 
-        # datas structure: [{'keycol': ..., 'keycol': ..., 'data'},...]
+        # datas structure: [{'keycols': ..., 'keyrows': ..., 'data'},...]
         datas = []
-        for dataset_i, kr, kc in enumerate(zip(keyrows, keycols)):
-            datas.append({'keycol': [], 'keyrow': [], 'data': []})
-            i = 1
-            while True:
-                col_header = self.index(kr, kc + i)
-                row_header = self.index(kr + i, kc)
-                if col_header == '' or row_header == '':
-                    break
-                data = self.index(kr + i, kc + i)
-                datas[dataset_i]['keycol'].append(row_header)
-                datas[dataset_i]['keyrow'].append(col_header)
-                datas[dataset_i]['data'].append(data)
+        dataset_i = 0
+        for kr, kc in zip(keyrows, keycols):
 
+            datas.append({'keyrows': [], 'keycols': [], 'data': []})
 
+            keycol = self.col(kc)[kr:]
+            try:
+                end_col_index = keycol.index('')
+            except ValueError:
+                end_col_index = self.maxrow - kr
+            kc_end = kr + end_col_index
 
-        pass
+            keyrow = self.row(kr)[kc:]
+            try:
+                end_row_index = keyrow.index('')
+            except ValueError:
+                end_row_index = self.maxcol - kc
+            kr_end = kc + end_row_index
+
+            datas[dataset_i]['keyrows'] = keycol[:end_col_index]
+            datas[dataset_i]['keycols'] = keyrow[:end_row_index]
+
+            for row_i in range(kr + 1, kc_end + 1):
+                datas[dataset_i]['data'].append(self.row(row_i)[kc:kr_end])
+            dataset_i += 1
+
+        return datas
+
 
 def address2index(address):
     """

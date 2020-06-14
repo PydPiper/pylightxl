@@ -14,3 +14,4 @@ pylightxl.egg-info
 test.py
 pylightxl_temp
 test.xlsx
+~$test.xlsx
