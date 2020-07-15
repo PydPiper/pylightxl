@@ -11,7 +11,8 @@ build
 build
 dist
 pylightxl.egg-info
-test.py
 pylightxl_temp
+
+test.py
 test.xlsx
 ~$test.xlsx

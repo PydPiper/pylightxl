@@ -297,14 +297,29 @@ class Worksheet():
         the start of a semi-structured data. A data table is read until an empty header is
         found by row or column. KEYROW and The search supports multiple tables.
 
-        :param keyrow:
-        :param keycol:
-        :return:
+        :param str keyrow: (default='KEYROW') a flag to indicate the start of keyrow's
+        :param str keycol: (default='KEYCOL') a flag to indicate the start of keycol's
+        :return list: list of data dict in the form of [{'keyrows': [], 'keycols': [], 'data': [[], ...]}, {...},]
         """
 
-        # find the index of keyrow(s) and keycol(s) plural if there are multiple datasets
-        keyrows = [rowID for rowID, row in enumerate(self.rows, 1) if keyrow in row or keyrow + keycol in row or keycol + keycol in row]
-        keycols = [colID for colID, col in enumerate(self.cols, 1) if keycol in col or keyrow + keycol in col or keycol + keycol in col]
+        # find the index of keyrow(s) and keycol(s) plural if there are multiple datasets - this is a fast loop downselect
+        keyrows = [rowID for rowID, row in enumerate(self.rows, 1) if keyrow in row or keyrow + keycol in row or keycol + keyrow in row]
+        keycols = [colID for colID, col in enumerate(self.cols, 1) if keycol in col or keyrow + keycol in col or keycol + keyrow in col]
+
+        # look for duplicate key flags within rows/cols - this is a slower loop
+        temp = []
+        for row_id in keyrows:
+            for cell in self.row(row_id):
+                if cell != '' and type(cell) is str and keyrow in cell:
+                    temp.append(row_id)
+        keyrows = temp
+        temp = []
+        for col_id in keycols:
+            for cell in self.col(col_id):
+                if cell != '' and type(cell) is str and keycol in cell:
+                    temp.append(col_id)
+        keycols = temp
+
 
         if len(keyrows) != len(keycols):
             raise ValueError('Error - keyrows != keycols most likely due to miss keyword flag keycol IDs: {}, keyrow IDs: {}'.format(keycols, keyrows))
