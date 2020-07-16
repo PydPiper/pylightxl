@@ -12,7 +12,7 @@ build
 dist
 pylightxl.egg-info
 pylightxl_temp
-
+~$testbook.xlsx
 test.py
 test.xlsx
 ~$test.xlsx

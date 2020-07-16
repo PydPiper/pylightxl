@@ -1,22 +1,7 @@
 # standard lib imports
 from unittest import TestCase
 
-# python27 handling
-try:
-    ModuleNotFoundError
-except NameError:
-    ModuleNotFoundError = ImportError
-
-# local lib imports
-try:
-    from pylightxl.database import Database, Worksheet
-except ModuleNotFoundError:
-    import sys
-    import os
-
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname('test_read_write'), '..')))
-
-    from pylightxl.database import Database, Worksheet
+from pylightxl.database import Database, Worksheet
 
 
 class TestWorksheet(TestCase):

@@ -291,7 +291,7 @@ class Worksheet():
                 return self.row(row_i)
         return []
 
-    def semistrucdata(self, keyrow='KEYROW', keycol='KEYCOL'):
+    def ssd(self, keyrow='KEYROW', keycol='KEYCOL'):
         """
         Runs through the worksheet and looks for "KEYROW" and "KEYCOL" flags in each cell to identify
         the start of a semi-structured data. A data table is read until an empty header is
@@ -322,7 +322,7 @@ class Worksheet():
 
 
         if len(keyrows) != len(keycols):
-            raise ValueError('Error - keyrows != keycols most likely due to miss keyword flag keycol IDs: {}, keyrow IDs: {}'.format(keycols, keyrows))
+            raise ValueError('Error - keyrows != keycols most likely due to missing keyword flag keyrow IDs: {}, keycol IDs: {}'.format(keyrows, keycols))
 
         # datas structure: [{'keycols': ..., 'keyrows': ..., 'data'},...]
         datas = []
@@ -446,13 +446,13 @@ def num2columnletters(num):
             # 26 ** (any power) % 26 will yield 0, which actually should be "Z"
             first_digit = 26
         # this is a condition for 2+ characters
-        second_digit = num / 26
+        second_digit = num / 26.0
         # check if next_digit_to_left rolled over to 3 characters
         if second_digit == 27:
             # num / 26 == 27 is a roll-over of 'Z' not the next character
             second_digit = 26
         if second_digit > 27:
-            third_digit = second_digit / 26
+            third_digit = second_digit / 26.0
             second_digit = int(second_digit) % 26
             if second_digit == 0:
                 # 26 ** (any power) % 26 will yield 0, which actually should be "Z"

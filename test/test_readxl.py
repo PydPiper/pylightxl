@@ -1,25 +1,10 @@
 # standard lib imports
 from unittest import TestCase
 
-# python27 handling
-try:
-    ModuleNotFoundError
-except NameError:
-    ModuleNotFoundError = ImportError
-
 # local lib imports
-try:
-    from pylightxl.readxl import readxl
-    from pylightxl.database import Database, Worksheet, address2index, index2address, \
-        columnletter2num, num2columnletters
-except ModuleNotFoundError:
-    import os, sys
-
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname('test_readxl'), '..')))
-
-    from pylightxl.readxl import readxl
-    from pylightxl.database import Database, Worksheet, address2index, index2address, \
-        columnletter2num, num2columnletters
+from pylightxl.readxl import readxl
+from pylightxl.database import Database, Worksheet, address2index, index2address, \
+    columnletter2num, num2columnletters
 
 try:
     # running from top level
@@ -60,7 +45,7 @@ class test_readxl_integration(TestCase):
         db_ws_names.sort()
         # test 10+ sheets to ensure sorting matches correctly
         true_ws_names = ['empty', 'types', 'scatter', 'merged_cells', 'length', 'sheet_not_to_read',
-                         'Sheet1', 'Sheet2', 'Sheet3', 'Sheet4', 'Sheet5']
+                         'ssd_error1', 'ssd_error2', 'ssd_error3', 'semistrucdata1', 'semistrucdata2']
         true_ws_names.sort()
         self.assertEqual(db_ws_names, true_ws_names)
 
@@ -187,6 +172,22 @@ class test_Database(TestCase):
         self.db.add_ws('test2', {})
         self.assertEqual(self.db.ws_names, ['test1', 'test2'])
 
+    def test_semistrucdata(self):
+        table1 = DB.ws('semistrucdata1').ssd()[0]
+        table2 = DB.ws('semistrucdata1').ssd()[1]
+        table3 = DB.ws('semistrucdata1').ssd()[2]
+
+        table4 = DB.ws('semistrucdata1').ssd(keyrow='myrows', keycol='mycols')[0]
+
+        self.assertEqual(table1, {'keyrows': ['r1', 'r2', 'r3'], 'keycols': ['c1', 'c2'], 'data': [[11, 12], [21, 22], [31, 32]]})
+        self.assertEqual(table2, {'keyrows': ['rr1', 'rr2'], 'keycols': ['cc1', 'cc2'], 'data': [[10, 20], [30, 40]]})
+        self.assertEqual(table3, {'keyrows': ['rrr1', 'rrr2', 'rrr3'], 'keycols': ['ccc1', 'ccc2'], 'data': [[110, 120], [210, 220], [310, 320]]})
+
+        self.assertEqual(table4, {'keyrows': ['rrrr1'], 'keycols': ['cccc1', 'cccc2', 'cccc3'], 'data': [['one', 'two', 'three']]})
+
+        with self.assertRaises(ValueError) as e:
+            _ = DB.ws('semistrucdata2').ssd()
+            self.assertEqual(e, 'Error - keyrows != keycols most likely due to missing keyword flag keycol IDs: [1], keyrow IDs: []')
 
 class test_Worksheet(TestCase):
 

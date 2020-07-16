@@ -1,27 +1,11 @@
 # standard lib imports
 from unittest import TestCase
 
-# python27 handling
-try:
-    ModuleNotFoundError
-except NameError:
-    ModuleNotFoundError = ImportError
 
-# local lib imports
-try:
-    from pylightxl.writexl import writexl, new_rels_text, new_app_text, new_core_text, \
-        new_workbookrels_text, new_workbook_text, new_worksheet_text, new_sharedStrings_text, \
-        new_content_types_text
-    from pylightxl.database import Database, address2index, index2address
-except ModuleNotFoundError:
-    import os, sys
-
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname('test_writexl'), '..')))
-
-    from pylightxl.writexl import writexl, new_rels_text, new_app_text, new_core_text, \
-        new_workbookrels_text, new_workbook_text, new_worksheet_text, new_sharedStrings_text, \
-        new_content_types_text
-    from pylightxl.database import Database, address2index, index2address
+from pylightxl.writexl import writexl, new_rels_text, new_app_text, new_core_text, \
+    new_workbookrels_text, new_workbook_text, new_worksheet_text, new_sharedStrings_text, \
+    new_content_types_text
+from pylightxl.database import Database, address2index, index2address
 
 
 class test_write_new(TestCase):
