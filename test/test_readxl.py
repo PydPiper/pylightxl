@@ -108,8 +108,8 @@ class test_readxl_integration(TestCase):
         for i, col in enumerate(DB.ws('types').cols, start=1):
             self.assertEqual(col, DB.ws('types').col(i))
 
-        self.assertEqual(DB.ws('types').keycol(11),[11, 'copy', 31, 41, 'string from A2 copy'])
-        self.assertEqual(DB.ws('types').keyrow(11),[11, 12.1])
+        self.assertEqual(DB.ws('types').keycol(11), [11, 'copy', 31, 41, 'string from A2 copy'])
+        self.assertEqual(DB.ws('types').keyrow(11), [11, 12.1])
 
     def test_ws_scatter(self):
         self.assertEqual(DB.ws('scatter').index(1, 1), '')
@@ -179,15 +179,32 @@ class test_Database(TestCase):
 
         table4 = DB.ws('semistrucdata1').ssd(keyrow='myrows', keycol='mycols')[0]
 
-        self.assertEqual(table1, {'keyrows': ['r1', 'r2', 'r3'], 'keycols': ['c1', 'c2'], 'data': [[11, 12], [21, 22], [31, 32]]})
-        self.assertEqual(table2, {'keyrows': ['rr1', 'rr2'], 'keycols': ['cc1', 'cc2'], 'data': [[10, 20], [30, 40]]})
-        self.assertEqual(table3, {'keyrows': ['rrr1', 'rrr2', 'rrr3'], 'keycols': ['ccc1', 'ccc2'], 'data': [[110, 120], [210, 220], [310, 320]]})
+        self.assertEqual(table1, {'keyrows': ['r1', 'r2', 'r3'], 'keycols': ['c1', 'c2'],
+                                  'data': [[11, 12], [21, 22], [31, 32]]})
+        self.assertEqual(table2, {'keyrows': ['rr1', 'rr2'], 'keycols': ['cc1', 'cc2'],
+                                  'data': [[10, 20], [30, 40]]})
+        self.assertEqual(table3, {'keyrows': ['rrr1', 'rrr2', 'rrr3'], 'keycols': ['ccc1', 'ccc2'],
+                                  'data': [[110, 120], [210, 220], [310, 320]]})
 
-        self.assertEqual(table4, {'keyrows': ['rrrr1'], 'keycols': ['cccc1', 'cccc2', 'cccc3'], 'data': [['one', 'two', 'three']]})
+        self.assertEqual(table4, {'keyrows': ['rrrr1'], 'keycols': ['cccc1', 'cccc2', 'cccc3'],
+                                  'data': [['one', 'two', 'three']]})
 
         with self.assertRaises(ValueError) as e:
             _ = DB.ws('semistrucdata2').ssd()
-            self.assertEqual(e, 'Error - keyrows != keycols most likely due to missing keyword flag keycol IDs: [1], keyrow IDs: []')
+            self.assertEqual(e,
+                             'Error - keyrows != keycols most likely due to missing keyword flag '
+                             'keycol IDs: [1], keyrow IDs: []')
+
+    def test_new_empty_cell(self):
+        self.assertEqual(DB.ws('empty').index(1, 1), '')
+        DB.set_emptycell(val='NA')
+        self.assertEqual(DB.ws('empty').index(1, 1), 'NA')
+        DB.set_emptycell(val=0)
+        self.assertEqual(DB.ws('empty').index(1, 1), 0)
+        # reset it so other tests run correctly
+        DB.set_emptycell(val='')
+
+
 
 class test_Worksheet(TestCase):
 
@@ -238,7 +255,8 @@ class test_Worksheet(TestCase):
         self.assertEqual(ws.maxrow, 1048576)
         self.assertEqual(ws.maxcol, 1)
 
-        ws._data = {'A1': {'v': 1}, 'AA1': {'v': 27}, 'AAA1': {'v': 703}, 'XFD1': {'v': 16384}, 'A1048576': {'v': 1048576}}
+        ws._data = {'A1': {'v': 1}, 'AA1': {'v': 27}, 'AAA1': {'v': 703}, 'XFD1': {'v': 16384},
+                    'A1048576': {'v': 1048576}}
         ws._calc_size()
         self.assertEqual(ws.maxrow, 1048576)
         self.assertEqual(ws.maxcol, 16384)
@@ -288,17 +306,16 @@ class test_Worksheet(TestCase):
         ws = Worksheet({'A1': {'v': 11}, 'B1': {'v': 11}, 'C1': {'v': 13},
                         'A2': {'v': 21}, 'B2': {'v': 22}, 'C2': {'v': 23},
                         'A3': {'v': 11}, 'B3': {'v': 32}, 'C3': {'v': 33}})
-        self.assertEqual(ws.keycol(key=11),[11,21,11])
-        self.assertEqual(ws.keycol(key=11,keyindex=1),[11,21,11])
-        self.assertEqual(ws.keycol(key=11,keyindex=2),[])
-        self.assertEqual(ws.keycol(key=32,keyindex=3),[11,22,32])
+        self.assertEqual(ws.keycol(key=11), [11, 21, 11])
+        self.assertEqual(ws.keycol(key=11, keyindex=1), [11, 21, 11])
+        self.assertEqual(ws.keycol(key=11, keyindex=2), [])
+        self.assertEqual(ws.keycol(key=32, keyindex=3), [11, 22, 32])
 
-        self.assertEqual(ws.keyrow(key=11),[11,11,13])
-        self.assertEqual(ws.keyrow(key=11,keyindex=1),[11,11,13])
-        self.assertEqual(ws.keyrow(key=11,keyindex=2),[11,11,13])
-        self.assertEqual(ws.keyrow(key=22,keyindex=2),[21,22,23])
-        self.assertEqual(ws.keyrow(key=22,keyindex=3),[])
-
+        self.assertEqual(ws.keyrow(key=11), [11, 11, 13])
+        self.assertEqual(ws.keyrow(key=11, keyindex=1), [11, 11, 13])
+        self.assertEqual(ws.keyrow(key=11, keyindex=2), [11, 11, 13])
+        self.assertEqual(ws.keyrow(key=22, keyindex=2), [21, 22, 23])
+        self.assertEqual(ws.keyrow(key=22, keyindex=3), [])
 
 
 class test_conversion(TestCase):
