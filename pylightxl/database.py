@@ -291,23 +291,38 @@ class Worksheet():
                 return self.row(row_i)
         return []
 
-    def semistrucdata(self, keyrow='KEYROW', keycol='KEYCOL'):
+    def ssd(self, keyrow='KEYROW', keycol='KEYCOL'):
         """
         Runs through the worksheet and looks for "KEYROW" and "KEYCOL" flags in each cell to identify
         the start of a semi-structured data. A data table is read until an empty header is
         found by row or column. KEYROW and The search supports multiple tables.
 
-        :param keyrow:
-        :param keycol:
-        :return:
+        :param str keyrow: (default='KEYROW') a flag to indicate the start of keyrow's
+        :param str keycol: (default='KEYCOL') a flag to indicate the start of keycol's
+        :return list: list of data dict in the form of [{'keyrows': [], 'keycols': [], 'data': [[], ...]}, {...},]
         """
 
-        # find the index of keyrow(s) and keycol(s) plural if there are multiple datasets
-        keyrows = [rowID for rowID, row in enumerate(self.rows, 1) if keyrow in row or keyrow + keycol in row or keycol + keycol in row]
-        keycols = [colID for colID, col in enumerate(self.cols, 1) if keycol in col or keyrow + keycol in col or keycol + keycol in col]
+        # find the index of keyrow(s) and keycol(s) plural if there are multiple datasets - this is a fast loop downselect
+        keyrows = [rowID for rowID, row in enumerate(self.rows, 1) if keyrow in row or keyrow + keycol in row or keycol + keyrow in row]
+        keycols = [colID for colID, col in enumerate(self.cols, 1) if keycol in col or keyrow + keycol in col or keycol + keyrow in col]
+
+        # look for duplicate key flags within rows/cols - this is a slower loop
+        temp = []
+        for row_id in keyrows:
+            for cell in self.row(row_id):
+                if cell != '' and type(cell) is str and keyrow in cell:
+                    temp.append(row_id)
+        keyrows = temp
+        temp = []
+        for col_id in keycols:
+            for cell in self.col(col_id):
+                if cell != '' and type(cell) is str and keycol in cell:
+                    temp.append(col_id)
+        keycols = temp
+
 
         if len(keyrows) != len(keycols):
-            raise ValueError('Error - keyrows != keycols most likely due to miss keyword flag keycol IDs: {}, keyrow IDs: {}'.format(keycols, keyrows))
+            raise ValueError('Error - keyrows != keycols most likely due to missing keyword flag keyrow IDs: {}, keycol IDs: {}'.format(keyrows, keycols))
 
         # datas structure: [{'keycols': ..., 'keyrows': ..., 'data'},...]
         datas = []
@@ -431,13 +446,13 @@ def num2columnletters(num):
             # 26 ** (any power) % 26 will yield 0, which actually should be "Z"
             first_digit = 26
         # this is a condition for 2+ characters
-        second_digit = num / 26
+        second_digit = num / 26.0
         # check if next_digit_to_left rolled over to 3 characters
         if second_digit == 27:
             # num / 26 == 27 is a roll-over of 'Z' not the next character
             second_digit = 26
         if second_digit > 27:
-            third_digit = second_digit / 26
+            third_digit = second_digit / 26.0
             second_digit = int(second_digit) % 26
             if second_digit == 0:
                 # 26 ** (any power) % 26 will yield 0, which actually should be "Z"

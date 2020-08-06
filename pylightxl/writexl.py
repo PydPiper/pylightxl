@@ -7,7 +7,8 @@ from xml.etree import cElementTree as ET
 # local lib imports
 from .database import index2address
 
-
+FileNotFoundError = IOError
+PermissionError = Exception
 
 def xml_namespace(file):
     """
@@ -59,7 +60,7 @@ def alt_writer(db, path):
     :return: None
     """
 
-    filename = path.split('/')[-1]
+    filename = os.path.split(path)[-1]
     filename = filename if filename.split('.')[-1] == 'xlsx' else '.'.join(filename.split('.')[:-1] + ['xlsx'])
     temp_folder = '_pylightxl_' + filename
 
@@ -125,19 +126,19 @@ def alt_writer(db, path):
     # cleanup files that would cause a "repair" workbook
     try:
         shutil.rmtree(temp_folder + '/xl/ctrlProps')
-    except FileNotFoundError:
+    except (FileNotFoundError, WindowsError):
         pass
     try:
         shutil.rmtree(temp_folder + '/xl/drawings')
-    except FileNotFoundError:
+    except (FileNotFoundError, WindowsError):
         pass
     try:
         shutil.rmtree(temp_folder + '/xl/printerSettings')
-    except FileNotFoundError:
+    except (FileNotFoundError, WindowsError):
         pass
     try:
         os.remove(temp_folder + '/xl/vbaProject.bin')
-    except FileNotFoundError:
+    except (FileNotFoundError, WindowsError):
         pass
 
     # remove existing file
@@ -163,7 +164,11 @@ def alt_writer(db, path):
                 if file != filename:
                     f.write(os.path.join(root, file))
     # move the zipped up file out of the temp folder
-    shutil.move(filename, old_dir)
+    try:
+        shutil.move(filename, old_dir)
+    except Exception:
+        os.remove(old_dir + '\\' + filename)
+        shutil.move(filename, old_dir)
     os.chdir(old_dir)
     # remove temp folder
     shutil.rmtree(temp_folder)
@@ -204,7 +209,7 @@ def alt_app_text(db, filepath):
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root, encoding='unicode')
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root)
 
     return text
 
@@ -259,9 +264,9 @@ def new_writer(db, path):
     :return: None
     """
 
-    filename = path.split('/')[-1]
+    filename = os.path.split(path)[-1]
     filename = filename if filename.split('.')[-1] == 'xlsx' else '.'.join(filename.split('.')[:-1] + ['xlsx'])
-    path = '/'.join(path.split('/')[:-1])
+    path = '/'.join(os.path.split(path)[:-1])
     path = path + '/' + filename if path else filename
 
     with zipfile.ZipFile(path, 'w') as zf:
