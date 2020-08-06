@@ -205,7 +205,6 @@ class test_Database(TestCase):
         DB.set_emptycell(val='')
 
 
-
 class test_Worksheet(TestCase):
 
     def test_ws_init(self):
