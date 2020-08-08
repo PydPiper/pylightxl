@@ -1,27 +1,12 @@
 # standard lib imports
 from unittest import TestCase
 
-# python27 handling
-try:
-    ModuleNotFoundError
-except NameError:
-    ModuleNotFoundError = ImportError
 
-# local lib imports
-try:
-    from pylightxl.writexl import writexl, new_rels_text, new_app_text, new_core_text, \
-        new_workbookrels_text, new_workbook_text, new_worksheet_text, new_sharedStrings_text, \
-        new_content_types_text
-    from pylightxl.database import Database, address2index, index2address
-except ModuleNotFoundError:
-    import os, sys
+from pylightxl.pylightxl import writexl, writexl_new_rels_text, writexl_new_app_text, writexl_new_core_text, \
+    writexl_new_workbookrels_text, writexl_new_workbook_text, writexl_new_worksheet_text, writexl_new_sharedStrings_text, \
+    writexl_new_content_types_text
+from pylightxl.pylightxl import Database, address2index, index2address
 
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname('test_writexl'), '..')))
-
-    from pylightxl.writexl import writexl, new_rels_text, new_app_text, new_core_text, \
-        new_workbookrels_text, new_workbook_text, new_worksheet_text, new_sharedStrings_text, \
-        new_content_types_text
-    from pylightxl.database import Database, address2index, index2address
 
 
 class test_write_new(TestCase):
@@ -33,7 +18,7 @@ class test_write_new(TestCase):
                    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>\r\n' \
                    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>\r\n' \
                    '</Relationships>'
-        self.assertEqual(new_rels_text(None), xml_base)
+        self.assertEqual(writexl_new_rels_text(None), xml_base)
 
     def test_app_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -86,7 +71,7 @@ class test_write_new(TestCase):
         db.add_ws('Sheet8',{})
         db.add_ws('Sheet9',{})
         db.add_ws('Sheet10',{})
-        self.assertEqual(new_app_text(db), xml_base.format(num_sheets=10, many_tag_vt=many_tag_vt))
+        self.assertEqual(writexl_new_app_text(db), xml_base.format(num_sheets=10, many_tag_vt=many_tag_vt))
 
     def test_core_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -97,7 +82,7 @@ class test_write_new(TestCase):
                    '<dcterms:modified xsi:type="dcterms:W3CDTF">2019-12-27T01:35:39Z</dcterms:modified>\r\n' \
                    '</cp:coreProperties>'
 
-        self.assertEqual(new_core_text(None), xml_base)
+        self.assertEqual(writexl_new_core_text(None), xml_base)
 
     def test_workbookrels_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -131,10 +116,10 @@ class test_write_new(TestCase):
         db.add_ws('Sheet9',{})
         db.add_ws('Sheet10',{})
         # test without sharedStrings
-        self.assertEqual(new_workbookrels_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=''))
+        self.assertEqual(writexl_new_workbookrels_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=''))
         # test with sharedStrings in db
         db._sharedStrings = ['text']
-        self.assertEqual(new_workbookrels_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=tag_sharedStrings))
+        self.assertEqual(writexl_new_workbookrels_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=tag_sharedStrings))
 
     def test_workbook_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -171,7 +156,7 @@ class test_write_new(TestCase):
         db.add_ws('Sheet8',{})
         db.add_ws('Sheet9',{})
         db.add_ws('Sheet10',{})
-        self.assertEqual(new_workbook_text(db), xml_base.format(many_tag_sheets=many_tag_sheets))
+        self.assertEqual(writexl_new_workbook_text(db), xml_base.format(many_tag_sheets=many_tag_sheets))
 
     def test_worksheet_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -211,7 +196,7 @@ class test_write_new(TestCase):
                              'A3':{'v': 'text1', 'f': '', 's': ''},
                              'C3':{'v': 'text2', 'f': '', 's': ''}})
 
-        self.assertEqual(new_worksheet_text(db, 'Sheet1'), xml_base.format(sizeAddress=sizeAddress,
+        self.assertEqual(writexl_new_worksheet_text(db, 'Sheet1'), xml_base.format(sizeAddress=sizeAddress,
                                                                            uid=uid,
                                                                            many_tag_row=many_tag_row))
 
@@ -242,10 +227,10 @@ class test_write_new(TestCase):
                              })
 
         # process the sharedStrings, see dev note why this is done this way inside new_worksheet_text
-        _ = new_worksheet_text(db, 'Sheet1')
-        _ = new_worksheet_text(db, 'Sheet2')
+        _ = writexl_new_worksheet_text(db, 'Sheet1')
+        _ = writexl_new_worksheet_text(db, 'Sheet2')
 
-        self.assertEqual(new_sharedStrings_text(db), xml_base.format(sharedString_len=6 ,many_tag_si=many_tag_si))
+        self.assertEqual(writexl_new_sharedStrings_text(db), xml_base.format(sharedString_len=6 ,many_tag_si=many_tag_si))
 
     def test_new_content_types_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -287,11 +272,11 @@ class test_write_new(TestCase):
         db.add_ws('Sheet10', {})
 
         # test without and sharedStrings in db
-        self.assertEqual(new_content_types_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=''))
+        self.assertEqual(writexl_new_content_types_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=''))
 
         # test with and sharedStrings in db
         db._sharedStrings = ['text']
-        self.assertEqual(new_content_types_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=xml_tag_sharedStrings))
+        self.assertEqual(writexl_new_content_types_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=xml_tag_sharedStrings))
 
 
 

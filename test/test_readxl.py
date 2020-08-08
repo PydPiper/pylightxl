@@ -1,25 +1,11 @@
 # standard lib imports
 from unittest import TestCase
 
-# python27 handling
-try:
-    ModuleNotFoundError
-except NameError:
-    ModuleNotFoundError = ImportError
 
 # local lib imports
-try:
-    from pylightxl.readxl import readxl
-    from pylightxl.database import Database, Worksheet, address2index, index2address, \
-        columnletter2num, num2columnletters
-except ModuleNotFoundError:
-    import os, sys
-
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname('test_readxl'), '..')))
-
-    from pylightxl.readxl import readxl
-    from pylightxl.database import Database, Worksheet, address2index, index2address, \
-        columnletter2num, num2columnletters
+from pylightxl.pylightxl import readxl
+from pylightxl.pylightxl import Database, Worksheet, address2index, index2address, \
+    columnletter2num, num2columnletters
 
 try:
     # running from top level
@@ -46,9 +32,9 @@ class test_readxl_bad_input(TestCase):
     def test_bad_fn_ext(self):
         with self.assertRaises(ValueError) as e:
             try:
-                db = readxl('test/test_readxl.py')
+                db = readxl('test/test_readpy')
             except ValueError:
-                db = readxl('test_readxl.py')
+                db = readxl('test_readpy')
             self.assertEqual(e, 'Error - Incorrect Excel file extension ({}). '
                                 'File extension supported: .xlsx .xlsm'.format('py'))
 
@@ -60,7 +46,7 @@ class test_readxl_integration(TestCase):
         db_ws_names.sort()
         # test 10+ sheets to ensure sorting matches correctly
         true_ws_names = ['empty', 'types', 'scatter', 'merged_cells', 'length', 'sheet_not_to_read',
-                         'Sheet1', 'Sheet2', 'Sheet3', 'Sheet4', 'Sheet5']
+                         'ssd_error1', 'ssd_error2', 'ssd_error3', 'semistrucdata1', 'semistrucdata2']
         true_ws_names.sort()
         self.assertEqual(db_ws_names, true_ws_names)
 
@@ -123,8 +109,8 @@ class test_readxl_integration(TestCase):
         for i, col in enumerate(DB.ws('types').cols, start=1):
             self.assertEqual(col, DB.ws('types').col(i))
 
-        self.assertEqual(DB.ws('types').keycol(11),[11, 'copy', 31, 41, 'string from A2 copy'])
-        self.assertEqual(DB.ws('types').keyrow(11),[11, 12.1])
+        self.assertEqual(DB.ws('types').keycol(11), [11, 'copy', 31, 41, 'string from A2 copy'])
+        self.assertEqual(DB.ws('types').keyrow(11), [11, 12.1])
 
     def test_ws_scatter(self):
         self.assertEqual(DB.ws('scatter').index(1, 1), '')
@@ -187,6 +173,38 @@ class test_Database(TestCase):
         self.db.add_ws('test2', {})
         self.assertEqual(self.db.ws_names, ['test1', 'test2'])
 
+    def test_semistrucdata(self):
+        table1 = DB.ws('semistrucdata1').ssd()[0]
+        table2 = DB.ws('semistrucdata1').ssd()[1]
+        table3 = DB.ws('semistrucdata1').ssd()[2]
+
+        table4 = DB.ws('semistrucdata1').ssd(keyrow='myrows', keycol='mycols')[0]
+
+        self.assertEqual(table1, {'keyrows': ['r1', 'r2', 'r3'], 'keycols': ['c1', 'c2'],
+                                  'data': [[11, 12], [21, 22], [31, 32]]})
+        self.assertEqual(table2, {'keyrows': ['rr1', 'rr2'], 'keycols': ['cc1', 'cc2'],
+                                  'data': [[10, 20], [30, 40]]})
+        self.assertEqual(table3, {'keyrows': ['rrr1', 'rrr2', 'rrr3'], 'keycols': ['ccc1', 'ccc2'],
+                                  'data': [[110, 120], [210, 220], [310, 320]]})
+
+        self.assertEqual(table4, {'keyrows': ['rrrr1'], 'keycols': ['cccc1', 'cccc2', 'cccc3'],
+                                  'data': [['one', 'two', 'three']]})
+
+        with self.assertRaises(ValueError) as e:
+            _ = DB.ws('semistrucdata2').ssd()
+            self.assertEqual(e,
+                             'Error - keyrows != keycols most likely due to missing keyword flag '
+                             'keycol IDs: [1], keyrow IDs: []')
+
+    def test_new_empty_cell(self):
+        self.assertEqual(DB.ws('empty').index(1, 1), '')
+        DB.set_emptycell(val='NA')
+        self.assertEqual(DB.ws('empty').index(1, 1), 'NA')
+        DB.set_emptycell(val=0)
+        self.assertEqual(DB.ws('empty').index(1, 1), 0)
+        # reset it so other tests run correctly
+        DB.set_emptycell(val='')
+
 
 class test_Worksheet(TestCase):
 
@@ -237,7 +255,8 @@ class test_Worksheet(TestCase):
         self.assertEqual(ws.maxrow, 1048576)
         self.assertEqual(ws.maxcol, 1)
 
-        ws._data = {'A1': {'v': 1}, 'AA1': {'v': 27}, 'AAA1': {'v': 703}, 'XFD1': {'v': 16384}, 'A1048576': {'v': 1048576}}
+        ws._data = {'A1': {'v': 1}, 'AA1': {'v': 27}, 'AAA1': {'v': 703}, 'XFD1': {'v': 16384},
+                    'A1048576': {'v': 1048576}}
         ws._calc_size()
         self.assertEqual(ws.maxrow, 1048576)
         self.assertEqual(ws.maxcol, 16384)
@@ -287,17 +306,16 @@ class test_Worksheet(TestCase):
         ws = Worksheet({'A1': {'v': 11}, 'B1': {'v': 11}, 'C1': {'v': 13},
                         'A2': {'v': 21}, 'B2': {'v': 22}, 'C2': {'v': 23},
                         'A3': {'v': 11}, 'B3': {'v': 32}, 'C3': {'v': 33}})
-        self.assertEqual(ws.keycol(key=11),[11,21,11])
-        self.assertEqual(ws.keycol(key=11,keyindex=1),[11,21,11])
-        self.assertEqual(ws.keycol(key=11,keyindex=2),[])
-        self.assertEqual(ws.keycol(key=32,keyindex=3),[11,22,32])
+        self.assertEqual(ws.keycol(key=11), [11, 21, 11])
+        self.assertEqual(ws.keycol(key=11, keyindex=1), [11, 21, 11])
+        self.assertEqual(ws.keycol(key=11, keyindex=2), [])
+        self.assertEqual(ws.keycol(key=32, keyindex=3), [11, 22, 32])
 
-        self.assertEqual(ws.keyrow(key=11),[11,11,13])
-        self.assertEqual(ws.keyrow(key=11,keyindex=1),[11,11,13])
-        self.assertEqual(ws.keyrow(key=11,keyindex=2),[11,11,13])
-        self.assertEqual(ws.keyrow(key=22,keyindex=2),[21,22,23])
-        self.assertEqual(ws.keyrow(key=22,keyindex=3),[])
-
+        self.assertEqual(ws.keyrow(key=11), [11, 11, 13])
+        self.assertEqual(ws.keyrow(key=11, keyindex=1), [11, 11, 13])
+        self.assertEqual(ws.keyrow(key=11, keyindex=2), [11, 11, 13])
+        self.assertEqual(ws.keyrow(key=22, keyindex=2), [21, 22, 23])
+        self.assertEqual(ws.keyrow(key=22, keyindex=3), [])
 
 
 class test_conversion(TestCase):
@@ -336,6 +354,7 @@ class test_conversion(TestCase):
         self.assertEqual(address2index('BA1'), [1, 53])
         self.assertEqual(address2index('YQ1'), [1, 667])
         self.assertEqual(address2index('AAA1'), [1, 703])
+        self.assertEqual(address2index('AAZ1'), [1, 728])
         self.assertEqual(address2index('PZD1'), [1, 11496])
         self.assertEqual(address2index('QGK1'), [1, 11685])
         self.assertEqual(address2index('XFD1'), [1, 16384])
@@ -363,6 +382,7 @@ class test_conversion(TestCase):
         self.assertEqual(index2address(1, 53), 'BA1')
         self.assertEqual(index2address(1, 667), 'YQ1')
         self.assertEqual(index2address(1, 703), 'AAA1')
+        self.assertEqual(index2address(1, 728), 'AAZ1')
         self.assertEqual(index2address(1, 11496), 'PZD1')
         self.assertEqual(index2address(1, 11685), 'QGK1')
         self.assertEqual(index2address(1, 16384), 'XFD1')
@@ -377,6 +397,7 @@ class test_conversion(TestCase):
         self.assertEqual(columnletter2num('YQ'), 667)
         self.assertEqual(columnletter2num('ZZ'), 702)
         self.assertEqual(columnletter2num('AAA'), 703)
+        self.assertEqual(columnletter2num('AAZ'), 728)
         self.assertEqual(columnletter2num('PZD'), 11496)
         self.assertEqual(columnletter2num('QGK'), 11685)
         self.assertEqual(columnletter2num('XFD'), 16384)
@@ -389,6 +410,7 @@ class test_conversion(TestCase):
         self.assertEqual(num2columnletters(667), 'YQ')
         self.assertEqual(num2columnletters(702), 'ZZ')
         self.assertEqual(num2columnletters(703), 'AAA')
+        self.assertEqual(num2columnletters(728), 'AAZ')
         self.assertEqual(num2columnletters(11496), 'PZD')
         self.assertEqual(num2columnletters(11685), 'QGK')
         self.assertEqual(num2columnletters(16384), 'XFD')

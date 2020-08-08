@@ -2,26 +2,10 @@
 from unittest import TestCase
 from os import remove
 
-# python27 handling
-try:
-    ModuleNotFoundError
-except NameError:
-    ModuleNotFoundError = ImportError
-
 # local lib imports
-try:
-    from pylightxl.readxl import readxl
-    from pylightxl.writexl import writexl
-    from pylightxl.database import Database, Worksheet
-except ModuleNotFoundError:
-    import sys
-    import os
-
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname('test_read_write'), '..')))
-
-    from pylightxl.readxl import readxl
-    from pylightxl.writexl import writexl
-    from pylightxl.database import Database, Worksheet
+from pylightxl.pylightxl import readxl
+from pylightxl.pylightxl import writexl
+from pylightxl.pylightxl import Database, Worksheet
 
 
 class TestIntegration(TestCase):

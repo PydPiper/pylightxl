@@ -4,20 +4,25 @@ database
 Database Class
 --------------
 
-.. autoclass:: pylightxl.database.Database
+.. autoclass:: pylightxl.pylightxl.Database
     :members:
 
 Worksheet Class
 ---------------
 
-.. autoclass:: pylightxl.database.Worksheet
+.. autoclass:: pylightxl.pylightxl.Worksheet
     :members:
 
 
 Support Functions
 -----------------
 
-.. automodule:: pylightxl.database
-    :members:
+.. autofunction:: pylightxl.pylightxl.address2index
+
+.. autofunction:: pylightxl.pylightxl.index2address
+
+.. autofunction:: pylightxl.pylightxl.columnletter2num
+
+.. autofunction:: pylightxl.pylightxl.num2columnletters
 
 
