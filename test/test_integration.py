@@ -3,9 +3,9 @@ from unittest import TestCase
 from os import remove
 
 # local lib imports
-from pylightxl.readxl import readxl
-from pylightxl.writexl import writexl
-from pylightxl.database import Database, Worksheet
+from pylightxl.pylightxl import readxl
+from pylightxl.pylightxl import writexl
+from pylightxl.pylightxl import Database, Worksheet
 
 
 class TestIntegration(TestCase):

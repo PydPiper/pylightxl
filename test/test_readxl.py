@@ -1,9 +1,10 @@
 # standard lib imports
 from unittest import TestCase
 
+
 # local lib imports
-from pylightxl.readxl import readxl
-from pylightxl.database import Database, Worksheet, address2index, index2address, \
+from pylightxl.pylightxl import readxl
+from pylightxl.pylightxl import Database, Worksheet, address2index, index2address, \
     columnletter2num, num2columnletters
 
 try:
@@ -31,9 +32,9 @@ class test_readxl_bad_input(TestCase):
     def test_bad_fn_ext(self):
         with self.assertRaises(ValueError) as e:
             try:
-                db = readxl('test/test_readxl.py')
+                db = readxl('test/test_readpy')
             except ValueError:
-                db = readxl('test_readxl.py')
+                db = readxl('test_readpy')
             self.assertEqual(e, 'Error - Incorrect Excel file extension ({}). '
                                 'File extension supported: .xlsx .xlsm'.format('py'))
 
@@ -353,6 +354,7 @@ class test_conversion(TestCase):
         self.assertEqual(address2index('BA1'), [1, 53])
         self.assertEqual(address2index('YQ1'), [1, 667])
         self.assertEqual(address2index('AAA1'), [1, 703])
+        self.assertEqual(address2index('AAZ1'), [1, 728])
         self.assertEqual(address2index('PZD1'), [1, 11496])
         self.assertEqual(address2index('QGK1'), [1, 11685])
         self.assertEqual(address2index('XFD1'), [1, 16384])
@@ -380,6 +382,7 @@ class test_conversion(TestCase):
         self.assertEqual(index2address(1, 53), 'BA1')
         self.assertEqual(index2address(1, 667), 'YQ1')
         self.assertEqual(index2address(1, 703), 'AAA1')
+        self.assertEqual(index2address(1, 728), 'AAZ1')
         self.assertEqual(index2address(1, 11496), 'PZD1')
         self.assertEqual(index2address(1, 11685), 'QGK1')
         self.assertEqual(index2address(1, 16384), 'XFD1')
@@ -394,6 +397,7 @@ class test_conversion(TestCase):
         self.assertEqual(columnletter2num('YQ'), 667)
         self.assertEqual(columnletter2num('ZZ'), 702)
         self.assertEqual(columnletter2num('AAA'), 703)
+        self.assertEqual(columnletter2num('AAZ'), 728)
         self.assertEqual(columnletter2num('PZD'), 11496)
         self.assertEqual(columnletter2num('QGK'), 11685)
         self.assertEqual(columnletter2num('XFD'), 16384)
@@ -406,6 +410,7 @@ class test_conversion(TestCase):
         self.assertEqual(num2columnletters(667), 'YQ')
         self.assertEqual(num2columnletters(702), 'ZZ')
         self.assertEqual(num2columnletters(703), 'AAA')
+        self.assertEqual(num2columnletters(728), 'AAZ')
         self.assertEqual(num2columnletters(11496), 'PZD')
         self.assertEqual(num2columnletters(11685), 'QGK')
         self.assertEqual(num2columnletters(16384), 'XFD')

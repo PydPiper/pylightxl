@@ -1,7 +1,7 @@
 # standard lib imports
 from unittest import TestCase
 
-from pylightxl.database import Database, Worksheet
+from pylightxl.pylightxl import Database, Worksheet
 
 
 class TestWorksheet(TestCase):
