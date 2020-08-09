@@ -178,7 +178,7 @@ class test_Database(TestCase):
         table2 = DB.ws('semistrucdata1').ssd()[1]
         table3 = DB.ws('semistrucdata1').ssd()[2]
 
-        table4 = DB.ws('semistrucdata1').ssd(keyrow='myrows', keycol='mycols')[0]
+        table4 = DB.ws('semistrucdata1').ssd(keyrows='myrows', keycols='mycols')[0]
 
         self.assertEqual(table1, {'keyrows': ['r1', 'r2', 'r3'], 'keycols': ['c1', 'c2'],
                                   'data': [[11, 12], [21, 22], [31, 32]]})

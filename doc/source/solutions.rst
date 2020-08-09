@@ -10,40 +10,18 @@ Reading Semi Structured data
 
 .. figure:: _static/ex_readsemistrdata.png
 
-- Solution:
+- Solution: note that ``ssd`` function takes any key-word argument as your KEYROWS/KEYCOLS flag and
+  multiple tables are read the same way as you would read a book. Top left-to-right, then down.
 
 .. code-block:: python
 
     import pylightxl
     db = pylightxl.readxl('Book1.xlsx')
-    # pull out all the rowIDs where data groups start
-    keyrows = [rowID for rowID, row in enumerate(db.ws('Sheet1').rows,1) if 'val1' in row]
 
-    # find the columnIDs where data groups start (like in your example, not all data groups start in col A)
-    keycols = []
-    for keyrow in keyrows:
-        # add +1 since python index start from 0
-        keycols.append(db.ws('Sheet1').row(keyrow).index('val1') + 1)
+    # request a semi-structured data (ssd) output
+    ssd = db.ws('Sheet1').ssd(keycols="KEYCOLS", keyrows="KEYROWS")
 
-    # define a dict to hold your data groups
-    datagroups = {}
-    # populate datatables
-    for tableIndex, keyrow in enumerate(keyrows,1):
-        i = 0
-        # data groups: keys are group IDs starting from 1, list: list of data rows (ie: val1, val2...)
-        datagroups.update({tableIndex: []})
-        while True:
-            # pull out the current group row of data, and remove leading cells with keycols
-            datarow = db.ws('Sheet1').row(keyrow + i)[keycols[tableIndex-1]:]
-            # check if the current row is still part of the datagroup
-            if datarow[0] == '':
-                # current row is empty and is no longer part of the data group
-                break
-            datagroups[tableIndex].append(datarow)
-            i += 1
-
-    print(datagroups[1])
-    >>> [[1, 2, 3, ''], [4, 5, 6, ''], [7, 8, 9, '']]
-    print(datagroups[2])
-    >>> [[9, 1, 4], [2, 4, 1], [3, 2, 1]]
-
+    ssd[0]
+    >>> {'keyrows': ['r1', 'r2', 'r3'], 'keycols': ['c1', 'c2', 'c3'], 'data': [[1, 2, 3], [4, '', 6], [7, 8, 9]]}
+    ssd[1]
+    >>> {'keyrows': ['rr1', 'rr2', 'rr3', 'rr4'], 'keycols': ['cc1', 'cc2', 'cc3'], 'data': [[10, 20, 30], [40, 50, 60], [70, 80, 90], [100, 110, 120]]}

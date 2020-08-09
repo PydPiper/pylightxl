@@ -1231,65 +1231,81 @@ class Worksheet():
                 return self.row(row_i)
         return []
 
-    def ssd(self, keyrow='KEYROW', keycol='KEYCOL'):
+    def ssd(self, keyrows='KEYROWS', keycols='KEYCOLS'):
         """
-        Runs through the worksheet and looks for "KEYROW" and "KEYCOL" flags in each cell to identify
+        Runs through the worksheet and looks for "KEYROWS" and "KEYCOLS" flags in each cell to identify
         the start of a semi-structured data. A data table is read until an empty header is
-        found by row or column. KEYROW and The search supports multiple tables.
+        found by row or column. The search supports multiple tables.
 
-        :param str keyrow: (default='KEYROW') a flag to indicate the start of keyrow's
-        :param str keycol: (default='KEYCOL') a flag to indicate the start of keycol's
+        :param str keyrows: (default='KEYROWS') a flag to indicate the start of keyrow's
+                            cells below are read until an empty cell is reached
+        :param str keycols: (default='KEYCOLS') a flag to indicate the start of keycol's
+                            cells to the right are read until an empty cell is reached
         :return list: list of data dict in the form of [{'keyrows': [], 'keycols': [], 'data': [[], ...]}, {...},]
         """
 
         # find the index of keyrow(s) and keycol(s) plural if there are multiple datasets - this is a fast loop downselect
-        keyrows = [rowID for rowID, row in enumerate(self.rows, 1) if keyrow in row or keyrow + keycol in row or keycol + keyrow in row]
-        keycols = [colID for colID, col in enumerate(self.cols, 1) if keycol in col or keyrow + keycol in col or keycol + keyrow in col]
+        kr_colIDs = [colID for colID, col in enumerate(self.cols, 1) if keyrows in col or keyrows + keycols in col or keycols + keyrows in col]
+        kc_rowIDs = [rowID for rowID, row in enumerate(self.rows, 1) if keycols in row or keyrows + keycols in row or keycols + keyrows in row]
 
         # look for duplicate key flags within rows/cols - this is a slower loop
         temp = []
-        for row_id in keyrows:
-            for cell in self.row(row_id):
-                if cell != '' and type(cell) is str and keyrow in cell:
-                    temp.append(row_id)
-        keyrows = temp
+        for row_id in range(1, self.maxrow):
+            for col_id in kr_colIDs:
+                cell = self.index(row_id, col_id)
+                if cell != '' and type(cell) is str and keyrows in cell:
+                    temp.append([row_id, col_id])
+        kr_indexIDs = temp
+
+        # for col_id in kr_colIDs:
+        #     for row_id, cell in enumerate(self.col(col_id), 1):
+        #         if cell != '' and type(cell) is str and keyrows in cell:
+        #             temp.append([row_id, col_id])
+
         temp = []
-        for col_id in keycols:
-            for cell in self.col(col_id):
-                if cell != '' and type(cell) is str and keycol in cell:
-                    temp.append(col_id)
-        keycols = temp
+        for row_id in kc_rowIDs:
+            for col_id, cell in enumerate(self.row(row_id), 1):
+                if cell != '' and type(cell) is str and keycols in cell:
+                    temp.append([row_id, col_id])
+        kc_indexIDs = temp
 
-
-        if len(keyrows) != len(keycols):
-            raise ValueError('Error - keyrows != keycols most likely due to missing keyword flag keyrow IDs: {}, keycol IDs: {}'.format(keyrows, keycols))
+        if len(kr_indexIDs) != len(kc_indexIDs):
+            raise ValueError('Error - keyrows != keycols most likely due to missing keyword '
+                             'flag keyrow IDs: {}, keycol IDs: {}'.format(kr_indexIDs, kc_indexIDs))
 
         # datas structure: [{'keycols': ..., 'keyrows': ..., 'data'},...]
         datas = []
         dataset_i = 0
-        for kr, kc in zip(keyrows, keycols):
+        for kr_indexID, kc_indexID in zip(kr_indexIDs, kc_indexIDs):
+
+            r, c = 0, 1
 
             datas.append({'keyrows': [], 'keycols': [], 'data': []})
 
-            keycol = self.col(kc)[kr:]
+            # pull the column for keycol_ID
+            kr_header = self.col(kr_indexID[c])[kr_indexID[r]:]
+            # find the end for column header (by looking for empty cell)
             try:
-                end_col_index = keycol.index('')
+                end_col_index = kr_header.index('')
             except ValueError:
-                end_col_index = self.maxrow - kr
-            kc_end = kr + end_col_index
+                end_col_index = self.maxrow - kr_indexID[r]
+            kr_end = end_col_index
 
-            keyrow = self.row(kr)[kc:]
+            # pull the row for keyrow_ID
+            kc_header = self.row(kc_indexID[r])[kc_indexID[c]:]
+            # find the end for column header (by looking for empty cell)
             try:
-                end_row_index = keyrow.index('')
+                end_row_index = kc_header.index('')
             except ValueError:
-                end_row_index = self.maxcol - kc
-            kr_end = kc + end_row_index
+                end_row_index = self.maxrow - kc_indexID[c]
+            kc_end = end_row_index
 
-            datas[dataset_i]['keyrows'] = keycol[:end_col_index]
-            datas[dataset_i]['keycols'] = keyrow[:end_row_index]
+            # truncate headers down
+            datas[dataset_i]['keyrows'] = kr_header[:kr_end]
+            datas[dataset_i]['keycols'] = kc_header[:kc_end]
 
-            for row_i in range(kr + 1, kc_end + 1):
-                datas[dataset_i]['data'].append(self.row(row_i)[kc:kr_end])
+            for row_i in range(kr_indexID[r] + 1, kr_indexID[r] + kr_end + 1):
+                datas[dataset_i]['data'].append(self.row(row_i)[kc_indexID[c]:kc_indexID[c] + kc_end])
             dataset_i += 1
 
         return datas

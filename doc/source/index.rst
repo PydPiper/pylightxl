@@ -9,24 +9,25 @@
 
    <br />
 
-Welcome to pylightxl documentation. A light weight Microsoft Excel File reader. Although there are
-several excellent read/write options out there (`python-excel.org <python-excel.org>`_) pylightxl focused
+Welcome to pylightxl documentation
+----------------------------------
+
+A light weight Microsoft Excel File reader. Although there are
+several excellent read/write options out there (`see python-excel.org <https://www.python-excel.org/>`_) pylightxl focused
 on the following key features:
 
-
-- Zero non-standard library dependencies (standard libs used: ``zipfile``, ``re``, ``os``, ``sys``). |br|
+- **Zero non-standard library dependencies** |br|
   No compatibility/version control issues.
 
-- Single source code that supports both Python37 and Python27.
-  The light weight library is only 3 source files that can be easily copied directly into a project for
-  those that have installation/download restrictions. In addition the library's size and zero dependency makes
-  pyinstaller compilation small and easy!
+- **Light-weight single source code file that supports both Python37 and Python27.** |br|
+  Single source files that can easily be copied directly into a project for true zero-dependency. |br|
+  Great for those that have installation/download restrictions. |br|
+  In addition the library's size and zero dependency makes this library pyinstaller compilation small and easy!
 
-- 100% test-driven development for highest reliability/maintainability with 100% coverage on all supported versions
+- **100% test-driven development for highest reliability/maintainability with 100% coverage on all supported versions**
 
-- API aimed to be user friendly, intuitive and to the point with no bells and whistles. Structure: database > worksheet > indexing |br|
+- **API aimed to be user friendly and intuitive. Structure: database > worksheet > indexing**
   example: ``db.ws('Sheet1').index(row=1,col=2)``  or ``db.ws('Sheet1').address(address='B1')``
-
 
 High-Level Feature Summary
 --------------------------
@@ -34,11 +35,11 @@ High-Level Feature Summary
 
 - Index cell data by row/col number or address
 
-- Calling an entire row/col of data returns an easy to use list output: |br| ``db.ws('Sheet1').row(1)`` or ``db.ws('Sheet1').rows``
+- Calling an entire row/col of data returns an easy to use list output: ``db.ws('Sheet1').row(1)`` or ``db.ws('Sheet1').rows``
 
-- Worksheet data size is consistent for each row/col. Any data that is empty will return a ''
+- Worksheet data size is consistent for each row/col. Any data that is empty will return a '' (default empty cell can be updated)
 
-- Writer now working in v1.41 (please see limitations)
+- Write to existing or now spreadsheets
 
 
 Limitations
@@ -47,11 +48,9 @@ Although every effort was made to support a variety of users, the following limi
 
 - Does not support ``.xls`` files (Microsoft Excel 2003 and older files)
 
-- Writer does not support anything other than cell data (no graphs, images, macros, formatting will be saved)
+- Writer does not support anything other than cell data (no graphs, images, macros, formatting)
 
 - Does not support worksheet cell data more than 536,870,912 cells (32-bit list limitation)
-
-
 
 
 .. toctree::
