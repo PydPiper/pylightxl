@@ -41,16 +41,14 @@ or into the python/lib/site-packages folder for general use.
 
     pylightxl
         1- __init__.py
-        2- readxl.py
-        3- database.py
+        2- pylightxl.py
 
 3.) Populate the files with their respective source code contents:
 
     3.1) File1: `__init__.py <https://github.com/PydPiper/pylightxl/blob/master/pylightxl/__init__.py>`_
 
-    3.2) File2: `readxl.py <https://github.com/PydPiper/pylightxl/blob/master/pylightxl/readxl.py>`_
+    3.2) File2: `pylightxl.py <https://github.com/PydPiper/pylightxl/blob/master/pylightxl/pylightxl.py>`_
 
-    3.3) File3: `database.py <https://github.com/PydPiper/pylightxl/blob/master/pylightxl/database.py>`_
 
 
 

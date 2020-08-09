@@ -38,8 +38,8 @@ Sample - see [docs - quick start guide](https://pylightxl.readthedocs.io/en/late
 
 - **100% test-driven development for highest reliability/maintainability with 100% coverage on all supported versions**
 
-- **API aimed to be user friendly and intuitive. Structure: database > worksheet > indexing**
-  example: ``db.ws('Sheet1').index(row=1,col=2)``  or ``db.ws('Sheet1').address(address='B1')``
+- **API aimed to be user friendly and intuitive. Structure: database > worksheet > indexing example:**
+   ``db.ws('Sheet1').index(row=1,col=2)``  or ``db.ws('Sheet1').address(address='B1')``
 
 ---
 
