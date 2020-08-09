@@ -1,10 +1,15 @@
 Revision Log
 ============
 
-in-work version 1.5
--------------------
+Future Tasks
+------------
 - additional database indexing features
 - performance
+
+pypi version 1.44
+-----------------
+- bug fix: accounted for num2letter roll-over issue
+- new feature: added a pylightxl native function for handling semi-structured data
 
 pypi version 1.43
 -----------------

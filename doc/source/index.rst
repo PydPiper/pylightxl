@@ -13,8 +13,8 @@ Welcome to pylightxl documentation
 ----------------------------------
 
 A light weight Microsoft Excel File reader. Although there are
-several excellent read/write options out there (`see python-excel.org <https://www.python-excel.org/>`_) pylightxl focused
-on the following key features:
+several excellent read/write options out there (`python-excel.org <https://www.python-excel.org/>`_ or
+`excelpython.org <https://www.excelpython.org/>`_) pylightxl focused on the following key features:
 
 - **Zero non-standard library dependencies** |br|
   No compatibility/version control issues.

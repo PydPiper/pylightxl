@@ -24,34 +24,22 @@ Sample - see [docs - quick start guide](https://pylightxl.readthedocs.io/en/late
  - Writer does not support anything other than writing values/formulas/strings.
  - Writing to existing workbooks will remove any macros/buttons/graphs/formatting!
 
-#### **In-work version 1.5**
-- additional database indexing features
-- performance
+---
 
-#### **pypi version 1.43**
-- bug fix: accounted for reading error'ed out cell "#N/A"
-- bug fix: accounted for bool TRUE/FALSE cell values not registering on readxl
-- bug fix: accounted for edge case that was prematurely splitting cell tags <c r /> by formula closing
-  bracket <f />
-- bug fix: accounted for cell address roll-over
+#### **Why pylightxl over pandas/openpyxl/xlrd**
 
+- **Zero non-standard library dependencies** 
+  No compatibility/version control issues.
 
-#### **Why pylightxl over pandas/openpyxl**
-- **(compatibility +1, small lib +1)** pylightxl has no external dependencies (only uses python built-in 
-  standard libs).
-- **(compatibility +1)** pylightxl was written to be compatible for python 2.7-3+ under one single
-  pylightxl version. It does not impose rules on users to switch versions.
-- **(small lib +1)** pylightxl was written to simply read/write, thereby making the library small 
-  without any bells or whistles which makes it easy to compile with PyInstaller and other packagers
-- **(user friendly +1)** pylightxl was written to be as pythonic and easy to use as possible. Core 
-  developers actively survey Stack Overflow questions on working with excel files to tailor the API 
-  for most common problems.
-- **(see [xlrd](https://xlrd.readthedocs.io/en/latest/) before pylightxl)** Note that the xlrd library is 
-  very similar in values to pylightxl, but with much more functionality! Please take a look 
-  at [xlrd](https://xlrd.readthedocs.io/en/latest/) to see if it is a good fit for your project.
-  So why pick pylightxl over xlrd that has much more to offer? Currently, xlrd does not have any active
-  developers. Pylightxl is a new library aimed to help solve current excel data issues (as surveyed 
-  by Stack Overflow), please submit your suggestions to help improve this library together.
+- **Light-weight single source code file that supports both Python37 and Python27.** 
+  Single source files that can easily be copied directly into a project for true zero-dependency. 
+  Great for those that have installation/download restrictions. 
+  In addition the library's size and zero dependency makes this library pyinstaller compilation small and easy!
+
+- **100% test-driven development for highest reliability/maintainability with 100% coverage on all supported versions**
+
+- **API aimed to be user friendly and intuitive. Structure: database > worksheet > indexing**
+  example: ``db.ws('Sheet1').index(row=1,col=2)``  or ``db.ws('Sheet1').address(address='B1')``
 
 ---
 
@@ -61,6 +49,18 @@ key features of pylightxl is that it is packed light in case the user has pip
 and/or download restrictions, see [docs - installation](https://pylightxl.readthedocs.io/en/latest/installation.html)
 
 ```pip install pylightxl```
+
+---
+
+#### **Future Tasks**
+- additional database indexing features
+- performance
+
+#### **pypi version 1.44**
+- bug fix: accounted for num2letter roll-over issue
+- new feature: added a pylightxl native function for handling semi-structured data
+
+See full history log of revisions: [Here](https://pylightxl.readthedocs.io/en/latest/revlog.html)
 
 ---
 
