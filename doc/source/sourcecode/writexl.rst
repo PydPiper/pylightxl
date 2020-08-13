@@ -1,8 +1,5 @@
 writexl
 =======
 
-.. automodule:: pylightxl.writexl
+.. autofunction:: pylightxl.pylightxl.writexl
     :members:
-
-
-
