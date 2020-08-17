@@ -24,12 +24,11 @@ jobs:
       # install dependencies
       - run:
           name: install dependencies
+          # note on linux virtualenv is in venv/bin/activate not venv/Scripts/activate
           command: |
             python -m pip install virtualenv
             python -m virtualenv venv
-            dir venv
-            dir venv/Scripts
-            . venv/Scripts/activate
+            . venv/bin/activate
             python -m pip install pytest pytest-cov
 
       # run tests
@@ -52,10 +51,11 @@ jobs:
       # install dependencies
       - run:
           name: install dependencies
+          # note on linux virtualenv is in venv/bin/activate not venv/Scripts/activate
           command: |
             python -m pip install virtualenv
             python -m virtualenv venv
-            . venv/Scripts/activate
+            . venv/bin/activate
             python -m pip install pytest pytest-cov
 
       # run tests
