@@ -23,17 +23,18 @@ jobs:
 
       # install dependencies
       - run:
-        name: install dependencies
-        command: python -m pip install virtualenv
-        command: python -m virtualenv venv
-        command: . venv/Scripts/activate
-        command: python -m pip install pytest pytest-cov
+          name: install dependencies
+          command: |
+            python -m pip install virtualenv
+            python -m virtualenv venv
+            . venv/Scripts/activate
+            python -m pip install pytest pytest-cov
 
       # run tests
       - run:
-        name: run tests
-        command: |
-          python -m pytest -v --cov
+          name: run tests
+          command: |
+            python -m pytest -v --cov
 
   test38:
     docker:
@@ -48,14 +49,16 @@ jobs:
 
       # install dependencies
       - run:
-        name: install dependencies
-        command: python -m pip install virtualenv
-        command: python -m virtualenv venv
-        command: . venv/Scripts/activate
-        command: python -m pip install pytest pytest-cov
+          name: install dependencies
+          command: |
+            python -m pip install virtualenv
+            python -m virtualenv venv
+            . venv/Scripts/activate
+            python -m pip install pytest pytest-cov
 
       # run tests
       - run:
-        name: run tests
-        command: |
-          python -m pytest -v --cov
+          name: run tests
+          command: |
+            python -m pytest -v --cov
+
