@@ -10,7 +10,7 @@ workflows:
       - test38
 
 jobs:
-  test27: testing python 2.7
+  test27:
     docker:
       - image: circleci/python:2.7
 
@@ -36,7 +36,7 @@ jobs:
         command: |
           python -m pytest -v --cov
 
-  test38: testing python 3.8
+  test38:
     docker:
       - image: circleci/python:3.8
 
