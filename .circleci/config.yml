@@ -27,6 +27,7 @@ jobs:
           command: |
             python -m pip install virtualenv
             python -m virtualenv venv
+            dir
             . venv/Scripts/activate
             python -m pip install pytest pytest-cov
 
