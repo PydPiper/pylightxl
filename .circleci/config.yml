@@ -1,7 +1,16 @@
 # definition of circleCI version
 version: 2
+
+# define workflow of executions
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test27
+      - test38
+
 jobs:
-  py27:
+  test27:
     docker:
       - image: circleci/python:2.7
 
@@ -16,6 +25,35 @@ jobs:
       - run:
         name: install dependencies
         command: |
+          python -m pip install virtualenv
+          python -m virtualenv venv
+          . venv/Scripts/activate
+          python -m pip install pytest pytest-cov
+
+      # run tests
+      - run:
+        name: run tests
+        command: |
+          python -m pytest -v --cov
+
+  test27:
+    docker:
+      - image: circleci/python:3.8
+
+    # change server dir to repo where we clone down the repo
+    working_directory: ~/repo
+
+    steps:
+      # download repo
+      - checkout
+
+      # install dependencies
+      - run:
+        name: install dependencies
+        command: |
+          python -m pip install virtualenv
+          python -m virtualenv venv
+          . venv/Scripts/activate
           python -m pip install pytest pytest-cov
 
       # run tests
