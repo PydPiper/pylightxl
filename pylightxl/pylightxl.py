@@ -984,7 +984,7 @@ class Database:
 
         return self._ws_names
 
-    def add_ws(self, sheetname, data):
+    def add_ws(self, sheetname, data=None):
         """
         Logs worksheet name and its data in the database
 
@@ -993,6 +993,8 @@ class Database:
         :return: None
         """
 
+        if data is None:
+            data = {'A1': {'v': '', 'f': '', 's': ''}}
         self._ws.update({sheetname: Worksheet(data)})
         self._ws_names.append(sheetname)
 
