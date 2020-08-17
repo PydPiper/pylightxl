@@ -25,10 +25,10 @@ jobs:
       - run:
         name: install dependencies
         command: |
-          python -m pip install virtualenv
-          python -m virtualenv venv
-          . venv/Scripts/activate
-          python -m pip install pytest pytest-cov
+            python -m pip install virtualenv
+            python -m virtualenv venv
+            . venv/Scripts/activate
+            python -m pip install pytest pytest-cov
 
       # run tests
       - run:
@@ -51,10 +51,10 @@ jobs:
       - run:
         name: install dependencies
         command: |
-          python -m pip install virtualenv
-          python -m virtualenv venv
-          . venv/Scripts/activate
-          python -m pip install pytest pytest-cov
+            python -m pip install virtualenv
+            python -m virtualenv venv
+            . venv/Scripts/activate
+            python -m pip install pytest pytest-cov
 
       # run tests
       - run:
