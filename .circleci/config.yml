@@ -34,7 +34,9 @@ jobs:
       # run tests
       - run:
           name: run tests
+          # note you have to reactive on each -run
           command: |
+            . venv/bin/activate
             python -m pytest -v --cov
 
   test38:
@@ -61,6 +63,8 @@ jobs:
       # run tests
       - run:
           name: run tests
+          # note you have to reactive on each -run
           command: |
+            . venv/bin/activate
             python -m pytest -v --cov
 
