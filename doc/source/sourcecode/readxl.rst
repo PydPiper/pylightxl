@@ -1,8 +1,6 @@
 readxl
 ======
 
-.. automodule:: pylightxl.readxl
-    :members:
-
+.. autofunction:: pylightxl.pylightxl.readxl
 
 
