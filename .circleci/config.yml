@@ -1,25 +1,25 @@
 # definition of circleCI version
 version: 2
-  jobs:
-    py27:
-      docker:
-        - image: circleci/python:2.7
+jobs:
+  py27:
+    docker:
+      - image: circleci/python:2.7
 
-      # change server dir to repo where we clone down the repo
-      working_directory: ~/repo
+    # change server dir to repo where we clone down the repo
+    working_directory: ~/repo
 
-      steps:
-        # download repo
-        - checkout
+    steps:
+      # download repo
+      - checkout
 
-        # install dependencies
-        - run:
-          name: install dependencies
-          command: |
-            python -m pip install pytest pytest-cov
+      # install dependencies
+      - run:
+        name: install dependencies
+        command: |
+          python -m pip install pytest pytest-cov
 
-        # run tests
-        - run:
-          name: run tests
-          command: |
-            python -m pytest -v --cov
+      # run tests
+      - run:
+        name: run tests
+        command: |
+          python -m pytest -v --cov
