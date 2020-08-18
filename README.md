@@ -1,4 +1,10 @@
-[![pydpiper](https://circleci.com/gh/pydpiper/pylightxl.svg?style=svg)](https://github.com/PydPiper/pylightxl)
+<p align="center">
+    <a href="https://app.circleci.com/pipelines/github/PydPiper">
+        <img src="https://img.shields.io/circleci/project/github/badges/shields/master" alt="build status"></a>
+    <a href="">
+            <img src="https://img.shields.io/coveralls/github/badges/shields"
+                alt="coverage"></a>
+</p>
 
 ![logo](doc/source/_static/header_logo.gif)
 # pylightxl - A Light Weight Excel Reader/Writer
