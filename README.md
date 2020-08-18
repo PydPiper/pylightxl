@@ -1,4 +1,4 @@
-[![build]https://img.shields.io/circleci/build/gh/PydPiper/pylightxl](https://app.circleci.com/pipelines/github/PydPiper/pylightxl)
+[![Build](https://img.shields.io/circleci/build/gh/PydPiper/pylightxl)](https://app.circleci.com/pipelines/github/PydPiper/pylightxl)
 
 
 ![logo](doc/source/_static/header_logo.gif)
