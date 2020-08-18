@@ -1,8 +1,4 @@
-**Please help us spread the word about pylightxl to the community by voting for pylightxl to be added
-to python-awesome list. Follow the [LINK](https://github.com/vinta/awesome-python/pull/1449) and upvote
-the pull request in the top right corner (emoji)**
-![vote](doc/source/_static/awesomelist.png)
-
+[![<ORG_NAME>](https://circleci.com/<VCS>/<ORG_NAME>/<PROJECT_NAME>.svg?style=svg)](<https://github.com/PydPiper/pylightxl>)
 
 ![logo](doc/source/_static/header_logo.gif)
 # pylightxl - A Light Weight Excel Reader/Writer
@@ -12,6 +8,10 @@ Microsoft Excel reader/writer python 2.7-3+ library. See documentation: [docs](h
 Sample - see [docs - quick start guide](https://pylightxl.readthedocs.io/en/latest/quickstart.html) for more examples:
 ![Example Code](doc/source/_static/readme_demo.gif)
 
+
+**Please help us spread the word about pylightxl to the community by voting for pylightxl to be added
+to python-awesome list. Follow the [LINK](https://github.com/vinta/awesome-python/pull/1449) and upvote
+the pull request in the top right corner (emoji)**
 ---
 
 #### **Supports**:
