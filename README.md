@@ -1,4 +1,4 @@
-[![<pydpiper>](https://circleci.com/<gh>/<pydpiper>/<pylightxl>.svg?style=svg)](<https://github.com/PydPiper/pylightxl>)
+[![pydpiper](https://circleci.com/gh/pydpiper/pylightxl.svg?style=svg)](https://github.com/PydPiper/pylightxl)
 
 ![logo](doc/source/_static/header_logo.gif)
 # pylightxl - A Light Weight Excel Reader/Writer
