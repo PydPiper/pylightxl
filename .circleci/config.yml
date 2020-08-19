@@ -1,9 +1,11 @@
 # definition of circleCI version
-version: 2
+version: 2.1
+orbs:
+  coveralls: coveralls/coveralls@1.0.6
 
 # define workflow of executions
 workflows:
-  version: 2
+  version: 2.1
   test:
     jobs:
       - test27
@@ -67,4 +69,6 @@ jobs:
           command: |
             . venv/bin/activate
             python -m pytest -v --cov
+
+      - coveralls/upload
 

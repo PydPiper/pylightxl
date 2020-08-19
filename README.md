@@ -1,5 +1,5 @@
 [![Build](https://img.shields.io/circleci/build/gh/PydPiper/pylightxl)](https://app.circleci.com/pipelines/github/PydPiper/pylightxl)
-
+[![Coverage](https://coveralls.io/repos/github/PydPiper/pylightxl/badge.svg?branch=master)](https://coveralls.io/github/PydPiper/pylightxl?branch=master)
 
 ![logo](doc/source/_static/header_logo.gif)
 # pylightxl - A Light Weight Excel Reader/Writer
@@ -13,6 +13,7 @@ Sample - see [docs - quick start guide](https://pylightxl.readthedocs.io/en/late
 **Please help us spread the word about pylightxl to the community by voting for pylightxl to be added
 to python-awesome list. Follow the [LINK](https://github.com/vinta/awesome-python/pull/1449) and upvote
 the pull request in the top right corner (emoji)**
+
 ---
 
 #### **Supports**:
