@@ -1,7 +1,7 @@
 # definition of circleCI version
 version: 2.1
 orbs:
-  codecov: codecov/codecov@1.0.2
+  codecov: codecov/codecov@1.1.1
 
 
 # define workflow of executions
