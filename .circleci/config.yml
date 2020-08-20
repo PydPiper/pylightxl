@@ -69,8 +69,9 @@ jobs:
           # note you have to reactive on each -run
           command: |
             . venv/bin/activate
-            python -m pytest -v --cov
+            python -m pytest --cov-report=xml --cov='.'
+            ls
 
       - codecov/upload:
-          file: .coverage
+          file: coverage.xml
 

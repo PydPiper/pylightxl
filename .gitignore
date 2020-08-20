@@ -13,7 +13,8 @@ dist
 pylightxl.egg-info
 pylightxl_temp
 ~$testbook.xlsx
-.coverage
+*.coverage
+*.xml
 htmlcov
 
 test.py

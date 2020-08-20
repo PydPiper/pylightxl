@@ -1,5 +1,5 @@
 [![Build](https://img.shields.io/circleci/build/gh/PydPiper/pylightxl)](https://app.circleci.com/pipelines/github/PydPiper/pylightxl)
-[![Coverage](https://coveralls.io/repos/github/PydPiper/pylightxl/badge.svg?branch=master)](https://coveralls.io/github/PydPiper/pylightxl?branch=master)
+[![Coverage](https://codecov.io/gh/PydPiper/pylightxl/branch/master/graph/badge.svg)](https://codecov.io/gh/PydPiper/pylightxl)
 
 ![logo](doc/source/_static/header_logo.gif)
 # pylightxl - A Light Weight Excel Reader/Writer
