@@ -2,6 +2,8 @@
 version: 2.1
 orbs:
   coveralls: coveralls/coveralls@1.0.6
+  # required to add "npm" to circleci commands
+  node: circleci/node@4.0.0
 
 # define workflow of executions
 workflows:
