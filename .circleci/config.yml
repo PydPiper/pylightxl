@@ -1,9 +1,8 @@
 # definition of circleCI version
 version: 2.1
 orbs:
-  coveralls: coveralls/coveralls@1.0.6
-  # required to add "npm" to circleci commands
-  node: circleci/node@4.0.0
+  codecov: codecov/codecov@1.0.2
+
 
 # define workflow of executions
 workflows:
@@ -72,5 +71,6 @@ jobs:
             . venv/bin/activate
             python -m pytest -v --cov
 
-      - coveralls/upload
+      - codecov/upload:
+        file: {{ /.coverage }}
 
