@@ -72,5 +72,5 @@ jobs:
             python -m pytest -v --cov
 
       - codecov/upload:
-          file: {{ /.coverage }}
+          file: .coverage
 
