@@ -1,9 +1,13 @@
+<p style="text-align: center;">
+
 [![Build](https://img.shields.io/circleci/build/gh/PydPiper/pylightxl)](https://app.circleci.com/pipelines/github/PydPiper/pylightxl)
-[![codecov](https://codecov.io/gh/PydPiper/pylightxl/branch/master/graph/badge.svg)](https://codecov.io/gh/PydPiper/pylightxl)
+![Codecov branch](https://img.shields.io/codecov/c/github/PydPiper/pylightxl/master)
 ![PyPI](https://img.shields.io/pypi/v/pylightxl)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/pylightxl)](https://pypi.org/project/pylightxl/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pylightxl)
 ![GitHub](https://img.shields.io/github/license/PydPiper/pylightxl)
+
+</p>
 
 ![logo](doc/source/_static/header_logo.gif)
 # pylightxl - A Light Weight Excel Reader/Writer
