@@ -26,6 +26,11 @@
 <h2 align="center">
     pylightxl - A Light Weight Excel Reader/Writer
 </h2>
+<h3>
+    <a href="https://pylightxl.readthedocs.io/en/latest/quickstart.html">
+        Documentation
+    </a>
+</h3>
 
 <p align="center">
     <a>
@@ -38,7 +43,6 @@
     </a>
 </p>
 
-[Documentation](https://pylightxl.readthedocs.io/en/latest/quickstart.html)
 
 **Please help us spread the word about pylightxl to the community by voting for pylightxl to be added
 to python-awesome list. Follow the [LINK](https://github.com/vinta/awesome-python/pull/1449) and upvote
