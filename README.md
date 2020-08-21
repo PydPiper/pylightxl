@@ -1,7 +1,5 @@
 <p align="center">
-
-![logo](doc/source/_static/header_logo.gif)
-    
+    <img src=doc/source/_static/header_logo.gif>
 </p>
 
 <p align="center">
