@@ -1,26 +1,41 @@
-
-
 <p align="center">
-
-![logo](doc/source/_static/header_logo.gif)
-
-[![Build](https://img.shields.io/circleci/build/gh/PydPiper/pylightxl)](https://app.circleci.com/pipelines/github/PydPiper/pylightxl)
-![Codecov branch](https://img.shields.io/codecov/c/github/PydPiper/pylightxl/master)
-![PyPI](https://img.shields.io/pypi/v/pylightxl)
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/pylightxl)](https://pypi.org/project/pylightxl/)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pylightxl)
-![GitHub](https://img.shields.io/github/license/PydPiper/pylightxl)
-
-### pylightxl - A Light Weight Excel Reader/Writer
-A light weight, zero dependency (only standard libs used), to the point (no bells and whistles) 
-Microsoft Excel reader/writer python 2.7-3+ library. See documentation: [docs](https://pylightxl.readthedocs.io)
-
-![Example Code](doc/source/_static/readme_demo.gif)
-[docs - quick start guide](https://pylightxl.readthedocs.io/en/latest/quickstart.html)
-
+    ![logo](doc/source/_static/header_logo.gif)
 </p>
 
- 
+<p align="center">
+    <a>
+    [![Build](https://img.shields.io/circleci/build/gh/PydPiper/pylightxl)](https://app.circleci.com/pipelines/github/PydPiper/pylightxl)
+    </a>
+    <a>
+    ![Codecov branch](https://img.shields.io/codecov/c/github/PydPiper/pylightxl/master)
+    </a>
+    <a>
+    ![PyPI](https://img.shields.io/pypi/v/pylightxl)
+    </a>
+    <a>
+    [![PyPI - Downloads](https://img.shields.io/pypi/dm/pylightxl)](https://pypi.org/project/pylightxl/)
+    </a>
+    <a>
+    ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pylightxl)
+    </a>
+    <a>
+    ![GitHub](https://img.shields.io/github/license/PydPiper/pylightxl)
+    </a>
+</p>
+
+<p align="center">
+    <a>
+    pylightxl - A Light Weight Excel Reader/Writer
+    A light weight, zero dependency (only standard libs used), to the point (no bells and whistles) 
+    Microsoft Excel reader/writer python 2.7-3+ library. See documentation: [docs](https://pylightxl.readthedocs.io)
+    </a>
+    <a>
+    ![Example Code](doc/source/_static/readme_demo.gif)
+    </a>
+    <a>
+    [docs - quick start guide](https://pylightxl.readthedocs.io/en/latest/quickstart.html)
+    </a>
+</p>
 
 **Please help us spread the word about pylightxl to the community by voting for pylightxl to be added
 to python-awesome list. Follow the [LINK](https://github.com/vinta/awesome-python/pull/1449) and upvote
