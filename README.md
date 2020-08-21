@@ -1,8 +1,11 @@
 <p align="center">
+
     ![logo](doc/source/_static/header_logo.gif)
+    
 </p>
 
 <p align="center">
+
     <a>
     [![Build](https://img.shields.io/circleci/build/gh/PydPiper/pylightxl)](https://app.circleci.com/pipelines/github/PydPiper/pylightxl)
     </a>
@@ -21,9 +24,11 @@
     <a>
     ![GitHub](https://img.shields.io/github/license/PydPiper/pylightxl)
     </a>
+    
 </p>
 
 <p align="center">
+
     <a>
     pylightxl - A Light Weight Excel Reader/Writer
     A light weight, zero dependency (only standard libs used), to the point (no bells and whistles) 
@@ -35,6 +40,7 @@
     <a>
     [docs - quick start guide](https://pylightxl.readthedocs.io/en/latest/quickstart.html)
     </a>
+    
 </p>
 
 **Please help us spread the word about pylightxl to the community by voting for pylightxl to be added
