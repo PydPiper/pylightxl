@@ -24,13 +24,13 @@
 </p>
 
 <h2 align="center">
-    pylightxl - A Light Weight Excel Reader/Writer
-</h2>
-<h3>
+    <a>
+        pylightxl - A Light Weight Excel Reader/Writer
+    </a>
     <a href="https://pylightxl.readthedocs.io/en/latest/quickstart.html">
         Documentation
     </a>
-</h3>
+</h2>
 
 <p align="center">
     <a>
