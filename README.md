@@ -1,70 +1,45 @@
 <p align="center">
-    <img src=doc/source/_static/header_logo.gif>
+    <img src="doc/source/_static/header_logo.gif" />
 </p>
 
 <p align="center">
+    <a href="https://app.circleci.com/pipelines/github/PydPiper/pylightxl" alt="build">
+        <img scr="https://img.shields.io/circleci/build/gh/PydPiper/pylightxl" />
+    </a>
+    <a href="https://codecov.io/gh/PydPiper/pylightxl" alt="codecov">
+        <img scr="https://img.shields.io/codecov/c/github/PydPiper/pylightxl/master" />
+    </a>
+    <a href="https://pypi.org/project/pylightxl/" alt="pypi">
+        <img scr="https://img.shields.io/pypi/v/pylightxl" />
+    </a>
+    <a href="https://pypi.org/project/pylightxl/" alt="downloads">
+        <img scr="https://img.shields.io/pypi/dm/pylightxl" />
+    </a>
+    <a alt="python">
+        <img scr="https://img.shields.io/pypi/pyversions/pylightxl" />
+    </a>
+    <a  alt="license">
+        <img scr="https://img.shields.io/github/license/PydPiper/pylightxl" />
+    </a>
+</p>
 
-<a>
+<center>
+    <h1>
+    pylightxl - A Light Weight Excel Reader/Writer
+    </h1>
+</center>
 
-[![Build](https://img.shields.io/circleci/build/gh/PydPiper/pylightxl)](https://app.circleci.com/pipelines/github/PydPiper/pylightxl)
-
-</a>
-
-<a>
-
-![Codecov branch](https://img.shields.io/codecov/c/github/PydPiper/pylightxl/master)
-
-</a>
-
-<a>
-
-![PyPI](https://img.shields.io/pypi/v/pylightxl)
-
-</a>
-
-<a>
-
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/pylightxl)](https://pypi.org/project/pylightxl/)
-
-</a>
-
-<a>
-
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pylightxl)
-
-</a>
-
-<a>
-
-![GitHub](https://img.shields.io/github/license/PydPiper/pylightxl)
-
-</a>
+<p align="center">
+    <a>
+        A light weight, zero dependency (only standard libs used), to the point (no bells and whistles) 
+        Microsoft Excel reader/writer python 2.7-3+ library. See documentation: [docs](https://pylightxl.readthedocs.io)
+    </a>
     
+    <a>
+        <img scr="doc/source/_static/readme_demo.gif" />
+    </a>
 </p>
-
-<p align="center">
-
-<a>
-
-pylightxl - A Light Weight Excel Reader/Writer
-A light weight, zero dependency (only standard libs used), to the point (no bells and whistles) 
-Microsoft Excel reader/writer python 2.7-3+ library. See documentation: [docs](https://pylightxl.readthedocs.io)
-
-</a>
-
-<a>
-
-![Example Code](doc/source/_static/readme_demo.gif)
-
-</a>
-
-<a>
-
 [docs - quick start guide](https://pylightxl.readthedocs.io/en/latest/quickstart.html)
-
-</a>
-    
-</p>
 
 **Please help us spread the word about pylightxl to the community by voting for pylightxl to be added
 to python-awesome list. Follow the [LINK](https://github.com/vinta/awesome-python/pull/1449) and upvote
