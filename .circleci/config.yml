@@ -29,8 +29,7 @@ jobs:
           name: install dependencies
           # note on linux virtualenv is in venv/bin/activate not venv/Scripts/activate
           command: |
-            python -m pip install virtualenv
-            python -m pip install pathlib
+            python -m pip install virtualenv pathlib
             python -m virtualenv venv
             . venv/bin/activate
             python -m pip install pytest -v

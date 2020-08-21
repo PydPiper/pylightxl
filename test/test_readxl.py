@@ -1,9 +1,13 @@
 # standard lib imports
 from unittest import TestCase
-import os
+import os, sys
 
 # 3rd party lib support
-from pathlib import Path
+
+if sys.version_info[0] == 3:
+    from pathlib import Path
+else:
+    from pathlib2 import Path
 
 # local lib imports
 from pylightxl.pylightxl import readxl
