@@ -24,9 +24,9 @@
 </p>
 
 <h2 align="center">
-    <a>
+    <p>
         pylightxl - A Light Weight Excel Reader/Writer
-    </a>
+    </p>
     <a href="https://pylightxl.readthedocs.io/en/latest/quickstart.html">
         Documentation
     </a>
@@ -37,10 +37,7 @@
         A light weight, zero dependency (only standard libs used), to the point (no bells and whistles) 
         Microsoft Excel reader/writer python 2.7-3+ library.
     </a>
-    
-    <a>
-        <img src="doc/source/_static/readme_demo.gif" />
-    </a>
+    <img src="doc/source/_static/readme_demo.gif" />
 </p>
 
 
