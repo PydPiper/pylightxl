@@ -8,7 +8,6 @@ from pylightxl.pylightxl import writexl, writexl_new_rels_text, writexl_new_app_
 from pylightxl.pylightxl import Database, address2index, index2address
 
 
-
 class test_write_new(TestCase):
 
     def test_rels_text(self):

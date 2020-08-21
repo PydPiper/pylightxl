@@ -1,16 +1,19 @@
 # standard lib imports
 from unittest import TestCase
+import os
 
+# 3rd party lib support
+from pathlib import Path
 
 # local lib imports
 from pylightxl.pylightxl import readxl
 from pylightxl.pylightxl import Database, Worksheet, address2index, index2address, \
     columnletter2num, num2columnletters
 
-try:
+if 'test' in os.listdir('.'):
     # running from top level
     DB = readxl('./test/testbook.xlsx')
-except ValueError:
+else:
     # running within /test folder or in debug
     DB = readxl('./testbook.xlsx')
 
@@ -31,15 +34,36 @@ class test_readxl_bad_input(TestCase):
 
     def test_bad_fn_ext(self):
         with self.assertRaises(ValueError) as e:
-            try:
-                db = readxl('test/test_readpy')
-            except ValueError:
-                db = readxl('test_readpy')
+            if 'test' in os.listdir('.'):
+                db = readxl('test/test_read.py')
+            else:
+                db = readxl('test_read.py')
             self.assertEqual(e, 'Error - Incorrect Excel file extension ({}). '
                                 'File extension supported: .xlsx .xlsm'.format('py'))
 
+    def test_bad_readxl_sheetnames(self):
+        with self.assertRaises(ValueError) as e:
+            if 'test' in os.listdir('.'):
+                # running from top level
+                db = readxl('./test/testbook.xlsx', ('not-a-sheet',))
+            else:
+                # running within /test folder or in debug
+                db = readxl('./testbook.xlsx', ('not-a-sheet',))
+            self.assertRaises(e, 'Error - Sheetname ({}) is not in the workbook.'.format('not-a-sheet'))
+
 
 class test_readxl_integration(TestCase):
+
+    def test_pathlib_readxl(self):
+        if 'test' in os.listdir('.'):
+            # running from top level
+            mypath = Path('./test/testbook.xlsx')
+        else:
+            # running within /test folder or in debug
+            mypath = Path('./testbook.xlsx')
+
+        db = readxl(fn=mypath, sheetnames=['types',])
+        self.assertEqual(db.ws('types').index(1,1), 11)
 
     def test_AllSheetsRead(self):
         db_ws_names = DB.ws_names

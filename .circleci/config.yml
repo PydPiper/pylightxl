@@ -32,7 +32,7 @@ jobs:
             python -m pip install virtualenv
             python -m virtualenv venv
             . venv/bin/activate
-            python -m pip install pytest pytest-cov
+            python -m pip install pytest -v
 
       # run tests
       - run:
@@ -40,7 +40,7 @@ jobs:
           # note you have to reactive on each -run
           command: |
             . venv/bin/activate
-            python -m pytest -v --cov
+            python -m pytest
 
   test38:
     docker:
@@ -61,7 +61,7 @@ jobs:
             python -m pip install virtualenv
             python -m virtualenv venv
             . venv/bin/activate
-            python -m pip install pytest pytest-cov
+            python -m pip install pytest -v pytest-cov
 
       # run tests
       - run:
