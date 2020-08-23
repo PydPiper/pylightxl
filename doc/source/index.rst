@@ -19,7 +19,7 @@ several excellent read/write options out there (`python-excel.org <https://www.p
 - **Zero non-standard library dependencies** |br|
   No compatibility/version control issues.
 
-- **Light-weight single source code file that supports both Python37 and Python27.** |br|
+- **Light-weight single source code file that supports both Python3 and Python2.7.18.** |br|
   Single source files that can easily be copied directly into a project for true zero-dependency. |br|
   Great for those that have installation/download restrictions. |br|
   In addition the library's size and zero dependency makes this library pyinstaller compilation small and easy!

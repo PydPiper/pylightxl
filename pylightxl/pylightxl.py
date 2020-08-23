@@ -112,7 +112,7 @@ def readxl(fn, sheetnames=()):
         # get common string cell value table
         if 'xl/sharedStrings.xml' in f_zip.NameToInfo.keys():
             with f_zip.open('xl/sharedStrings.xml') as f:
-                sharedString = readxl_get_sharedStrings(f)
+                sharedString = readxl_get_sharedStrings(f, f_zip)
         else:
             sharedString = {}
 
@@ -190,7 +190,7 @@ def readxl_get_zipsheetnames(zipfile):
     return [name for name in zipfile.NameToInfo.keys() if 'sheet' in name and 'rels' not in name]
 
 
-def readxl_get_sharedStrings(file):
+def readxl_get_sharedStrings(file, f_zip):
     """
     Takes a file-handle of xl/sharedStrings.xml and returns a dictionary of commonly used strings
 
@@ -198,22 +198,32 @@ def readxl_get_sharedStrings(file):
     :return: dict of commonly used strings
     """
 
+
     sharedStrings = {}
 
-    text = file.read().decode()
-    # remove next lines that mess up re findall
-    text = text.replace('\r','')
-    text = text.replace('\n','')
+    # extract text from existing app.xml
+    ns = writexl_xml_namespace(file)
+    for prefix, uri in ns.items():
+        ET.register_namespace(prefix, uri)
 
-    # allowed to search <t... because of <t xml:space="preserve"> call for keeping white spaces
-    tag_t = re.compile(r'<t(.*?)</t>')
-    tag_t_vals = tag_t.findall(text)
-    # this will find each string value already separated out as a list
+    try:
+        file.seek(0)
+        tree = ET.parse(file)
+    except:
+        # zipfile from python 2.7.18 comes with zipfile 1.6 doesnt come with file.seek method
+        # raises UnsupportedOperation error
+        with f_zip.open('xl/sharedStrings.xml') as file:
+            tree = ET.parse(file)
 
-    for i, val in enumerate(tag_t_vals):
-        # remove extras from re finding
-        val = val[1:] if 'xml:space="preserve">' not in val else val[22:]
-        sharedStrings.update({i: val})
+    root = tree.getroot()
+    pass
+    for i, tag_si in enumerate(root.findall('./default:si', ns)):
+        tag_t = tag_si.findall('./default:r//default:t', ns)
+        if tag_t:
+            text = ''.join([tag.text for tag in tag_t])
+        else:
+            text = tag_si.findall('./default:t', ns)[0].text
+        sharedStrings.update({i: text})
 
     return sharedStrings
 

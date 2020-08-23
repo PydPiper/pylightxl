@@ -23,6 +23,7 @@ else:
 
 
 # TODO: add test for formula returning empty string </v> tag
+# TODO: add testing for new readxl_get_sharedStrings that reads a cell with variable text formats
 
 class test_readxl_bad_input(TestCase):
 

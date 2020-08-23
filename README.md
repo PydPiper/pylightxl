@@ -35,7 +35,7 @@
 <p align="center">
     <a>
         A light weight, zero dependency (only standard libs used), to the point (no bells and whistles) 
-        Microsoft Excel reader/writer python 2.7-3+ library.
+        Microsoft Excel reader/writer python 2.7.18 - 3+ library.
     </a>
     <img src="doc/source/_static/readme_demo.gif" />
 </p>
@@ -64,7 +64,7 @@ the pull request in the top right corner**
 - **Zero non-standard library dependencies** 
   No compatibility/version control issues.
 
-- **Light-weight single source code file that supports both Python37 and Python27.** 
+- **Light-weight single source code file that supports both Python3 and Python2.7.18.** 
   Single source files that can easily be copied directly into a project for true zero-dependency. 
   Great for those that have installation/download restrictions. 
   In addition the library's size and zero dependency makes this library pyinstaller compilation small and easy!
