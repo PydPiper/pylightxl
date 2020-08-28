@@ -1,3 +1,5 @@
+# TODO: add test for formula returning empty string </v> tag
+
 # standard lib imports
 from unittest import TestCase
 import os, sys
@@ -10,7 +12,7 @@ else:
     from pathlib2 import Path
 
 # local lib imports
-from pylightxl.pylightxl import readxl
+from pylightxl.pylightxl import readxl, writexl
 from pylightxl.pylightxl import Database, Worksheet, address2index, index2address, \
     columnletter2num, num2columnletters
 
@@ -22,10 +24,7 @@ else:
     DB = readxl('./testbook.xlsx')
 
 
-# TODO: add test for formula returning empty string </v> tag
-# TODO: add testing for new readxl_get_sharedStrings that reads a cell with variable text formats
-
-class test_readxl_bad_input(TestCase):
+class TestReadxl_BadInput(TestCase):
 
     def test_bad_fn_type(self):
         with self.assertRaises(ValueError) as e:
@@ -57,7 +56,7 @@ class test_readxl_bad_input(TestCase):
             self.assertRaises(e, 'Error - Sheetname ({}) is not in the workbook.'.format('not-a-sheet'))
 
 
-class test_readxl_integration(TestCase):
+class TestIntegration(TestCase):
 
     def test_pathlib_readxl(self):
         if 'test' in os.listdir('.'):
@@ -68,7 +67,7 @@ class test_readxl_integration(TestCase):
             mypath = Path('./testbook.xlsx')
 
         db = readxl(fn=mypath, sheetnames=['types',])
-        self.assertEqual(db.ws('types').index(1,1), 11)
+        self.assertEqual(db.ws('types').index(1, 1), 11)
 
     def test_AllSheetsRead(self):
         db_ws_names = DB.ws_names
@@ -172,8 +171,28 @@ class test_readxl_integration(TestCase):
     def test_ws_length(self):
         self.assertEqual(DB.ws('length').size, [1048576, 16384])
 
+    def test_reading_written_ws(self):
+        file_path = 'temporary_test_file.xlsx'
+        db = Database()
+        db.add_ws('new_ws')
+        writexl(db, file_path)
+        db = readxl(file_path)
+        self.assertEqual(db.ws_names, ['new_ws'])
+        os.remove(file_path)
 
-class test_Database(TestCase):
+    def test_reading_written_cells(self):
+        file_path = 'temporary_test_file.xlsx'
+        db = Database()
+        db.add_ws('new_ws', {})
+        ws = db.ws('new_ws')
+        ws.update_index(row=4, col=2, val=42)
+        writexl(db, file_path)
+        db = readxl(file_path)
+        self.assertEqual(db.ws('new_ws').index(4, 2), 42)
+        os.remove(file_path)
+
+
+class TestDatabase(TestCase):
     db = Database()
 
     def test_db_badsheet(self):
@@ -199,7 +218,7 @@ class test_Database(TestCase):
         self.db.add_ws(sheetname='test1', data={})
         self.assertEqual(str(self.db.ws(sheetname='test1')), 'pylightxl.Database.Worksheet')
         self.assertEqual(self.db.ws_names, ['test1'])
-        self.db.add_ws('test2', {})
+        self.db.add_ws('test2')
         self.assertEqual(self.db.ws_names, ['test1', 'test2'])
 
     def test_semistrucdata(self):
@@ -235,7 +254,7 @@ class test_Database(TestCase):
         DB.set_emptycell(val='')
 
 
-class test_Worksheet(TestCase):
+class TestWorksheet(TestCase):
 
     def test_ws_init(self):
         ws = Worksheet(data={})
@@ -346,8 +365,17 @@ class test_Worksheet(TestCase):
         self.assertEqual(ws.keyrow(key=22, keyindex=2), [21, 22, 23])
         self.assertEqual(ws.keyrow(key=22, keyindex=3), [])
 
+    def test_update_index(self):
+        ws = Worksheet({})
+        ws.update_index(row=4, col=2, val=42)
+        self.assertEqual(ws.size, [4, 2])
+        self.assertEqual(ws.index(4, 2), 42)
+        self.assertEqual(ws.address('B4'), 42)
+        self.assertEqual(ws.row(4)[1], 42)
+        self.assertEqual(ws.col(2)[3], 42)
 
-class test_conversion(TestCase):
+
+class TestConversion(TestCase):
 
     def test_address2index_baddata(self):
         with self.assertRaises(ValueError) as e:

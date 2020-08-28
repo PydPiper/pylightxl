@@ -502,7 +502,11 @@ def writexl_alt_writer(db, path):
 
 def writexl_alt_app_text(db, filepath):
     """
-    Takes a docProps/app.xml and returns a db altered text version of the xml
+    Takes a docProps/app.xml filepath and returns the updated xml text version of it.
+    Updates:
+        - HeadingPairs/vt:variant/vt:i4 "text" after Worksheets
+        - TitlesOfParts/vt:vector named filed "size"
+        - TitlesOfParts/vt:vector/vt:lpstr
 
     :param pylightxl.Database db: pylightxl database that contains data to update xml file
     :param str filepath: file path for docProps/app.xml
@@ -512,30 +516,58 @@ def writexl_alt_app_text(db, filepath):
     # extract text from existing app.xml
     ns = writexl_xml_namespace(filepath)
     for prefix, uri in ns.items():
-        ET.register_namespace(prefix,uri)
+        ET.register_namespace(prefix, uri)
 
     tree = ET.parse(filepath)
     root = tree.getroot()
 
-    # sheet sizes
-    tag_i4 = root.findall('./default:HeadingPairs//vt:i4', ns)[0]
-    tag_i4.text = str(len(db.ws_names))
+    # default declarations (worksheets, named ranges)
+    old_ws_count = 0
+    old_nr_count = 0
+
+    # TODO: named ranges - update vt:vector size=ws_count + nr_count
+    # update: number of worksheets and named ranges for the workbook under "HeadingPairs"
+    tags_vt = root.findall('./default:HeadingPairs//vt:variant', ns)
+    # each tag_vt:variant should only have 1 vt:i4 tag under it (that's the [0] indexing)
+    for i_tag_vt, tag_vt in enumerate(tags_vt):
+        try:
+            if tag_vt[0].text == "Worksheets":
+                old_ws_count = int(tags_vt[i_tag_vt + 1][0].text)
+                tags_vt[i_tag_vt + 1][0].text = str(len(db.ws_names))
+        except IndexError:
+            # ill-formatted xml
+            raise UserWarning('pylightxl error - Ill formatted xml on docProps/app.xml.\n'
+                              'HeadingPairs/vt:vector/vt:variant Worksheets missing vt:variant pair')
+        try:
+            # TODO: named ranges - count
+            if tag_vt[0].text == "Named Ranges":
+                old_nr_count = int(tags_vt[i_tag_vt + 1][0].text)
+        except IndexError:
+            # ill-formatted xml
+            raise UserWarning('pylightxl error - Ill formatted xml on docProps/app.xml.\n'
+                              'HeadingPairs/vt:vector/vt:variant Named Ranges missing vt:variant pair')
+
+    # update: number of worksheets and named ranges for the workbook under "TitlesOfParts"
     tag_titles_vector = root.findall('./default:TitlesOfParts/vt:vector', ns)[0]
-    tag_titles_vector.set('size', str(len(db.ws_names)))
-    # sheet names, remove them then add new ones
-    for sheet in root.findall('./default:TitlesOfParts//vt:lpstr', ns):
-        root.find('./default:TitlesOfParts/vt:vector', ns).remove(sheet)
-    for sheet_name in db.ws_names:
+    # TODO: named ranges - count update
+    tag_titles_vector.set('size', str(len(db.ws_names) + old_nr_count))
+
+    # update: remove existing worksheet names, preserve named ranges, add new worksheet names
+    # TODO: named ranges - vt:lpstr nr names
+    for i_tag_vtlpstr, tag_vtlpstr in enumerate(root.findall('./default:TitlesOfParts//vt:lpstr', ns), 1):
+        if i_tag_vtlpstr <= old_ws_count:
+            root.find('./default:TitlesOfParts/vt:vector', ns).remove(tag_vtlpstr)
+    for sheet_name in db.ws_names[::-1]:
         element = ET.Element('vt:lpstr')
         element.text = sheet_name
 
-        root.find('./default:TitlesOfParts/vt:vector', ns).append(element)
+        root.find('./default:TitlesOfParts/vt:vector', ns).insert(0, element)
 
     # reset default namespace
     ET.register_namespace('', ns['default'])
 
     # roll up entire xml file as text
-    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root)
+    text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root).decode()
 
     return text
 

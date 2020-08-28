@@ -4,7 +4,6 @@ venv27
 venv363
 venv38
 *.pyc
-*.xml
 __pycache__
 build
 .pytest_cache

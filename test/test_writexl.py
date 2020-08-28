@@ -1,14 +1,18 @@
+# TODO: write to existing tests
+
 # standard lib imports
 from unittest import TestCase
+import os, sys
+
+from pylightxl import pylightxl as xl
 
 
-from pylightxl.pylightxl import writexl, writexl_new_rels_text, writexl_new_app_text, writexl_new_core_text, \
-    writexl_new_workbookrels_text, writexl_new_workbook_text, writexl_new_worksheet_text, writexl_new_sharedStrings_text, \
-    writexl_new_content_types_text
-from pylightxl.pylightxl import Database, address2index, index2address
+if 'test' in os.listdir('.'):
+    # running from top level
+    os.chdir('./test')
 
 
-class test_write_new(TestCase):
+class TestWritexlNew(TestCase):
 
     def test_rels_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -17,7 +21,7 @@ class test_write_new(TestCase):
                    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>\r\n' \
                    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>\r\n' \
                    '</Relationships>'
-        self.assertEqual(writexl_new_rels_text(None), xml_base)
+        self.assertEqual(xl.writexl_new_rels_text(None), xml_base)
 
     def test_app_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -59,7 +63,7 @@ class test_write_new(TestCase):
                       tag_vt.format(sheet_name='Sheet9') + \
                       tag_vt.format(sheet_name='Sheet10')
 
-        db = Database()
+        db = xl.Database()
         db.add_ws('Sheet1',{})
         db.add_ws('Sheet2',{})
         db.add_ws('Sheet3',{})
@@ -70,7 +74,7 @@ class test_write_new(TestCase):
         db.add_ws('Sheet8',{})
         db.add_ws('Sheet9',{})
         db.add_ws('Sheet10',{})
-        self.assertEqual(writexl_new_app_text(db), xml_base.format(num_sheets=10, many_tag_vt=many_tag_vt))
+        self.assertEqual(xl.writexl_new_app_text(db), xml_base.format(num_sheets=10, many_tag_vt=many_tag_vt))
 
     def test_core_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -81,7 +85,7 @@ class test_write_new(TestCase):
                    '<dcterms:modified xsi:type="dcterms:W3CDTF">2019-12-27T01:35:39Z</dcterms:modified>\r\n' \
                    '</cp:coreProperties>'
 
-        self.assertEqual(writexl_new_core_text(None), xml_base)
+        self.assertEqual(xl.writexl_new_core_text(None), xml_base)
 
     def test_workbookrels_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -103,7 +107,7 @@ class test_write_new(TestCase):
                           xml_tag_sheet.format(sheet_num=9) + \
                           xml_tag_sheet.format(sheet_num=10)
 
-        db = Database()
+        db = xl.Database()
         db.add_ws('Sheet1',{})
         db.add_ws('Sheet2',{})
         db.add_ws('Sheet3',{})
@@ -115,10 +119,10 @@ class test_write_new(TestCase):
         db.add_ws('Sheet9',{})
         db.add_ws('Sheet10',{})
         # test without sharedStrings
-        self.assertEqual(writexl_new_workbookrels_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=''))
+        self.assertEqual(xl.writexl_new_workbookrels_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=''))
         # test with sharedStrings in db
         db._sharedStrings = ['text']
-        self.assertEqual(writexl_new_workbookrels_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=tag_sharedStrings))
+        self.assertEqual(xl.writexl_new_workbookrels_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=tag_sharedStrings))
 
     def test_workbook_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -144,7 +148,7 @@ class test_write_new(TestCase):
                           xml_tag_sheet.format(sheet_name='Sheet9',order_id=9,ref_id=9) + \
                           xml_tag_sheet.format(sheet_name='Sheet10',order_id=10,ref_id=10)
 
-        db = Database()
+        db = xl.Database()
         db.add_ws('Sheet1',{})
         db.add_ws('Sheet2',{})
         db.add_ws('Sheet3',{})
@@ -155,7 +159,7 @@ class test_write_new(TestCase):
         db.add_ws('Sheet8',{})
         db.add_ws('Sheet9',{})
         db.add_ws('Sheet10',{})
-        self.assertEqual(writexl_new_workbook_text(db), xml_base.format(many_tag_sheets=many_tag_sheets))
+        self.assertEqual(xl.writexl_new_workbook_text(db), xml_base.format(many_tag_sheets=many_tag_sheets))
 
     def test_worksheet_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -188,14 +192,14 @@ class test_write_new(TestCase):
         uid = '2C7EE24B-C535-494D-AA97-0A61EE84BA40'
         sizeAddress = 'A1:C3'
 
-        db = Database()
+        db = xl.Database()
         db.add_ws('Sheet1', {'A1':{'v': 1, 'f': '', 's': ''},
                              'B1':{'v': 'text1', 'f': '', 's': ''},
                              'C1':{'v': '=A1+2', 'f': '', 's': ''},
                              'A3':{'v': 'text1', 'f': '', 's': ''},
                              'C3':{'v': 'text2', 'f': '', 's': ''}})
 
-        self.assertEqual(writexl_new_worksheet_text(db, 'Sheet1'), xml_base.format(sizeAddress=sizeAddress,
+        self.assertEqual(xl.writexl_new_worksheet_text(db, 'Sheet1'), xml_base.format(sizeAddress=sizeAddress,
                                                                            uid=uid,
                                                                            many_tag_row=many_tag_row))
 
@@ -213,7 +217,7 @@ class test_write_new(TestCase):
                       xml_tag_si.format(space_preserve='xml:space="preserve"',val='text5 ') + \
                       xml_tag_si.format(space_preserve='xml:space="preserve"',val=' text6 ')
 
-        db = Database()
+        db = xl.Database()
         db.add_ws('Sheet1', {'A1': {'v': 'text1', 'f': '', 's': ''},
                              'A2': {'v': 'text2', 'f': '', 's': ''},
                              'A3': {'v': ' text3', 'f': '', 's': ''},
@@ -226,10 +230,10 @@ class test_write_new(TestCase):
                              })
 
         # process the sharedStrings, see dev note why this is done this way inside new_worksheet_text
-        _ = writexl_new_worksheet_text(db, 'Sheet1')
-        _ = writexl_new_worksheet_text(db, 'Sheet2')
+        _ = xl.writexl_new_worksheet_text(db, 'Sheet1')
+        _ = xl.writexl_new_worksheet_text(db, 'Sheet2')
 
-        self.assertEqual(writexl_new_sharedStrings_text(db), xml_base.format(sharedString_len=6 ,many_tag_si=many_tag_si))
+        self.assertEqual(xl.writexl_new_sharedStrings_text(db), xml_base.format(sharedString_len=6 ,many_tag_si=many_tag_si))
 
     def test_new_content_types_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -258,7 +262,7 @@ class test_write_new(TestCase):
                           xml_tag_sheet.format(sheet_id=9) + \
                           xml_tag_sheet.format(sheet_id=10)
 
-        db = Database()
+        db = xl.Database()
         db.add_ws('Sheet1', {})
         db.add_ws('Sheet2', {})
         db.add_ws('Sheet3', {})
@@ -271,11 +275,29 @@ class test_write_new(TestCase):
         db.add_ws('Sheet10', {})
 
         # test without and sharedStrings in db
-        self.assertEqual(writexl_new_content_types_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=''))
+        self.assertEqual(xl.writexl_new_content_types_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=''))
 
         # test with and sharedStrings in db
         db._sharedStrings = ['text']
-        self.assertEqual(writexl_new_content_types_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=xml_tag_sharedStrings))
+        self.assertEqual(xl.writexl_new_content_types_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=xml_tag_sharedStrings))
 
 
+class TestWritexlExisting(TestCase):
 
+    def test_app_text(self):
+        # tests that sheet names and sheet count were updated and named ranges were preserved
+        db = xl.Database()
+        db.add_ws('one')
+        db.add_ws('two')
+        db.add_ws('three')
+
+        text = xl.writexl_alt_app_text(db=db, filepath='app.xml')
+
+        if sys.version_info[0] < 3:
+            with open('correct_app27.xml', 'r') as f:
+                correct_text = f.read()
+        else:
+            with open('correct_app3.xml', 'r') as f:
+                correct_text = f.read()
+
+        self.assertEqual(correct_text, text)
