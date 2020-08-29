@@ -284,14 +284,14 @@ class TestWritexlNew(TestCase):
 
 class TestWritexlExisting(TestCase):
 
-    def test_app_text(self):
+    def test_writexl_alt_app_text(self):
         # tests that sheet names and sheet count were updated and named ranges were preserved
         db = xl.Database()
         db.add_ws('one')
         db.add_ws('two')
         db.add_ws('three')
 
-        text = xl.writexl_alt_app_text(db=db, filepath='app.xml')
+        text = xl.writexl_alt_app_text(db=db, filepath='input_app.xml')
 
         if sys.version_info[0] < 3:
             with open('correct_app27.xml', 'r') as f:
@@ -301,3 +301,20 @@ class TestWritexlExisting(TestCase):
                 correct_text = f.read()
 
         self.assertEqual(correct_text, text)
+
+    def test_writexl_alt_getsheetref(self):
+        sheetref = xl.writexl_alt_getsheetref(path_wbrels='input_workbook.xml.rels',
+                                              path_wb='input_workbook.xml')
+
+        correct_sheetref = {'rId2': {'sheetId': 2, 'name': 'sh2', 'filename': 'sheet2.xml'},
+                            'rId1': {'sheetId': 1, 'name': 'Sheet1', 'filename': 'sheet1.xml'},
+                            }
+
+        self.assertEqual(correct_sheetref, sheetref)
+
+
+
+
+
+
+

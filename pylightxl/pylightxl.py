@@ -410,7 +410,8 @@ def writexl_alt_writer(db, path):
             new_name = temp_folder + '/xl/worksheets/' + 'temp_' + file
             os.rename(old_name, new_name)
     # get filename to xml rId associations
-    sheetref = writexl_alt_getsheetref(temp_folder)
+    sheetref = writexl_alt_getsheetref(path_wbrels=temp_folder + '/xl/_rels/workbook.xml.rels',
+                                       path_wb=temp_folder + '/xl/workbook.xml')
     existing_sheetnames = [d['name'] for d in sheetref.values()]
 
     for shID, sheet_name in enumerate(db.ws_names, 1):
@@ -517,7 +518,6 @@ def writexl_alt_app_text(db, filepath):
     ns = writexl_xml_namespace(filepath)
     for prefix, uri in ns.items():
         ET.register_namespace(prefix, uri)
-
     tree = ET.parse(filepath)
     root = tree.getroot()
 
@@ -572,43 +572,48 @@ def writexl_alt_app_text(db, filepath):
     return text
 
 
-def writexl_alt_getsheetref(temp_folder):
+def writexl_alt_getsheetref(path_wbrels, path_wb):
     """
-    Takes a file path for the temp pylightxl uncompressed excel xml files and returns the un-altered
-    filenames and rIds
+    Takes a file path for '/xl/_rels/workbook.xml.rels' and '/xl/workbook.xml' files
+    and returns a dictionary relationship between sheetID, name and xml worksheet file path
+        rId: xml's indexing between files (workbook.xml.rels defined rID to xml worksheet file path)
+        sheetId: order of worksheet in the workbook as it appears in excel
+        name: worksheet name as it appears in excel (user defined name)
+        filename: xml worksheet file path
 
-    :param str path: file path to pylightxl_temp
-    :return dict: dictionary of filenames {rId: {name: '', filename: ''}}
+    :param str path_wbrels: file path to '/xl/_rels/workbook.xml.rels'
+    :param str path_wb: file path to '/xl/workbook.xml'
+    :return dict: dictionary of filenames {'rId#': {'name': str, 'filename': str, 'sheetId': int}}
     """
 
     sheetref = {}
 
     # -------------------------------------------------------------
     # get worksheet filenames and Ids
-    ns = writexl_xml_namespace(temp_folder + '/xl/_rels/workbook.xml.rels')
+    ns = writexl_xml_namespace(path_wbrels)
     for prefix, uri in ns.items():
-        ET.register_namespace(prefix,uri)
-
-    tree = ET.parse(temp_folder + '/xl/_rels/workbook.xml.rels')
+        ET.register_namespace(prefix, uri)
+    tree = ET.parse(path_wbrels)
     root = tree.getroot()
 
     for element in root.findall('./default:Relationship', ns):
         if 'worksheets/sheet' in element.get('Target'):
-            Id = element.get('Id')
+            rId = element.get('Id')
             filename = element.get('Target').split('/')[1].replace('"', '')
-            sheetref.update({Id: {'name': '', 'filename': filename}})
+            sheetref.update({rId: {'sheetId': None, 'name': None, 'filename': filename}})
 
     # -------------------------------------------------------------
     # get custom worksheet names
-    ns = writexl_xml_namespace(temp_folder + '/xl/workbook.xml')
+    ns = writexl_xml_namespace(path_wb)
     for prefix, uri in ns.items():
-        ET.register_namespace(prefix,uri)
-    tree = ET.parse(temp_folder + '/xl/workbook.xml')
+        ET.register_namespace(prefix, uri)
+    tree = ET.parse(path_wb)
     root = tree.getroot()
 
     for element in root.findall('./default:sheets/default:sheet', ns):
-        Id = 'rId' + element.get('sheetId')
-        sheetref[Id]['name'] = element.get('name')
+        rId = element.get('{' + ns['r'] + '}id')
+        sheetref[rId]['name'] = element.get('name')
+        sheetref[rId]['sheetId'] = int(element.get('sheetId'))
 
     return sheetref
 
