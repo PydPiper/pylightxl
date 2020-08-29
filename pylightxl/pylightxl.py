@@ -57,11 +57,11 @@ from xml.etree import cElementTree as ET
 
 
 # unicode is a python27 object that was merged into str in 3+, for compatibility it is redefined here
-if sys.version_info[0] >= 3:
-    unicode = str
+if sys.version_info[0] < 3:
     FileNotFoundError = IOError
     PermissionError = Exception
-
+else:
+    unicode = str
 
 ########################################################################################################
 # SEC-03: READXL FUNCTIONS
@@ -369,11 +369,6 @@ def writexl_xml_namespace(file):
         if event == "start-ns":
             elem = ('default', elem[1]) if elem[0] == '' else elem
             ns_map.append(elem)
-        # elif event == "end-ns":
-        #     ns_map.pop()
-        #     return dict(ns_map)
-        # elif event == "start":
-        #     return dict(ns_map)
     return dict(ns_map)
 
 
@@ -399,9 +394,6 @@ def writexl_alt_writer(db, path):
     with open(temp_folder + '/docProps/app.xml', 'w') as f:
         f.write(text)
 
-    text = writexl_new_workbook_text(db)
-    with open(temp_folder + '/xl/workbook.xml', 'w') as f:
-        f.write(text)
 
     # rename sheet#.xml to temp to prevent overwriting
     for file in os.listdir(temp_folder + '/xl/worksheets'):
@@ -413,6 +405,10 @@ def writexl_alt_writer(db, path):
     sheetref = writexl_alt_getsheetref(path_wbrels=temp_folder + '/xl/_rels/workbook.xml.rels',
                                        path_wb=temp_folder + '/xl/workbook.xml')
     existing_sheetnames = [d['name'] for d in sheetref.values()]
+
+    text = writexl_new_workbook_text(db)
+    with open(temp_folder + '/xl/workbook.xml', 'w') as f:
+        f.write(text)
 
     for shID, sheet_name in enumerate(db.ws_names, 1):
         if sheet_name in existing_sheetnames:
@@ -855,8 +851,8 @@ def writexl_new_worksheet_text(db, sheet_name):
     xml_tag_row = '<row r="{row_num}" x14ac:dyDescent="0.25" spans="1:{num_of_cr_tags}">{many_tag_cr}</row>\r\n'
 
     # location: c r tag for xml_tag_row
-    # inserts: address, str_option (t="s" for sharedStrings or t="str" for formulas), tag_formula, val
-    xml_tag_cr = '<c r="{address}" {str_option}>{tag_formula}<v>{val}</v></c>'
+    # inserts: address, str_option (t="s" for sharedStrings), val
+    xml_tag_cr = '<c r="{address}" {str_option}><v>{val}</v></c>'
 
     ws_size = db.ws(sheet_name).size
     if ws_size == [0,0] or ws_size == [1,1]:
@@ -872,47 +868,54 @@ def writexl_new_worksheet_text(db, sheet_name):
         for colID, val in enumerate(row, 1):
             address = index2address(rowID, colID)
             str_option = ''
-            tag_formula = ''
+            cell_formula = ''
+
+            # empty cells are not stored in _data
             try:
-                readin_formula = db.ws(sheet_name)._data[index2address(rowID, colID)]['f']
+                cell_formula = db.ws(sheet_name)._data[address]['f']
             except KeyError:
-                readin_formula = ''
+                pass
 
-            if val != '':
-                if type(val) is str and val[0] != '=':
-                    str_option = 't="s"'
-                    try:
-                        # replace val with its sharedStrings index, note sharedString index does start at 0
-                        val = db._sharedStrings.index(val)
-                    except ValueError:
-                        db._sharedStrings.append(val)
-                        val = db._sharedStrings.index(val)
-
-                if readin_formula != '':
-                    str_option = 't="str"'
-                    tag_formula = '<f>{f}</f>'.format(f=readin_formula)
-                    tag_formula = tag_formula.replace('&', '&amp;')
-                    val = '"pylightxl - open excel file and save it for formulas to calculate"'
-
-                # let val equation overwrite the readin_formula if it exist (this was a manual input equation)
-                if type(val) is str and val[0] == '=':
-                    # technically if the result of a formula is a str then str_option should be t="str"
-                    #   but this designation is not necessary for excel to open
-                    str_option = 't="str"'
-                    tag_formula = '<f>{f}</f>'.format(f=val[1:])
-                    tag_formula = tag_formula.replace('&', '&amp;')
-                    val = '"pylightxl - open excel file and save it for formulas to calculate"'
-
+            # cell contains a formula
+            if cell_formula:
+                # cells containing formula must not have a type declaration or a <v> tag
+                #   to calculate properly when excel is opened
+                tag_formula = '<f>{f}</f>'.format(f=cell_formula)
+                tag_formula = tag_formula.replace('&', '&amp;')
                 tag_cr = True
                 num_of_cr_tags_counter += 1
-                many_tag_cr += xml_tag_cr.format(address=address, str_option=str_option, tag_formula=tag_formula, val=val)
+                many_tag_cr += '<c r="{address}">{tag_formula}</c>'.format(address=address,
+                                                                           tag_formula=tag_formula)
+
+            # cell value is string
+            elif type(val) is str and val != '':
+                str_option = 't="s"'
+                try:
+                    # replace val with its sharedStrings index,
+                    #   note sharedString index does start at 0
+                    val = db._sharedStrings.index(val)
+                except ValueError:
+                    db._sharedStrings.append(val.replace('&', '&amp;'))
+                    val = db._sharedStrings.index(val.replace('&', '&amp;'))
+                tag_cr = True
+                num_of_cr_tags_counter += 1
+                many_tag_cr += xml_tag_cr.format(address=address, str_option=str_option, val=val)
+
+            # cell does not contain a formula, it is numeric
+            elif val != '':
+                # val is numeric
+                tag_cr = True
+                num_of_cr_tags_counter += 1
+                many_tag_cr += xml_tag_cr.format(address=address, str_option=str_option, val=val)
 
         if tag_cr:
             many_tag_row += xml_tag_row.format(row_num=rowID, num_of_cr_tags=str(num_of_cr_tags_counter),
                                                many_tag_cr=many_tag_cr)
 
     # not 100% what uid does, but it is required for excel to open
-    rv = xml_base.format(sizeAddress=sheet_size_address, uid='2C7EE24B-C535-494D-AA97-0A61EE84BA40', many_tag_row=many_tag_row)
+    rv = xml_base.format(sizeAddress=sheet_size_address,
+                         uid='2C7EE24B-C535-494D-AA97-0A61EE84BA40',
+                         many_tag_row=many_tag_row)
     return rv
 
 
@@ -1056,7 +1059,9 @@ class Database:
         for ws in self.ws_names:
             self.ws(ws).set_emptycell(val)
 
-
+#TODO: add update formula
+#TODO: add rename sheet
+#TODO: add remove sheet
 class Worksheet():
 
     def __init__(self, data):
@@ -1119,34 +1124,42 @@ class Worksheet():
 
         return [self.maxrow, self.maxcol]
 
-    def address(self, address):
+    def address(self, address, formula=False):
         """
         Takes an excel address and returns the worksheet stored value
 
         :param str address: Excel address (ex: "A1")
+        :param bool formula: flag to return the formula of this cell
         :return: cell value
         """
 
         try:
-            rv = self._data[address]['v']
+            if not formula:
+                rv = self._data[address]['v']
+            else:
+                rv = '=' + self._data[address]['f']
         except KeyError:
             # no data was parsed, return empty cell value
             rv = self.emptycell
 
         return rv
 
-    def index(self, row, col):
+    def index(self, row, col, formula=False):
         """
         Takes an excel row and col starting at index 1 and returns the worksheet stored value
 
         :param int row: row index (starting at 1)
         :param int col: col index (start at 1 that corresponds to column "A")
+        :param bool formula: flag to return the formula of this cell
         :return: cell value
         """
 
         address = index2address(row, col)
         try:
-            rv = self._data[address]['v']
+            if not formula:
+                rv = self._data[address]['v']
+            else:
+                rv = '=' + self._data[address]['f']
         except KeyError:
             # no data was parsed, return empty cell value
             rv = self.emptycell
@@ -1159,26 +1172,36 @@ class Worksheet():
 
         :param int row: row index
         :param int col: column index
-        :param int/float/str val: value to change or add (if row/col data doesnt already exist)
+        :param int/float/str val: cell value; equations are strings and must begin with "="
         :return: None
         """
         address = index2address(row, col)
         self.maxcol = col if col > self.maxcol else self.maxcol
         self.maxrow = row if row > self.maxrow else self.maxrow
-        self._data.update({address: {'v':val,'f':'','s':''}})
+        # log formulas under formulas and trim off the '='
+        if type(val) is str and val[0] == '=':
+            # overwrite existing cell val to be empty (it will calc when excel is opened)
+            self._data.update({address: {'v': '', 'f': val[1:], 's': ''}})
+        else:
+            self._data.update({address: {'v': val, 'f': '', 's': ''}})
 
     def update_address(self, address, val):
         """
         Update worksheet data via address
 
         :param str address: excel address (ex: "A1")
-        :param int/float/str val: value to change or add (if row/col data doesnt already exist)
+        :param int/float/str val: cell value; equations are strings and must begin with "="
         :return: None
         """
         row, col = address2index(address)
         self.maxcol = col if col > self.maxcol else self.maxcol
         self.maxrow = row if row > self.maxrow else self.maxrow
-        self._data.update({address: {'v':val,'f':'','s':''}})
+        # log formulas under formulas and trim off the '='
+        if type(val) is str and val[0] == '=':
+            # overwrite existing cell val to be empty (it will calc when excel is opened)
+            self._data.update({address: {'v': '', 'f': val[1:], 's': ''}})
+        else:
+            self._data.update({address: {'v': val, 'f': '', 's': ''}})
 
     def row(self, row):
         """

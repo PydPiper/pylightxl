@@ -2,9 +2,14 @@
 
 # standard lib imports
 from unittest import TestCase
-import os, sys
+import os, sys, shutil
 
 from pylightxl import pylightxl as xl
+
+if sys.version_info[0] >= 3:
+    unicode = str
+    FileNotFoundError = IOError
+    PermissionError = Exception
 
 
 if 'test' in os.listdir('.'):
@@ -181,27 +186,32 @@ class TestWritexlNew(TestCase):
         # test all input types
         many_tag_cr_row1 = xml_tag_cr.format(address='A1', str_option='', tag_formula='', val=1) + \
                            xml_tag_cr.format(address='B1', str_option='t="s"', tag_formula='', val=0) + \
-                           xml_tag_cr.format(address='C1', str_option='t="str"', tag_formula='<f>A1+2</f>', val='"pylightxl - open excel file and save it for formulas to calculate"')
-        # test scarce, and repeat text value
+                           '<c r="{address}">{tag_formula}</c>'.format(address='C1', tag_formula='<f>A1+2</f>') + \
+                           xml_tag_cr.format(address='D1', str_option='t="s"', tag_formula='', val=1)
+            # test scarce, and repeat text value
         many_tag_cr_row3 = xml_tag_cr.format(address='A3', str_option='t="s"', tag_formula='', val=0) + \
-                           xml_tag_cr.format(address='C3', str_option='t="s"', tag_formula='', val=1)
+                           xml_tag_cr.format(address='C3', str_option='t="s"', tag_formula='', val=2)
 
-        many_tag_row = xml_tag_row.format(row_num=1,num_of_cr_tags=3,many_tag_cr=many_tag_cr_row1) + \
+        many_tag_row = xml_tag_row.format(row_num=1,num_of_cr_tags=4,many_tag_cr=many_tag_cr_row1) + \
                        xml_tag_row.format(row_num=3,num_of_cr_tags=2,many_tag_cr=many_tag_cr_row3)
 
         uid = '2C7EE24B-C535-494D-AA97-0A61EE84BA40'
-        sizeAddress = 'A1:C3'
+        sizeAddress = 'A1:D3'
 
         db = xl.Database()
-        db.add_ws('Sheet1', {'A1':{'v': 1, 'f': '', 's': ''},
-                             'B1':{'v': 'text1', 'f': '', 's': ''},
-                             'C1':{'v': '=A1+2', 'f': '', 's': ''},
-                             'A3':{'v': 'text1', 'f': '', 's': ''},
-                             'C3':{'v': 'text2', 'f': '', 's': ''}})
+        db.add_ws('Sheet1', {})
+        db.ws('Sheet1').update_address('A1', 1)
+        db.ws('Sheet1').update_address('B1', 'text1')
+        db.ws('Sheet1').update_address('C1', '=A1+2')
+        db.ws('Sheet1').update_address('D1', 'B1&"_"&"two"')
+        db.ws('Sheet1').update_address('A3', 'text1')
+        db.ws('Sheet1').update_address('C3', 'text2')
 
         self.assertEqual(xl.writexl_new_worksheet_text(db, 'Sheet1'), xml_base.format(sizeAddress=sizeAddress,
                                                                            uid=uid,
                                                                            many_tag_row=many_tag_row))
+        #TODO: add checks for sharedStrings
+
 
     def test_sharedStrings_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -312,9 +322,68 @@ class TestWritexlExisting(TestCase):
 
         self.assertEqual(correct_sheetref, sheetref)
 
+    def test_integration_alt_writer(self):
+        db = xl.Database()
 
+        # cleanup failed test workbook
+        if 'temp_wb.xlsx' in os.listdir('.'):
+            os.remove('temp_wb.xlsx')
+        if '_pylightxl_temp_wb.xlsx' in os.listdir('.'):
+            shutil.rmtree('_pylightxl_temp_wb.xlsx')
 
+        # create the "existing workbook"
+        db.add_ws(sheetname='sh1', data={'A1': {'v':'one', 'f': '', 's': ''},
+                                         'A2': {'v':1, 'f': '', 's': ''},
+                                         'A3': {'v':1.0, 'f': '', 's': ''},
+                                         'A4': {'v':'one', 'f': 'A1', 's': ''},
+                                         'A5': {'v':6, 'f': 'A2+5', 's': ''},
+                                         'B1': {'v': 'one', 'f': '', 's': ''},
+                                         'B2': {'v': 1, 'f': '', 's': ''},
+                                         'B3': {'v': 1.0, 'f': '', 's': ''},
+                                         'B4': {'v': 'one', 'f': 'A1', 's': ''},
+                                         'B5': {'v': 6, 'f': 'A2+5', 's': ''},
+                                         })
+        db.add_ws(sheetname='sh2')
+        xl.writexl(db, 'temp_wb.xlsx')
 
+        # all changes will be registered as altered xl writer since the filename exists
+        db.ws(sheetname='sh1').update_address('B1', 'two')
+        db.ws(sheetname='sh1').update_address('B2', 2)
+        db.ws(sheetname='sh1').update_address('B3', 2.0)
+        # was a formula now a string that looks like a formula
+        db.ws(sheetname='sh1').update_address('B4', 'A1&"_"&"two"')
+        db.ws(sheetname='sh1').update_address('B5', '=A2+10')
+        db.ws(sheetname='sh1').update_address('C6', 'new')
 
+        db.add_ws(sheetname='sh3')
+        db.ws(sheetname='sh3').update_address('A1', 'one')
+
+        xl.writexl(db, 'temp_wb.xlsx')
+
+        # check the results made it in correctly
+        db_alt = xl.readxl(fn='temp_wb.xlsx')
+
+        self.assertEqual([6, 3], db_alt.ws('sh1').size)
+        self.assertEqual('one', db_alt.ws('sh1').address('A1'))
+        self.assertEqual(1, db_alt.ws('sh1').address('A2'))
+        self.assertEqual(1.0, db_alt.ws('sh1').address('A3'))
+        self.assertEqual('', db_alt.ws('sh1').address('A4'))
+        self.assertEqual('A1', db_alt.ws('sh1')._data['A4']['f'])
+        self.assertEqual('', db_alt.ws('sh1').address('A5'))
+        self.assertEqual('A2+5', db_alt.ws('sh1')._data['A5']['f'])
+        self.assertEqual('two', db_alt.ws('sh1').address('B1'))
+        self.assertEqual(2, db_alt.ws('sh1').address('B2'))
+        self.assertEqual(2.0, db_alt.ws('sh1').address('B3'))
+        self.assertEqual('A1&"_"&"two"', db_alt.ws('sh1').address('B4'))
+        self.assertEqual('', db_alt.ws('sh1')._data['B4']['f'])
+        self.assertEqual('', db_alt.ws('sh1').address('B5'))
+        self.assertEqual('A2+10', db_alt.ws('sh1')._data['B5']['f'])
+        self.assertEqual('new', db_alt.ws('sh1').address('C6'))
+
+        self.assertEqual([0, 0], db_alt.ws('sh2').size)
+        self.assertEqual('', db_alt.ws('sh2').address('A1'))
+
+        self.assertEqual([1, 1], db_alt.ws('sh3').size)
+        self.assertEqual('one', db_alt.ws('sh3').address('A1'))
 
 
