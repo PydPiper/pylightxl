@@ -38,6 +38,9 @@ Future Ideas:
 
 
 """
+
+#TODO: add docs for formulas in quick ref guide
+
 ########################################################################################################
 # SEC-01: IMPORTS
 ########################################################################################################
@@ -60,8 +63,11 @@ from xml.etree import cElementTree as ET
 if sys.version_info[0] < 3:
     FileNotFoundError = IOError
     PermissionError = Exception
+    WindowsError = Exception
 else:
     unicode = str
+    WindowsError = Exception
+
 
 ########################################################################################################
 # SEC-03: READXL FUNCTIONS
