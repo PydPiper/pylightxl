@@ -95,7 +95,7 @@ def readxl(fn, ws=()):
 
         # get custom sheetnames
         with f_zip.open('xl/workbook.xml', 'r') as f:
-            sh_names = readxl_get_sheetnames(f)
+            sh_names = readxl_get_sheetnames(f, f_zip)
 
         # get all of the zip'ed xml sheetnames, sort in because python27 reads these out of order
         zip_sheetnames = readxl_get_zipsheetnames(f_zip)
@@ -155,30 +155,34 @@ def readxl_check_excelfile(fn):
                          'File extension supported: .xlsx .xlsm'.format(extension))
 
 
-def readxl_get_sheetnames(file):
+def readxl_get_sheetnames(file, f_zip):
     """
     Takes a file-handle of xl/workbook.xml and returns a list of sheetnames
 
     :param open-filehanle file: xl/workbook.xml file-handle
+    :param open-zip-filehanle f_zip: zip file-handle for workbook (to reopen for python 2.7)
     :return: list of sheetnames
     """
 
     sheetnames = []
 
-    text = file.read().decode()
+    # extract text from existing app.xml
+    ns = utility_xml_namespace(file)
+    for prefix, uri in ns.items():
+        ET.register_namespace(prefix,uri)
 
-    tag_sheets = re.compile(r'(?<=<sheets>)([\s\S]*)(?=</sheets>)')
-    sheet_section = tag_sheets.findall(text)[0].strip()
-    # this will find something like:
-    # ['sheet name="Sheet1" sheetId="1" r:id="rId1"/><sheet name="sh2" sheetId="2" r:id']
+    try:
+        file.seek(0)
+        tree = ET.parse(file)
+    except:
+        # zipfile from python 2.7.18 comes with zipfile 1.6 doesnt come with file.seek method
+        # raises UnsupportedOperation error
+        with f_zip.open('xl/workbook.xml') as file:
+            tree = ET.parse(file)
 
-    # split on '/>' to get each <sheet r.../> as a separate list item
-    #   last item on list has to be removed because string ends with '/>'
-    sheet_lines = sheet_section.split('/>')[:-1]
-    for sheet_line in sheet_lines:
-        # split sheet line on '"' will result with: ['sheet name=','Sheet1', 'sheetId=', '1', 'r:id=', 'rId1']
-        # simply index to 1 to get the sheet name: Sheet1
-        sheetnames.append(sheet_line.split('"')[1])
+    root = tree.getroot()
+    for tag_sheet in root.findall('./default:sheets/default:sheet', ns):
+        sheetnames.append(tag_sheet.get('name'))
 
     return sheetnames
 
