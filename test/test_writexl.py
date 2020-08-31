@@ -332,7 +332,7 @@ class TestWritexlExisting(TestCase):
             shutil.rmtree('_pylightxl_temp_wb.xlsx')
 
         # create the "existing workbook"
-        db.add_ws(sheetname='sh1', data={'A1': {'v':'one', 'f': '', 's': ''},
+        db.add_ws(ws='sh1', data={'A1': {'v':'one', 'f': '', 's': ''},
                                          'A2': {'v':1, 'f': '', 's': ''},
                                          'A3': {'v':1.0, 'f': '', 's': ''},
                                          'A4': {'v':'one', 'f': 'A1', 's': ''},
@@ -343,20 +343,20 @@ class TestWritexlExisting(TestCase):
                                          'B4': {'v': 'one', 'f': 'A1', 's': ''},
                                          'B5': {'v': 6, 'f': 'A2+5', 's': ''},
                                          })
-        db.add_ws(sheetname='sh2')
+        db.add_ws(ws='sh2')
         xl.writexl(db, 'temp_wb.xlsx')
 
         # all changes will be registered as altered xl writer since the filename exists
-        db.ws(sheetname='sh1').update_address('B1', 'two')
-        db.ws(sheetname='sh1').update_address('B2', 2)
-        db.ws(sheetname='sh1').update_address('B3', 2.0)
+        db.ws(ws='sh1').update_address('B1', 'two')
+        db.ws(ws='sh1').update_address('B2', 2)
+        db.ws(ws='sh1').update_address('B3', 2.0)
         # was a formula now a string that looks like a formula
-        db.ws(sheetname='sh1').update_address('B4', 'A1&"_"&"two"')
-        db.ws(sheetname='sh1').update_address('B5', '=A2+10')
-        db.ws(sheetname='sh1').update_address('C6', 'new')
+        db.ws(ws='sh1').update_address('B4', 'A1&"_"&"two"')
+        db.ws(ws='sh1').update_address('B5', '=A2+10')
+        db.ws(ws='sh1').update_address('C6', 'new')
 
-        db.add_ws(sheetname='sh3')
-        db.ws(sheetname='sh3').update_address('A1', 'one')
+        db.add_ws(ws='sh3')
+        db.ws(ws='sh3').update_address('A1', 'one')
 
         xl.writexl(db, 'temp_wb.xlsx')
 

@@ -1,10 +1,21 @@
 Revision Log
 ============
 
-Future Tasks
+pypi version 1.45 (in-work)
 ------------
-- additional database indexing features
-- performance
+- added support for cell values that have multiple formats within a single cell.
+  previous versions did not support this functionality since it is logged differently in sharedString.xml
+- added support for updating formulas and viewing them:
+
+    - view formula: ``db.ws('Sheet1').address('A1', formula=True)``
+    - edit formula: ``db.ws('Sheet1').update_address('A1', val='=A1+10')``
+
+- updated the following function arguments to drive commonality:
+
+    - was: ``readxl(fn, sheetnames)`` new: ``readxl(fn, ws)``
+    - was: ``writexl(db, path)`` new: ``writexl(db, fn)``
+    - was: ``db.ws(sheetname)`` new: ``db.ws(ws)``
+    - was: ``db.add_ws(sheetname, data)`` new: ``db.add_ws(ws, data)``
 
 pypi version 1.44
 -----------------

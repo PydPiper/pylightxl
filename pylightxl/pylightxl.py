@@ -5,7 +5,7 @@
 
 Title: pylightxl
 
-Version: 08082020
+Version: 1.44
 
 Source: https://github.com/PydPiper/pylightxl
 
@@ -39,7 +39,6 @@ Future Ideas:
 
 """
 
-#TODO: add docs for formulas in quick ref guide
 
 ########################################################################################################
 # SEC-01: IMPORTS
@@ -73,12 +72,12 @@ else:
 # SEC-03: READXL FUNCTIONS
 ########################################################################################################
 
-def readxl(fn, sheetnames=()):
+def readxl(fn, ws=()):
     """
     Reads an xlsx or xlsm file and returns a pylightxl database
 
     :param str fn: Excel file name
-    :param tuple sheetnames: sheetnames to read into the database, if not specified - all sheets are read
+    :param tuple ws: sheetnames to read into the database, if not specified - all sheets are read
     :return: pylightxl.Database class
     """
 
@@ -105,9 +104,9 @@ def readxl(fn, sheetnames=()):
         zip_sheetnames.sort(key=len)
 
         # remove all names not in entry sheetnames
-        if sheetnames != ():
+        if ws != ():
             temp = []
-            for sn in sheetnames:
+            for sn in ws:
                 try:
                     pop_index = sh_names.index(sn)
                     temp.append(zip_sheetnames[pop_index])
@@ -123,14 +122,14 @@ def readxl(fn, sheetnames=()):
             sharedString = {}
 
         # scrape each sheet#.xml file
-        if sheetnames == ():
+        if ws == ():
             for i, zip_sheetname in enumerate(zip_sheetnames):
                 with f_zip.open(zip_sheetname, 'r') as f:
-                    db.add_ws(sheetname=str(sh_names[i]), data=readxl_scrape(f, sharedString))
+                    db.add_ws(ws=str(sh_names[i]), data=readxl_scrape(f, sharedString))
         else:
-            for sn, zip_sheetname in zip(sheetnames, zip_sheetnames):
+            for sn, zip_sheetname in zip(ws, zip_sheetnames):
                 with f_zip.open(zip_sheetname, 'r') as f:
-                    db.add_ws(sheetname=sn, data=readxl_scrape(f, sharedString))
+                    db.add_ws(ws=sn, data=readxl_scrape(f, sharedString))
 
     return db
 
@@ -208,7 +207,7 @@ def readxl_get_sharedStrings(file, f_zip):
     sharedStrings = {}
 
     # extract text from existing app.xml
-    ns = writexl_xml_namespace(file)
+    ns = utility_xml_namespace(file)
     for prefix, uri in ns.items():
         ET.register_namespace(prefix, uri)
 
@@ -342,40 +341,21 @@ def readxl_scrape(f, sharedString):
 ########################################################################################################
 
 
-def writexl(db, path):
+def writexl(db, fn):
     """
     Writes an excel file from pylightxl.Database
 
     :param pylightxl.Database db: database contains sheetnames, and their data
-    :param str path: file output path
+    :param str fn: file output path
     :return: None
     """
 
-    if not os.path.isfile(path):
+    if not os.path.isfile(fn):
         # write to new excel
-        writexl_new_writer(db, path)
+        writexl_new_writer(db, fn)
     else:
         # write to existing excel
-        writexl_alt_writer(db, path)
-
-
-def writexl_xml_namespace(file):
-    """
-    Takes an xml file and returns the root namespace as a dict
-
-    :param str file: xml file path
-    :return dict: dictionary of root namespace
-    """
-
-    events = "start", "start-ns", "end-ns"
-
-    ns_map = []
-
-    for event, elem in ET.iterparse(file, events):
-        if event == "start-ns":
-            elem = ('default', elem[1]) if elem[0] == '' else elem
-            ns_map.append(elem)
-    return dict(ns_map)
+        writexl_alt_writer(db, fn)
 
 
 def writexl_alt_writer(db, path):
@@ -517,7 +497,7 @@ def writexl_alt_app_text(db, filepath):
     """
 
     # extract text from existing app.xml
-    ns = writexl_xml_namespace(filepath)
+    ns = utility_xml_namespace(filepath)
     for prefix, uri in ns.items():
         ET.register_namespace(prefix, uri)
     tree = ET.parse(filepath)
@@ -592,7 +572,7 @@ def writexl_alt_getsheetref(path_wbrels, path_wb):
 
     # -------------------------------------------------------------
     # get worksheet filenames and Ids
-    ns = writexl_xml_namespace(path_wbrels)
+    ns = utility_xml_namespace(path_wbrels)
     for prefix, uri in ns.items():
         ET.register_namespace(prefix, uri)
     tree = ET.parse(path_wbrels)
@@ -606,7 +586,7 @@ def writexl_alt_getsheetref(path_wbrels, path_wb):
 
     # -------------------------------------------------------------
     # get custom worksheet names
-    ns = writexl_xml_namespace(path_wb)
+    ns = utility_xml_namespace(path_wb)
     for prefix, uri in ns.items():
         ET.register_namespace(prefix, uri)
     tree = ET.parse(path_wb)
@@ -864,7 +844,7 @@ def writexl_new_worksheet_text(db, sheet_name):
     if ws_size == [0,0] or ws_size == [1,1]:
         sheet_size_address = 'A1'
     else:
-        sheet_size_address = 'A1:' + index2address(ws_size[0],ws_size[1])
+        sheet_size_address = 'A1:' + utility_index2address(ws_size[0],ws_size[1])
 
     many_tag_row = ''
     for rowID, row in enumerate(db.ws(sheet_name).rows, 1):
@@ -872,7 +852,7 @@ def writexl_new_worksheet_text(db, sheet_name):
         tag_cr = False
         num_of_cr_tags_counter = 0
         for colID, val in enumerate(row, 1):
-            address = index2address(rowID, colID)
+            address = utility_index2address(rowID, colID)
             str_option = ''
             cell_formula = ''
 
@@ -1017,18 +997,18 @@ class Database:
     def __repr__(self):
         return 'pylightxl.Database'
 
-    def ws(self, sheetname):
+    def ws(self, ws):
         """
         Indexes worksheets within the database
 
-        :param str sheetname: worksheet name
+        :param str ws: worksheet name
         :return: pylightxl.Database.Worksheet class object
         """
 
         try:
-            return self._ws[sheetname]
+            return self._ws[ws]
         except KeyError:
-            raise ValueError('Error - Sheetname ({}) is not in the database'.format(sheetname))
+            raise ValueError('Error - Sheetname ({}) is not in the database'.format(ws))
 
     @property
     def ws_names(self):
@@ -1040,19 +1020,19 @@ class Database:
 
         return self._ws_names
 
-    def add_ws(self, sheetname, data=None):
+    def add_ws(self, ws, data=None):
         """
         Logs worksheet name and its data in the database
 
-        :param str sheetname: worksheet name
+        :param str ws: worksheet name
         :param data: dictionary of worksheet cell values (ex: {'A1': {'v':10,'f':'','s':''}, 'A2': {'v':20,'f':'','s':''}})
         :return: None
         """
 
         if data is None:
             data = {'A1': {'v': '', 'f': '', 's': ''}}
-        self._ws.update({sheetname: Worksheet(data)})
-        self._ws_names.append(sheetname)
+        self._ws.update({ws: Worksheet(data)})
+        self._ws_names.append(ws)
 
     def set_emptycell(self, val):
         """
@@ -1065,7 +1045,6 @@ class Database:
         for ws in self.ws_names:
             self.ws(ws).set_emptycell(val)
 
-#TODO: add update formula
 #TODO: add rename sheet
 #TODO: add remove sheet
 class Worksheet():
@@ -1105,7 +1084,7 @@ class Worksheet():
             list_of_chars.sort(reverse=True)
             # if chars are different length
             list_of_chars.sort(key=len, reverse=True)
-            self.maxcol = address2index(list_of_chars[0]+"1")[1]
+            self.maxcol = utility_address2index(list_of_chars[0]+"1")[1]
         else:
             self.maxrow = 0
             self.maxcol = 0
@@ -1160,7 +1139,7 @@ class Worksheet():
         :return: cell value
         """
 
-        address = index2address(row, col)
+        address = utility_index2address(row, col)
         try:
             if not formula:
                 rv = self._data[address]['v']
@@ -1181,7 +1160,7 @@ class Worksheet():
         :param int/float/str val: cell value; equations are strings and must begin with "="
         :return: None
         """
-        address = index2address(row, col)
+        address = utility_index2address(row, col)
         self.maxcol = col if col > self.maxcol else self.maxcol
         self.maxrow = row if row > self.maxrow else self.maxrow
         # log formulas under formulas and trim off the '='
@@ -1199,7 +1178,7 @@ class Worksheet():
         :param int/float/str val: cell value; equations are strings and must begin with "="
         :return: None
         """
-        row, col = address2index(address)
+        row, col = utility_address2index(address)
         self.maxcol = col if col > self.maxcol else self.maxcol
         self.maxrow = row if row > self.maxrow else self.maxrow
         # log formulas under formulas and trim off the '='
@@ -1394,7 +1373,7 @@ class Worksheet():
 ########################################################################################################
 
 
-def address2index(address):
+def utility_address2index(address):
     """
     Convert excel address to row/col index
 
@@ -1419,7 +1398,7 @@ def address2index(address):
         raise ValueError('Error - Incorrect address ({}) entry. Address must be an alphanumeric '
                          'where the starting character(s) are alpha characters a-z'.format(address))
 
-    col = columnletter2num(colstr)
+    col = utility_columnletter2num(colstr)
 
     try:
         row = int(strVSnum.split(address)[1])
@@ -1430,7 +1409,7 @@ def address2index(address):
     return [row, col]
 
 
-def index2address(row, col):
+def utility_index2address(row, col):
     """
     Converts index row/col to excel address
 
@@ -1446,12 +1425,12 @@ def index2address(row, col):
         raise ValueError('Error - Row ({}) and Col ({}) entry cannot be less than 1'.format(row, col))
 
     # values over 26 are outside the A-Z range, reduce them
-    colname = num2columnletters(col)
+    colname = utility_num2columnletters(col)
 
     return colname + str(row)
 
 
-def columnletter2num(text):
+def utility_columnletter2num(text):
     """
     Takes excel column header string and returns the equivalent column count
 
@@ -1462,14 +1441,14 @@ def columnletter2num(text):
     val = 0
     try:
         val = (ord(text[0].upper())-64) * 26 ** letter_pos
-        next_val = columnletter2num(text[1:])
+        next_val = utility_columnletter2num(text[1:])
         val = val + next_val
     except IndexError:
         return val
     return val
 
 
-def num2columnletters(num):
+def utility_num2columnletters(num):
     """
     Takes a column number and converts it to the equivalent excel column letters
 
@@ -1491,3 +1470,22 @@ def num2columnletters(num):
         return num
 
     return "".join(list(map(lambda x: chr(x + 64), pre_num2alpha(num))))
+
+
+def utility_xml_namespace(file):
+    """
+    Takes an xml file and returns the root namespace as a dict
+
+    :param str file: xml file path
+    :return dict: dictionary of root namespace
+    """
+
+    events = "start", "start-ns", "end-ns"
+
+    ns_map = []
+
+    for event, elem in ET.iterparse(file, events):
+        if event == "start-ns":
+            elem = ('default', elem[1]) if elem[0] == '' else elem
+            ns_map.append(elem)
+    return dict(ns_map)

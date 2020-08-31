@@ -12,61 +12,44 @@ else:
     from pathlib2 import Path
 
 # local lib imports
-from pylightxl.pylightxl import readxl, writexl
-from pylightxl.pylightxl import Database, Worksheet, address2index, index2address, \
-    columnletter2num, num2columnletters
+from pylightxl import pylightxl as xl
 
 if 'test' in os.listdir('.'):
     # running from top level
-    DB = readxl('./test/testbook.xlsx')
-else:
-    # running within /test folder or in debug
-    DB = readxl('./testbook.xlsx')
+    os.chdir('./test')
+    DB = xl.readxl('./testbook.xlsx')
 
 
 class TestReadxl_BadInput(TestCase):
 
     def test_bad_fn_type(self):
         with self.assertRaises(ValueError) as e:
-            db = readxl(fn=1)
+            db = xl.readxl(fn=1)
             self.assertEqual(e, 'Error - Incorrect file entry ({}).'.format('1'))
 
     def test_bad_fn_exist(self):
         with self.assertRaises(ValueError) as e:
-            db = readxl('bad')
+            db = xl.readxl('bad')
             self.assertEqual(e, 'Error - File ({}) does not exit.'.format('bad'))
 
     def test_bad_fn_ext(self):
         with self.assertRaises(ValueError) as e:
-            if 'test' in os.listdir('.'):
-                db = readxl('test/test_read.py')
-            else:
-                db = readxl('test_read.py')
+            db = xl.readxl('test_read.py')
             self.assertEqual(e, 'Error - Incorrect Excel file extension ({}). '
                                 'File extension supported: .xlsx .xlsm'.format('py'))
 
     def test_bad_readxl_sheetnames(self):
         with self.assertRaises(ValueError) as e:
-            if 'test' in os.listdir('.'):
-                # running from top level
-                db = readxl('./test/testbook.xlsx', ('not-a-sheet',))
-            else:
-                # running within /test folder or in debug
-                db = readxl('./testbook.xlsx', ('not-a-sheet',))
+            db = xl.readxl('./testbook.xlsx', ('not-a-sheet',))
             self.assertRaises(e, 'Error - Sheetname ({}) is not in the workbook.'.format('not-a-sheet'))
 
 
 class TestIntegration(TestCase):
 
     def test_pathlib_readxl(self):
-        if 'test' in os.listdir('.'):
-            # running from top level
-            mypath = Path('./test/testbook.xlsx')
-        else:
-            # running within /test folder or in debug
-            mypath = Path('./testbook.xlsx')
+        mypath = Path('./testbook.xlsx')
 
-        db = readxl(fn=mypath, sheetnames=['types',])
+        db = xl.readxl(fn=mypath, ws=['types',])
         self.assertEqual(db.ws('types').index(1, 1), 11)
 
     def test_AllSheetsRead(self):
@@ -79,10 +62,7 @@ class TestIntegration(TestCase):
         self.assertEqual(db_ws_names, true_ws_names)
 
     def test_SelectedSheetReading(self):
-        try:
-            db = readxl('test/testbook.xlsx', ('empty', 'types'))
-        except ValueError:
-            db = readxl('testbook.xlsx', ('empty', 'types'))
+        db = xl.readxl('testbook.xlsx', ('empty', 'types'))
         db_ws_names = db.ws_names
         db_ws_names.sort()
         true_ws_names = ['empty', 'types']
@@ -173,37 +153,37 @@ class TestIntegration(TestCase):
 
     def test_reading_written_ws(self):
         file_path = 'temporary_test_file.xlsx'
-        db = Database()
+        db = xl.Database()
         db.add_ws('new_ws')
-        writexl(db, file_path)
-        db = readxl(file_path)
+        xl.writexl(db, file_path)
+        db = xl.readxl(file_path)
         self.assertEqual(db.ws_names, ['new_ws'])
         os.remove(file_path)
 
     def test_reading_written_cells(self):
         file_path = 'temporary_test_file.xlsx'
-        db = Database()
+        db = xl.Database()
         db.add_ws('new_ws', {})
         ws = db.ws('new_ws')
         ws.update_index(row=4, col=2, val=42)
-        writexl(db, file_path)
-        db = readxl(file_path)
+        xl.writexl(db, file_path)
+        db = xl.readxl(file_path)
         self.assertEqual(db.ws('new_ws').index(4, 2), 42)
         os.remove(file_path)
 
 
 class TestDatabase(TestCase):
-    db = Database()
+    db = xl.Database()
 
     def test_db_badsheet(self):
-        db = Database()
+        db = xl.Database()
         with self.assertRaises(ValueError) as e:
             db.ws('not a sheet')
             self.assertEqual(e, 'Error - Sheetname (not a sheet) is not in the database')
 
     def test_db_init(self):
         # locally defined to return an empty ws
-        db = Database()
+        db = xl.Database()
         self.assertEqual(db._ws, {})
 
     def test_db_repr(self):
@@ -211,12 +191,12 @@ class TestDatabase(TestCase):
 
     def test_db_ws_names(self):
         # locally defined to return an empty list
-        db = Database()
+        db = xl.Database()
         self.assertEqual(db.ws_names, [])
 
     def test_db_add_ws(self):
-        self.db.add_ws(sheetname='test1', data={})
-        self.assertEqual(str(self.db.ws(sheetname='test1')), 'pylightxl.Database.Worksheet')
+        self.db.add_ws(ws='test1', data={})
+        self.assertEqual(str(self.db.ws(ws='test1')), 'pylightxl.Database.Worksheet')
         self.assertEqual(self.db.ws_names, ['test1'])
         self.db.add_ws('test2')
         self.assertEqual(self.db.ws_names, ['test1', 'test2'])
@@ -257,17 +237,17 @@ class TestDatabase(TestCase):
 class TestWorksheet(TestCase):
 
     def test_ws_init(self):
-        ws = Worksheet(data={})
+        ws = xl.Worksheet(data={})
         self.assertEqual(ws._data, {})
         self.assertEqual(ws.maxrow, 0)
         self.assertEqual(ws.maxcol, 0)
 
     def test_ws_repr(self):
-        ws = Worksheet({})
+        ws = xl.Worksheet({})
         self.assertEqual(str(ws), 'pylightxl.Database.Worksheet')
 
     def test_ws_calc_size(self):
-        ws = Worksheet({})
+        ws = xl.Worksheet({})
         # force calc size
         ws._calc_size()
         self.assertEqual(ws.maxrow, 0)
@@ -310,48 +290,48 @@ class TestWorksheet(TestCase):
         self.assertEqual(ws.maxcol, 16384)
 
     def test_ws_size(self):
-        ws = Worksheet({})
+        ws = xl.Worksheet({})
         self.assertEqual(ws.size, [0, 0])
         ws._data = {'A1': {'v': 11}, 'A2': {'v': 21}}
         ws._calc_size()
         self.assertEqual(ws.size, [2, 1])
 
     def test_ws_address(self):
-        ws = Worksheet({'A1': {'v': 1}})
+        ws = xl.Worksheet({'A1': {'v': 1}})
         self.assertEqual(ws.address(address='A1'), 1)
         self.assertEqual(ws.address('A2'), '')
 
     def test_ws_index(self):
-        ws = Worksheet({'A1': {'v': 1}})
+        ws = xl.Worksheet({'A1': {'v': 1}})
         self.assertEqual(ws.index(row=1, col=1), 1)
         self.assertEqual(ws.index(1, 2), '')
 
     def test_ws_row(self):
-        ws = Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
+        ws = xl.Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
         self.assertEqual(ws.row(row=1), [11, 12])
         self.assertEqual(ws.row(2), [21, ''])
         self.assertEqual(ws.row(3), ['', ''])
 
     def test_ws_col(self):
-        ws = Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
+        ws = xl.Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
         self.assertEqual(ws.col(col=1), [11, 21])
         self.assertEqual(ws.col(2), [12, ''])
         self.assertEqual(ws.col(3), ['', ''])
 
     def test_ws_rows(self):
-        ws = Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
+        ws = xl.Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
         correct_list = [[11, 12], [21, '']]
         for i, row in enumerate(ws.rows):
             self.assertEqual(row, correct_list[i])
 
     def test_ws_cols(self):
-        ws = Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
+        ws = xl.Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
         correct_list = [[11, 21], [12, '']]
         for i, col in enumerate(ws.cols):
             self.assertEqual(col, correct_list[i])
 
     def test_ws_keycol(self):
-        ws = Worksheet({'A1': {'v': 11}, 'B1': {'v': 11}, 'C1': {'v': 13},
+        ws = xl.Worksheet({'A1': {'v': 11}, 'B1': {'v': 11}, 'C1': {'v': 13},
                         'A2': {'v': 21}, 'B2': {'v': 22}, 'C2': {'v': 23},
                         'A3': {'v': 11}, 'B3': {'v': 32}, 'C3': {'v': 33}})
         self.assertEqual(ws.keycol(key=11), [11, 21, 11])
@@ -366,7 +346,7 @@ class TestWorksheet(TestCase):
         self.assertEqual(ws.keyrow(key=22, keyindex=3), [])
 
     def test_update_index(self):
-        ws = Worksheet({})
+        ws = xl.Worksheet({})
         ws.update_index(row=4, col=2, val=42)
         self.assertEqual(ws.size, [4, 2])
         self.assertEqual(ws.index(4, 2), 42)
@@ -379,95 +359,95 @@ class TestConversion(TestCase):
 
     def test_address2index_baddata(self):
         with self.assertRaises(ValueError) as e:
-            address2index(address=1)
+            xl.utility_address2index(address=1)
             self.assertEqual(e, 'Error - Address (1) must be a string.')
 
         with self.assertRaises(ValueError) as e:
-            address2index('')
+            xl.utility_address2index('')
             self.assertEqual(e, 'Error - Address ('') cannot be an empty str.')
 
         with self.assertRaises(ValueError) as e:
-            address2index('1')
+            xl.utility_address2index('1')
             self.assertEqual(e, 'Error - Incorrect address (1) entry. Address must be an alphanumeric '
                                 'where the starting character(s) are alpha characters a-z')
 
         with self.assertRaises(ValueError) as e:
-            address2index('1A')
+            xl.utility_address2index('1A')
             self.assertEqual(e, 'Error - Incorrect address (1A) entry. Address must be an alphanumeric '
                                 'where the starting character(s) are alpha characters a-z')
 
         with self.assertRaises(ValueError) as e:
-            address2index('AA')
+            xl.utility_address2index('AA')
             self.assertEqual(e, 'Error - Incorrect address (AA) entry. Address must be an alphanumeric '
                                 'where the trailing character(s) are numeric characters 1-9')
 
     def test_address2index(self):
-        self.assertEqual(address2index('A1'), [1, 1])
-        self.assertEqual(address2index('A1000'), [1000, 1])
-        self.assertEqual(address2index('A1048576'), [1048576, 1])
+        self.assertEqual(xl.utility_address2index('A1'), [1, 1])
+        self.assertEqual(xl.utility_address2index('A1000'), [1000, 1])
+        self.assertEqual(xl.utility_address2index('A1048576'), [1048576, 1])
 
-        self.assertEqual(address2index('Z1'), [1, 26])
-        self.assertEqual(address2index('AA1'), [1, 27])
-        self.assertEqual(address2index('BA1'), [1, 53])
-        self.assertEqual(address2index('YQ1'), [1, 667])
-        self.assertEqual(address2index('AAA1'), [1, 703])
-        self.assertEqual(address2index('AAZ1'), [1, 728])
-        self.assertEqual(address2index('PZD1'), [1, 11496])
-        self.assertEqual(address2index('QGK1'), [1, 11685])
-        self.assertEqual(address2index('XFD1'), [1, 16384])
+        self.assertEqual(xl.utility_address2index('Z1'), [1, 26])
+        self.assertEqual(xl.utility_address2index('AA1'), [1, 27])
+        self.assertEqual(xl.utility_address2index('BA1'), [1, 53])
+        self.assertEqual(xl.utility_address2index('YQ1'), [1, 667])
+        self.assertEqual(xl.utility_address2index('AAA1'), [1, 703])
+        self.assertEqual(xl.utility_address2index('AAZ1'), [1, 728])
+        self.assertEqual(xl.utility_address2index('PZD1'), [1, 11496])
+        self.assertEqual(xl.utility_address2index('QGK1'), [1, 11685])
+        self.assertEqual(xl.utility_address2index('XFD1'), [1, 16384])
 
-        self.assertEqual(address2index('XFD1048576'), [1048576, 16384])
+        self.assertEqual(xl.utility_address2index('XFD1048576'), [1048576, 16384])
 
     def test_index2address_baddata(self):
         with self.assertRaises(ValueError) as e:
-            index2address(row='', col=1)
+            xl.utility_index2address(row='', col=1)
             self.assertEqual(e, 'Error - Incorrect row ('') entry. Row must either be a int or float')
         with self.assertRaises(ValueError) as e:
-            index2address(1, '')
+            xl.utility_index2address(1, '')
             self.assertEqual(e, 'Error - Incorrect col ('') entry. Col must either be a int or float')
         with self.assertRaises(ValueError) as e:
-            index2address(0, 0)
+            xl.utility_index2address(0, 0)
             self.assertEqual(e, 'Error - Row (0) and Col (0) entry cannot be less than 1')
 
     def test_index2address(self):
-        self.assertEqual(index2address(1, 1), 'A1')
-        self.assertEqual(index2address(1000, 1), 'A1000')
-        self.assertEqual(index2address(1048576, 1), 'A1048576')
+        self.assertEqual(xl.utility_index2address(1, 1), 'A1')
+        self.assertEqual(xl.utility_index2address(1000, 1), 'A1000')
+        self.assertEqual(xl.utility_index2address(1048576, 1), 'A1048576')
 
-        self.assertEqual(index2address(1, 26), 'Z1')
-        self.assertEqual(index2address(1, 27), 'AA1')
-        self.assertEqual(index2address(1, 53), 'BA1')
-        self.assertEqual(index2address(1, 667), 'YQ1')
-        self.assertEqual(index2address(1, 703), 'AAA1')
-        self.assertEqual(index2address(1, 728), 'AAZ1')
-        self.assertEqual(index2address(1, 11496), 'PZD1')
-        self.assertEqual(index2address(1, 11685), 'QGK1')
-        self.assertEqual(index2address(1, 16384), 'XFD1')
+        self.assertEqual(xl.utility_index2address(1, 26), 'Z1')
+        self.assertEqual(xl.utility_index2address(1, 27), 'AA1')
+        self.assertEqual(xl.utility_index2address(1, 53), 'BA1')
+        self.assertEqual(xl.utility_index2address(1, 667), 'YQ1')
+        self.assertEqual(xl.utility_index2address(1, 703), 'AAA1')
+        self.assertEqual(xl.utility_index2address(1, 728), 'AAZ1')
+        self.assertEqual(xl.utility_index2address(1, 11496), 'PZD1')
+        self.assertEqual(xl.utility_index2address(1, 11685), 'QGK1')
+        self.assertEqual(xl.utility_index2address(1, 16384), 'XFD1')
 
-        self.assertEqual(index2address(1048576, 16384), 'XFD1048576')
+        self.assertEqual(xl.utility_index2address(1048576, 16384), 'XFD1048576')
 
     def test_col2num(self):
-        self.assertEqual(columnletter2num('A'), 1)
-        self.assertEqual(columnletter2num('Z'), 26)
-        self.assertEqual(columnletter2num('AA'), 27)
-        self.assertEqual(columnletter2num('BA'), 53)
-        self.assertEqual(columnletter2num('YQ'), 667)
-        self.assertEqual(columnletter2num('ZZ'), 702)
-        self.assertEqual(columnletter2num('AAA'), 703)
-        self.assertEqual(columnletter2num('AAZ'), 728)
-        self.assertEqual(columnletter2num('PZD'), 11496)
-        self.assertEqual(columnletter2num('QGK'), 11685)
-        self.assertEqual(columnletter2num('XFD'), 16384)
+        self.assertEqual(xl.utility_columnletter2num('A'), 1)
+        self.assertEqual(xl.utility_columnletter2num('Z'), 26)
+        self.assertEqual(xl.utility_columnletter2num('AA'), 27)
+        self.assertEqual(xl.utility_columnletter2num('BA'), 53)
+        self.assertEqual(xl.utility_columnletter2num('YQ'), 667)
+        self.assertEqual(xl.utility_columnletter2num('ZZ'), 702)
+        self.assertEqual(xl.utility_columnletter2num('AAA'), 703)
+        self.assertEqual(xl.utility_columnletter2num('AAZ'), 728)
+        self.assertEqual(xl.utility_columnletter2num('PZD'), 11496)
+        self.assertEqual(xl.utility_columnletter2num('QGK'), 11685)
+        self.assertEqual(xl.utility_columnletter2num('XFD'), 16384)
 
     def test_num2col(self):
-        self.assertEqual(num2columnletters(1), 'A')
-        self.assertEqual(num2columnletters(26), 'Z')
-        self.assertEqual(num2columnletters(27), 'AA')
-        self.assertEqual(num2columnletters(53), 'BA')
-        self.assertEqual(num2columnletters(667), 'YQ')
-        self.assertEqual(num2columnletters(702), 'ZZ')
-        self.assertEqual(num2columnletters(703), 'AAA')
-        self.assertEqual(num2columnletters(728), 'AAZ')
-        self.assertEqual(num2columnletters(11496), 'PZD')
-        self.assertEqual(num2columnletters(11685), 'QGK')
-        self.assertEqual(num2columnletters(16384), 'XFD')
+        self.assertEqual(xl.utility_num2columnletters(1), 'A')
+        self.assertEqual(xl.utility_num2columnletters(26), 'Z')
+        self.assertEqual(xl.utility_num2columnletters(27), 'AA')
+        self.assertEqual(xl.utility_num2columnletters(53), 'BA')
+        self.assertEqual(xl.utility_num2columnletters(667), 'YQ')
+        self.assertEqual(xl.utility_num2columnletters(702), 'ZZ')
+        self.assertEqual(xl.utility_num2columnletters(703), 'AAA')
+        self.assertEqual(xl.utility_num2columnletters(728), 'AAZ')
+        self.assertEqual(xl.utility_num2columnletters(11496), 'PZD')
+        self.assertEqual(xl.utility_num2columnletters(11685), 'QGK')
+        self.assertEqual(xl.utility_num2columnletters(16384), 'XFD')
