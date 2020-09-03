@@ -87,8 +87,8 @@ following cell content:
 
 - update cell formula: same as update cell value except the entry must begin with a equal sign "="
 
-.. note:: updating a cell formula will clear the previously read in cell value. Formulas will not
-          calculate their cell value until the excel file is opened.
+.. note:: updating a cell formula will clear the previously read in cell value. Formulas will
+          not calculate their cell value until the excel file is opened.
 
 .. code-block:: python
 

@@ -1,4 +1,4 @@
-# TODO: add test for formula returning empty string </v> tag
+# TODO: nr integration into ssd
 
 # standard lib imports
 from unittest import TestCase
@@ -17,7 +17,7 @@ from pylightxl import pylightxl as xl
 if 'test' in os.listdir('.'):
     # running from top level
     os.chdir('./test')
-    DB = xl.readxl('./testbook.xlsx')
+DB = xl.readxl('./testbook.xlsx')
 
 
 class TestReadxl_BadInput(TestCase):
@@ -162,6 +162,8 @@ class TestIntegration(TestCase):
 
     def test_reading_written_cells(self):
         file_path = 'temporary_test_file.xlsx'
+        if file_path in os.listdir('.'):
+            os.remove(file_path)
         db = xl.Database()
         db.add_ws('new_ws', {})
         ws = db.ws('new_ws')
@@ -171,35 +173,13 @@ class TestIntegration(TestCase):
         self.assertEqual(db.ws('new_ws').index(4, 2), 42)
         os.remove(file_path)
 
-
-class TestDatabase(TestCase):
-    db = xl.Database()
-
-    def test_db_badsheet(self):
-        db = xl.Database()
-        with self.assertRaises(ValueError) as e:
-            db.ws('not a sheet')
-            self.assertEqual(e, 'Error - Sheetname (not a sheet) is not in the database')
-
-    def test_db_init(self):
-        # locally defined to return an empty ws
-        db = xl.Database()
-        self.assertEqual(db._ws, {})
-
-    def test_db_repr(self):
-        self.assertEqual(str(self.db), 'pylightxl.Database')
-
-    def test_db_ws_names(self):
-        # locally defined to return an empty list
-        db = xl.Database()
-        self.assertEqual(db.ws_names, [])
-
-    def test_db_add_ws(self):
-        self.db.add_ws(ws='test1', data={})
-        self.assertEqual(str(self.db.ws(ws='test1')), 'pylightxl.Database.Worksheet')
-        self.assertEqual(self.db.ws_names, ['test1'])
-        self.db.add_ws('test2')
-        self.assertEqual(self.db.ws_names, ['test1', 'test2'])
+    def test_reading_nr(self):
+        true_nr = {'table1': 'semistrucdata1!A1:C4',
+                   'table2': 'semistrucdata1!G1:I3',
+                   'table3': 'semistrucdata1!A11:A14',
+                   'single_nr': 'semistrucdata1!E6',
+                   }
+        self.assertEqual(true_nr, DB.nr_names)
 
     def test_semistrucdata(self):
         table1 = DB.ws('semistrucdata1').ssd()[0]
@@ -233,6 +213,80 @@ class TestDatabase(TestCase):
         # reset it so other tests run correctly
         DB.set_emptycell(val='')
 
+
+class TestDatabase(TestCase):
+    db = xl.Database()
+
+    def test_db_badsheet(self):
+        db = xl.Database()
+        with self.assertRaises(ValueError) as e:
+            db.ws('not a sheet')
+            self.assertEqual(e, 'Error - Sheetname (not a sheet) is not in the database')
+
+    def test_db_init(self):
+        # locally defined to return an empty ws
+        db = xl.Database()
+        self.assertEqual(db._ws, {})
+
+    def test_db_repr(self):
+        self.assertEqual(str(DB), 'pylightxl.Database')
+
+    def test_db_ws_names(self):
+        # locally defined to return an empty list
+        db = xl.Database()
+        self.assertEqual(db.ws_names, [])
+
+    def test_db_add_ws(self):
+        db = xl.Database()
+        db.add_ws(ws='test1', data={})
+        self.assertEqual(str(db.ws(ws='test1')), 'pylightxl.Database.Worksheet')
+        self.assertEqual(db.ws_names, ['test1'])
+        db.add_ws('test2')
+        self.assertEqual(db.ws_names, ['test1', 'test2'])
+
+    def test_db_remove_ws(self):
+        db = xl.Database()
+        db.add_ws('one')
+        db.add_ws('two')
+        db.add_ws('three')
+
+        db.remove_ws(ws='two')
+
+        self.assertEqual(['one', 'three'], db.ws_names)
+        self.assertEqual(False, 'two' in db._ws.keys())
+
+    def test_namedranges(self):
+        db = xl.Database()
+
+        # single entry
+        db.add_nr(ws='one', name='r1', address='A1')
+        self.assertEqual({'r1': 'one!A1'}, db.nr_names)
+        # multi entry
+        db.add_nr(ws='two', name='r2', address='A2:A3')
+        self.assertEqual({'r1': 'one!A1', 'r2': 'two!A2:A3'}, db.nr_names)
+        # overwrite by name
+        db.add_nr(ws='three', name='r1', address='A3')
+        self.assertEqual({'r1': 'three!A3', 'r2': 'two!A2:A3'}, db.nr_names)
+        # overwrite by address
+        db.add_nr(ws='three', name='r3', address='A3')
+        self.assertEqual({'r3': 'three!A3', 'r2': 'two!A2:A3'}, db.nr_names)
+        # overwrite by both name and address
+        db.add_nr(ws='three', name='r3', address='A4')
+        self.assertEqual({'r3': 'three!A4', 'r2': 'two!A2:A3'}, db.nr_names)
+        # remove $ references
+        db.add_nr(ws='three', name='r3', address='$A$4')
+        self.assertEqual({'r3': 'three!A4', 'r2': 'two!A2:A3'}, db.nr_names)
+
+    def test_rename_ws(self):
+        db = xl.Database()
+        db.add_ws('one')
+        db.ws('one').update_address('A1', 10)
+        db.add_ws('two')
+        db.ws('two').update_address('A1', 20)
+
+        db.rename_ws('one', 'two')
+        self.assertEqual(['two'], db.ws_names)
+        self.assertEqual(10, db.ws('two').address('A1'))
 
 class TestWorksheet(TestCase):
 

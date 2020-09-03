@@ -17,6 +17,19 @@ pypi version 1.45 (in-work)
     - was: ``db.ws(sheetname)`` new: ``db.ws(ws)``
     - was: ``db.add_ws(sheetname, data)`` new: ``db.add_ws(ws, data)``
 
+- added new feature to be able to read-in NamedRanges, store it in the Database, update it, remove it,
+  and write it. NamedRanges were integrated with existing function to handle semi-structured-data
+
+    - ``db.add_nr(name'range1', ws='sheet1', address='A1:C2')``
+    - ``db.remove_nr(name='range1')``
+    - ``db.nr_names``
+
+- add feature to remove worksheet: ``db.remove_ws(ws='Sheet1')``
+- add feature to rename worksheet: ``db.rename_ws(old='sh1', new='sh2')``
+- added a cleanup function upon writing to delete _pylightxl_ temp folder in case an error left them
+- added feature to write to file that is open by excel by appending a "new_" tag to the file name and
+  a warning message that file is opened by excel so a file was saved as "new_" + filename
+
 pypi version 1.44
 -----------------
 - bug fix: accounted for num2letter roll-over issue

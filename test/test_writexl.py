@@ -1,4 +1,4 @@
-# TODO: write to existing tests
+# TODO: if excel has file open it writes it with a _new tag
 
 # standard lib imports
 from unittest import TestCase
@@ -35,17 +35,18 @@ class TestWritexlNew(TestCase):
                    '<DocSecurity>0</DocSecurity>\r\n' \
                    '<ScaleCrop>false</ScaleCrop>\r\n' \
                    '<HeadingPairs>\r\n' \
-                   '<vt:vector baseType="variant" size="2">\r\n' \
+                   '<vt:vector baseType="variant" size="{vector_size}">\r\n' \
                    '<vt:variant>\r\n' \
                    '<vt:lpstr>Worksheets</vt:lpstr>\r\n' \
                    '</vt:variant>\r\n' \
                    '<vt:variant>\r\n' \
-                   '<vt:i4>{num_sheets}</vt:i4>\r\n' \
+                   '<vt:i4>{ws_size}</vt:i4>\r\n' \
                    '</vt:variant>\r\n' \
+                   '{variant_tag_nr}' \
                    '</vt:vector>\r\n' \
                    '</HeadingPairs>\r\n' \
                    '<TitlesOfParts>\r\n' \
-                   '<vt:vector baseType="lpstr" size="{num_sheets}">\r\n' \
+                   '<vt:vector baseType="lpstr" size="{vt_size}">\r\n' \
                    '{many_tag_vt}\r\n' \
                    '</vt:vector>\r\n' \
                    '</TitlesOfParts>\r\n' \
@@ -55,6 +56,7 @@ class TestWritexlNew(TestCase):
                    '<HyperlinksChanged>false</HyperlinksChanged>\r\n' \
                    '<AppVersion>16.0300</AppVersion>\r\n' \
                    '</Properties>'
+
         tag_vt = '<vt:lpstr>{sheet_name}</vt:lpstr>\r\n'
 
         many_tag_vt = tag_vt.format(sheet_name='Sheet1') + \
@@ -79,7 +81,31 @@ class TestWritexlNew(TestCase):
         db.add_ws('Sheet8',{})
         db.add_ws('Sheet9',{})
         db.add_ws('Sheet10',{})
-        self.assertEqual(xl.writexl_new_app_text(db), xml_base.format(num_sheets=10, many_tag_vt=many_tag_vt))
+        self.assertEqual(xl.writexl_new_app_text(db), xml_base.format(vector_size=2,
+                                                                      ws_size=10,
+                                                                      variant_tag_nr='',
+                                                                      vt_size=10,
+                                                                      many_tag_vt=many_tag_vt))
+
+        db.add_nr('range1', 'sheet1', 'A1')
+        db.add_nr('range2', 'sheet1', 'A2:A5')
+
+        variant_tag_nr = '<vt:variant><vt:lpstr>Named Ranges</vt:lpstr></vt:variant>\r\n' \
+                         '<vt:variant><vt:i4>2</vt:i4></vt:variant>\r\n'
+
+        # python 2 does not keep dict order
+        if sys.version_info[0] >= 3:
+            many_tag_vt += '<vt:lpstr>range1</vt:lpstr>\r\n'
+            many_tag_vt += '<vt:lpstr>range2</vt:lpstr>\r\n'
+        else:
+            many_tag_vt += '<vt:lpstr>range2</vt:lpstr>\r\n'
+            many_tag_vt += '<vt:lpstr>range1</vt:lpstr>\r\n'
+
+        self.assertEqual(xl.writexl_new_app_text(db), xml_base.format(vector_size=4,
+                                                                      ws_size=10,
+                                                                      variant_tag_nr=variant_tag_nr,
+                                                                      vt_size=12,
+                                                                      many_tag_vt=many_tag_vt))
 
     def test_core_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -137,6 +163,7 @@ class TestWritexlNew(TestCase):
                    '<sheets>\r\n' \
                    '{many_tag_sheets}\r\n' \
                    '</sheets>\r\n' \
+                   '{xml_namedrange}' \
                    '<calcPr calcId="181029"/>\r\n' \
                    '</workbook>'
 
@@ -153,6 +180,9 @@ class TestWritexlNew(TestCase):
                           xml_tag_sheet.format(sheet_name='Sheet9',order_id=9,ref_id=9) + \
                           xml_tag_sheet.format(sheet_name='Sheet10',order_id=10,ref_id=10)
 
+        xml_namedrange = '<definedNames><definedName name="{}">{}</definedName>\r\n'.format('range1', 'Sheet1!A1') + \
+                      '<definedName name="{}">{}</definedName>\r\n</definedNames>\r\n'.format('range2', 'Sheet2!A1:C3')
+
         db = xl.Database()
         db.add_ws('Sheet1',{})
         db.add_ws('Sheet2',{})
@@ -164,7 +194,22 @@ class TestWritexlNew(TestCase):
         db.add_ws('Sheet8',{})
         db.add_ws('Sheet9',{})
         db.add_ws('Sheet10',{})
-        self.assertEqual(xl.writexl_new_workbook_text(db), xml_base.format(many_tag_sheets=many_tag_sheets))
+        self.assertEqual(xl.writexl_new_workbook_text(db),
+                         xml_base.format(many_tag_sheets=many_tag_sheets, xml_namedrange=''))
+
+        db.add_nr('range1', 'Sheet1', 'A1')
+        db.add_nr('range2', 'Sheet2', 'A1:C3')
+        try:
+            self.assertEqual(xl.writexl_new_workbook_text(db),
+                             xml_base.format(many_tag_sheets=many_tag_sheets, xml_namedrange=xml_namedrange))
+        except:
+            # python 2 does not keep dict order
+            xml_namedrange = '<definedNames><definedName name="{}">{}</definedName>\r\n'.format('range2',
+                                                                                                'Sheet2!A1:C3') + \
+                             '<definedName name="{}">{}</definedName>\r\n</definedNames>\r\n'.format(
+                                 'range1', 'Sheet1!A1')
+            self.assertEqual(xl.writexl_new_workbook_text(db),
+                             xml_base.format(many_tag_sheets=many_tag_sheets, xml_namedrange=xml_namedrange))
 
     def test_worksheet_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -211,7 +256,6 @@ class TestWritexlNew(TestCase):
                                                                            uid=uid,
                                                                            many_tag_row=many_tag_row))
         #TODO: add checks for sharedStrings
-
 
     def test_sharedStrings_text(self):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
@@ -297,6 +341,12 @@ class TestWritexlExisting(TestCase):
     def test_writexl_alt_app_text(self):
         # tests that sheet names and sheet count were updated and named ranges were preserved
         db = xl.Database()
+        # existing info in input_app.xml
+        db.add_ws('Sheet1')
+        db.add_ws('sh2')
+        db.add_nr('mylist', 'Sheet1', 'A1')
+        db.add_nr('mylist2', 'Sheet1', 'A2')
+        # new info
         db.add_ws('one')
         db.add_ws('two')
         db.add_ws('three')

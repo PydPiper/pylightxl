@@ -95,7 +95,17 @@ def readxl(fn, ws=()):
 
         # get custom sheetnames
         with f_zip.open('xl/workbook.xml', 'r') as f:
-            sh_names = readxl_get_sheetnames(f, f_zip)
+            sh_names, namedranges = readxl_get_workbook(f, f_zip)
+
+        # unload the namedranges
+        for name, fulladdress in namedranges.items():
+            try:
+                sheetname, address = fulladdress.split('!')
+            except ValueError:
+                raise UserWarning('pylightxl - Ill formatted workbook.xml. '
+                                  'NamedRange does not contain sheet reference (ex: "Sheet1!A1"): '
+                                  '{name} - {fulladdress}'.format(name=name, fulladdress=fulladdress))
+            db.add_nr(ws=sheetname, name=name, address=address)
 
         # get all of the zip'ed xml sheetnames, sort in because python27 reads these out of order
         zip_sheetnames = readxl_get_zipsheetnames(f_zip)
@@ -155,21 +165,23 @@ def readxl_check_excelfile(fn):
                          'File extension supported: .xlsx .xlsm'.format(extension))
 
 
-def readxl_get_sheetnames(file, f_zip):
+def readxl_get_workbook(file, f_zip):
     """
     Takes a file-handle of xl/workbook.xml and returns a list of sheetnames
 
     :param open-filehanle file: xl/workbook.xml file-handle
     :param open-zip-filehanle f_zip: zip file-handle for workbook (to reopen for python 2.7)
-    :return: list of sheetnames
+    :return list, dict: list of sheetnames and dict of NamedRanges {rangename: fulladdress,}
     """
 
     sheetnames = []
+    # {namedrange: fulladdress,}
+    namedrange = {}
 
     # extract text from existing app.xml
     ns = utility_xml_namespace(file)
     for prefix, uri in ns.items():
-        ET.register_namespace(prefix,uri)
+        ET.register_namespace(prefix, uri)
 
     try:
         file.seek(0)
@@ -184,7 +196,13 @@ def readxl_get_sheetnames(file, f_zip):
     for tag_sheet in root.findall('./default:sheets/default:sheet', ns):
         sheetnames.append(tag_sheet.get('name'))
 
-    return sheetnames
+    for tag_sheet in root.findall('./default:definedNames/default:definedName', ns):
+        name = tag_sheet.get('name')
+        # for user friendly entry $ for locked cell-locations are removed
+        address = tag_sheet.text.replace('$', '')
+        namedrange.update({name: address})
+
+    return sheetnames, namedrange
 
 
 def readxl_get_zipsheetnames(zipfile):
@@ -206,7 +224,6 @@ def readxl_get_sharedStrings(file, f_zip):
     :param open-filehandle file: xl/sharedString.xml file-handle
     :return: dict of commonly used strings
     """
-
 
     sharedStrings = {}
 
@@ -354,6 +371,11 @@ def writexl(db, fn):
     :return: None
     """
 
+    # cleanup existing pylightxl temp files if an error occured
+    temp_folders = [folder for folder in os.listdir('.') if '_pylightxl_' in folder]
+    for folder in temp_folders:
+        shutil.rmtree(folder)
+
     if not os.path.isfile(fn):
         # write to new excel
         writexl_new_writer(db, fn)
@@ -374,7 +396,10 @@ def writexl_alt_writer(db, path):
     filename = os.path.split(path)[-1]
     filename = filename if filename.split('.')[-1] == 'xlsx' else '.'.join(filename.split('.')[:-1] + ['xlsx'])
     temp_folder = '_pylightxl_' + filename
-
+    # cleanup old fies
+    for file in os.listdir('.'):
+        if '_pylightxl_' in file:
+            shutil.rmtree(file)
 
     # have to extract all first to modify
     with zipfile.ZipFile(path, 'r') as f:
@@ -458,9 +483,10 @@ def writexl_alt_writer(db, path):
     try:
         os.remove(path)
     except PermissionError:
-        # file is open
-        shutil.rmtree(temp_folder)
-        raise UserWarning('Error - Cannot write to existing file ({}) that is already open.'.format(filename))
+        # file is open, adjust name and print warning
+        print('pylightxl - Cannot write to existing file <{}> that is open in excel.'.format(filename))
+        print('     New temporary file was written to <{}>'.format('new_' + filename))
+        filename = 'new_' + filename
 
 
 
@@ -507,47 +533,75 @@ def writexl_alt_app_text(db, filepath):
     tree = ET.parse(filepath)
     root = tree.getroot()
 
-    # default declarations (worksheets, named ranges)
-    old_ws_count = 0
-    old_nr_count = 0
+    if db.nr_names == {}:
+        # does not contain namedranges
+        tag_vt_vector = root.find('./default:HeadingPairs//vt:vector', ns)
+        tag_vt_vector.clear()
+        tag_vt_vector.set('size', '"2"')
+        tag_vt_vector.set('baseType', 'variant')
 
-    # TODO: named ranges - update vt:vector size=ws_count + nr_count
-    # update: number of worksheets and named ranges for the workbook under "HeadingPairs"
-    tags_vt = root.findall('./default:HeadingPairs//vt:variant', ns)
-    # each tag_vt:variant should only have 1 vt:i4 tag under it (that's the [0] indexing)
-    for i_tag_vt, tag_vt in enumerate(tags_vt):
-        try:
-            if tag_vt[0].text == "Worksheets":
-                old_ws_count = int(tags_vt[i_tag_vt + 1][0].text)
-                tags_vt[i_tag_vt + 1][0].text = str(len(db.ws_names))
-        except IndexError:
-            # ill-formatted xml
-            raise UserWarning('pylightxl error - Ill formatted xml on docProps/app.xml.\n'
-                              'HeadingPairs/vt:vector/vt:variant Worksheets missing vt:variant pair')
-        try:
-            # TODO: named ranges - count
-            if tag_vt[0].text == "Named Ranges":
-                old_nr_count = int(tags_vt[i_tag_vt + 1][0].text)
-        except IndexError:
-            # ill-formatted xml
-            raise UserWarning('pylightxl error - Ill formatted xml on docProps/app.xml.\n'
-                              'HeadingPairs/vt:vector/vt:variant Named Ranges missing vt:variant pair')
+        tag_vt_variant = ET.Element('vt:variant')
+        tag_vt_vector.append(tag_vt_variant)
+        tag_vt_lpstr = ET.Element('vt:lpstr')
+        tag_vt_lpstr.text = 'Worksheets'
+        tag_vt_variant.append(tag_vt_lpstr)
+
+        tag_vt_variant = ET.Element('vt:variant')
+        tag_vt_vector.append(tag_vt_variant)
+        tag_vt_lpstr = ET.Element('vt:i4')
+        tag_vt_lpstr.text = str(len(db.ws_names))
+        tag_vt_variant.append(tag_vt_lpstr)
+
+
+    else:
+        # contains namedranges
+        tag_vt_vector = root.find('./default:HeadingPairs//vt:vector', ns)
+        tag_vt_vector.clear()
+        tag_vt_vector.set('size', '4')
+        tag_vt_vector.set('baseType', 'variant')
+
+        tag_vt_variant = ET.Element('vt:variant')
+        tag_vt_vector.append(tag_vt_variant)
+        tag_vt_lpstr = ET.Element('vt:lpstr')
+        tag_vt_lpstr.text = 'Worksheets'
+        tag_vt_variant.append(tag_vt_lpstr)
+
+        tag_vt_variant = ET.Element('vt:variant')
+        tag_vt_vector.append(tag_vt_variant)
+        tag_vt_lpstr = ET.Element('vt:i4')
+        tag_vt_lpstr.text = str(len(db.ws_names))
+        tag_vt_variant.append(tag_vt_lpstr)
+
+        tag_vt_variant = ET.Element('vt:variant')
+        tag_vt_vector.append(tag_vt_variant)
+        tag_vt_lpstr = ET.Element('vt:lpstr')
+        tag_vt_lpstr.text = 'Named Ranges'
+        tag_vt_variant.append(tag_vt_lpstr)
+
+        tag_vt_variant = ET.Element('vt:variant')
+        tag_vt_vector.append(tag_vt_variant)
+        tag_vt_lpstr = ET.Element('vt:i4')
+        tag_vt_lpstr.text = str(len(db.nr_names))
+        tag_vt_variant.append(tag_vt_lpstr)
 
     # update: number of worksheets and named ranges for the workbook under "TitlesOfParts"
-    tag_titles_vector = root.findall('./default:TitlesOfParts/vt:vector', ns)[0]
-    # TODO: named ranges - count update
-    tag_titles_vector.set('size', str(len(db.ws_names) + old_nr_count))
-
     # update: remove existing worksheet names, preserve named ranges, add new worksheet names
-    # TODO: named ranges - vt:lpstr nr names
-    for i_tag_vtlpstr, tag_vtlpstr in enumerate(root.findall('./default:TitlesOfParts//vt:lpstr', ns), 1):
-        if i_tag_vtlpstr <= old_ws_count:
-            root.find('./default:TitlesOfParts/vt:vector', ns).remove(tag_vtlpstr)
-    for sheet_name in db.ws_names[::-1]:
+    tag_vt_vector = root.find('./default:TitlesOfParts//vt:vector', ns)
+    tag_vt_vector.clear()
+    tag_vt_vector.set('size', str(len(db.ws_names) + len(db.nr_names)))
+    tag_vt_vector.set('baseType', 'lpstr')
+
+    for sheet_name in db.ws_names:
         element = ET.Element('vt:lpstr')
         element.text = sheet_name
 
-        root.find('./default:TitlesOfParts/vt:vector', ns).insert(0, element)
+        tag_vt_vector.append(element)
+    if db.nr_names != {}:
+        for range_name in db.nr_names.keys():
+            element = ET.Element('vt:lpstr')
+            element.text = range_name
+
+            tag_vt_vector.append(element)
 
     # reset default namespace
     ET.register_namespace('', ns['default'])
@@ -679,17 +733,18 @@ def writexl_new_app_text(db):
                 '<DocSecurity>0</DocSecurity>\r\n' \
                 '<ScaleCrop>false</ScaleCrop>\r\n' \
                 '<HeadingPairs>\r\n' \
-                    '<vt:vector baseType="variant" size="2">\r\n' \
+                    '<vt:vector baseType="variant" size="{vector_size}">\r\n' \
                         '<vt:variant>\r\n' \
                             '<vt:lpstr>Worksheets</vt:lpstr>\r\n' \
                         '</vt:variant>\r\n' \
                         '<vt:variant>\r\n' \
-                            '<vt:i4>{num_sheets}</vt:i4>\r\n' \
+                            '<vt:i4>{ws_size}</vt:i4>\r\n' \
                         '</vt:variant>\r\n' \
+                        '{variant_tag_nr}' \
                     '</vt:vector>\r\n' \
                '</HeadingPairs>\r\n' \
                '<TitlesOfParts>\r\n' \
-                   '<vt:vector baseType="lpstr" size="{num_sheets}">\r\n' \
+                   '<vt:vector baseType="lpstr" size="{vt_size}">\r\n' \
                        '{many_tag_vt}\r\n' \
                    '</vt:vector>\r\n' \
                '</TitlesOfParts>\r\n' \
@@ -700,15 +755,31 @@ def writexl_new_app_text(db):
                '<AppVersion>16.0300</AppVersion>\r\n' \
                '</Properties>'
 
+    if db.nr_names != {}:
+        variant_tag_nr = '<vt:variant><vt:lpstr>Named Ranges</vt:lpstr></vt:variant>\r\n' \
+                         '<vt:variant><vt:i4>{nr_size}</vt:i4></vt:variant>\r\n'.format(nr_size=len(db.nr_names))
+        vector_size = 4
+    else:
+        variant_tag_nr = ''
+        vector_size = 2
+
     # location: single tag_sheet insert for xml_base
     # inserts: sheet_name
-    tag_vt = '<vt:lpstr>{sheet_name}</vt:lpstr>\r\n'
+    tag_vt = '<vt:lpstr>{name}</vt:lpstr>\r\n'
 
-    num_sheets = len(db.ws_names)
+    vt_size = len(db.ws_names) + len(db.nr_names)
+    ws_size = len(db.ws_names)
     many_tag_vt = ''
     for sheet_name in db.ws_names:
-        many_tag_vt += tag_vt.format(sheet_name=sheet_name)
-    rv = xml_base.format(num_sheets=num_sheets, many_tag_vt=many_tag_vt)
+        many_tag_vt += tag_vt.format(name=sheet_name)
+    for range_name in db.nr_names.keys():
+        many_tag_vt += tag_vt.format(name=range_name)
+
+    rv = xml_base.format(vector_size=vector_size,
+                         ws_size=ws_size,
+                         variant_tag_nr=variant_tag_nr,
+                         vt_size=vt_size,
+                         many_tag_vt=many_tag_vt)
 
     return rv
 
@@ -792,6 +863,7 @@ def writexl_new_workbook_text(db):
                     '<sheets>\r\n' \
                         '{many_tag_sheets}\r\n' \
                     '</sheets>\r\n' \
+                '{xml_namedrange}' \
                     '<calcPr calcId="181029"/>\r\n' \
                 '</workbook>'
 
@@ -804,7 +876,18 @@ def writexl_new_workbook_text(db):
     many_tag_sheets = ''
     for shID, sheet_name in enumerate(db.ws_names, 1):
         many_tag_sheets += xml_tag_sheet.format(sheet_name=sheet_name, order_id=shID, ref_id=shID)
-    rv = xml_base.format(many_tag_sheets=many_tag_sheets)
+
+
+    many_tag_nr = ''
+    for name, address in db.nr_names.items():
+        many_tag_nr += '<definedName name="{}">{}</definedName>\r\n'.format(name, address)
+
+    if db.nr_names != {}:
+        xml_namedrange = '<definedNames>{many_tag_nr}</definedNames>\r\n'.format(many_tag_nr=many_tag_nr)
+    else:
+        xml_namedrange = ''
+
+    rv = xml_base.format(many_tag_sheets=many_tag_sheets, xml_namedrange=xml_namedrange)
     return rv
 
 
@@ -993,10 +1076,15 @@ def writexl_new_content_types_text(db):
 class Database:
 
     def __init__(self):
+        # keys are worksheet names, values are Workbook classes
         self._ws = {}
         self._sharedStrings = []
         # list to preserve insertion order <3.6 and easier to reorder for users than keys of dict
         self._ws_names = []
+
+        # Named Ranges: checking for unique names and unique address for single worksheet
+        # {unique_name: unique_address, ...}
+        self._NamedRange = {}
 
     def __repr__(self):
         return 'pylightxl.Database'
@@ -1038,6 +1126,43 @@ class Database:
         self._ws.update({ws: Worksheet(data)})
         self._ws_names.append(ws)
 
+    def remove_ws(self, ws):
+        """
+        Removes a worksheet and its data from the database
+
+        :param str ws: worksheet name
+        :return: None
+        """
+
+        try:
+            del(self._ws[ws])
+        except KeyError:
+            pass
+
+        try:
+            self._ws_names.remove(ws)
+        except ValueError:
+            pass
+
+    def rename_ws(self, old, new):
+        """
+        Renames an existing worksheet. Caution, renaming to an existing new worksheet name will overwrite
+
+        :param str old: old name
+        :param str new: new name
+        :return: None
+        """
+
+        try:
+            data = self._ws[old]._data
+            del(self._ws[old])
+            self.remove_ws(old)
+            if new in self.ws_names:
+                _ = self._ws_names.pop(self._ws_names.index(new))
+            self.add_ws(new, data)
+        except KeyError:
+            pass
+
     def set_emptycell(self, val):
         """
         Custom definition for how pylightxl returns an empty cell
@@ -1049,8 +1174,55 @@ class Database:
         for ws in self.ws_names:
             self.ws(ws).set_emptycell(val)
 
+    def add_nr(self, name, ws,  address):
+        """
+        Add a NamedRange to the database. There can not be duplicate name or addresses. A named range
+        that overlaps either the name or address will overwrite the database's existing NamedRange
+
+        :param str name: NamedRange name
+        :param str ws: worksheet name
+        :param str address: range of address (single cell ex: "A1", range ex: "A1:B4")
+        :return: None
+        """
+
+        full_address = ws + '!' + address.replace('$', '')
+        if full_address in self._NamedRange.values():
+            # conflicting address, overwrite existing entry
+            # get key for the full_address value
+            key = list(self._NamedRange.keys())[list(self._NamedRange.values()).index(full_address)]
+            # remove old key/value
+            del(self._NamedRange[key])
+            # add the new key/value
+            self._NamedRange.update({name: full_address})
+        else:
+            # potentially a new entry or overwrite by name
+            self._NamedRange.update({name: full_address})
+
+    def remove_nr(self, name):
+        """
+        Removes a Named Range from the database
+
+        :param str name: NamedRange name
+        :return: None
+        """
+
+        try:
+            del(self._NamedRange[name])
+        except KeyError:
+            pass
+
+    @property
+    def nr_names(self):
+        """
+        Returns the dictionary of named ranges ex: {unique_name: unique_address, ...}
+
+        :return dict: {unique_name: unique_address, ...}
+        """
+
+        return self._NamedRange
+
+
 #TODO: add rename sheet
-#TODO: add remove sheet
 class Worksheet():
 
     def __init__(self, data):
