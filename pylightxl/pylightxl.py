@@ -1222,7 +1222,6 @@ class Database:
         return self._NamedRange
 
 
-#TODO: add rename sheet
 class Worksheet():
 
     def __init__(self, data):
@@ -1340,7 +1339,7 @@ class Worksheet():
         self.maxcol = col if col > self.maxcol else self.maxcol
         self.maxrow = row if row > self.maxrow else self.maxrow
         # log formulas under formulas and trim off the '='
-        if type(val) is str and val[0] == '=':
+        if type(val) is str and len(val) != 0 and val[0] == '=':
             # overwrite existing cell val to be empty (it will calc when excel is opened)
             self._data.update({address: {'v': '', 'f': val[1:], 's': ''}})
         else:
@@ -1358,7 +1357,7 @@ class Worksheet():
         self.maxcol = col if col > self.maxcol else self.maxcol
         self.maxrow = row if row > self.maxrow else self.maxrow
         # log formulas under formulas and trim off the '='
-        if type(val) is str and val[0] == '=':
+        if type(val) is str and len(val) != 0 and val[0] == '=':
             # overwrite existing cell val to be empty (it will calc when excel is opened)
             self._data.update({address: {'v': '', 'f': val[1:], 's': ''}})
         else:

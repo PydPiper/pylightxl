@@ -14,7 +14,11 @@ setuptools.setup(
     url="https://github.com/PydPiper/pylightxl",
     packages=setuptools.find_packages(),
     classifiers=[
-        "Programming Language :: Python :: 2.7, 3.6+",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],

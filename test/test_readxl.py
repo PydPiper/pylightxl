@@ -402,11 +402,32 @@ class TestWorksheet(TestCase):
     def test_update_index(self):
         ws = xl.Worksheet({})
         ws.update_index(row=4, col=2, val=42)
-        self.assertEqual(ws.size, [4, 2])
-        self.assertEqual(ws.index(4, 2), 42)
-        self.assertEqual(ws.address('B4'), 42)
-        self.assertEqual(ws.row(4)[1], 42)
-        self.assertEqual(ws.col(2)[3], 42)
+        self.assertEqual([4, 2], ws.size)
+        self.assertEqual(42, ws.index(4, 2))
+        self.assertEqual(42, ws.address('B4'))
+        self.assertEqual(42, ws.row(4)[1])
+        self.assertEqual(42, ws.col(2)[3])
+        # update with empty data
+        ws.update_index(1, 1, '')
+        self.assertEqual('', ws.index(1, 1))
+        # update with formula
+        ws.update_index(1, 1, '=A2')
+        self.assertEqual('=A2', ws.index(1, 1, formula=True))
+
+    def test_update_address(self):
+        ws = xl.Worksheet({})
+        ws.update_address(address='B4', val=42)
+        self.assertEqual([4, 2], ws.size)
+        self.assertEqual(42, ws.index(4, 2))
+        self.assertEqual(42, ws.address('B4'))
+        self.assertEqual(42, ws.row(4)[1])
+        self.assertEqual(42, ws.col(2)[3])
+        # update with empty data
+        ws.update_address('A1', '')
+        self.assertEqual('', ws.address('A1'))
+        # update with formula
+        ws.update_address('A1', '=A2')
+        self.assertEqual('=A2', ws.address('A1', formula=True))
 
 
 class TestConversion(TestCase):
