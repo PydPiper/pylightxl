@@ -5,7 +5,7 @@
 
 Title: pylightxl
 
-Version: 1.44
+Version: 1.46
 
 Source: https://github.com/PydPiper/pylightxl
 
@@ -31,13 +31,16 @@ Code Structure:
     - SEC-04: DATABASE FUNCTIONS
     - SEC-05: UTILITY FUNCTIONS
 
-Future Ideas:
-    - function to remove empty rows/cols
-    - function that output data in pandas like data format (in-case someone needed to convert to pandas)
-    - matrix function to output 2D data lists
-
-
+TODO MASTER LIST:
 """
+#TODO: integrate namedrange into ssd function
+#TODO: add/remove row/col
+#TODO: read csv into db
+#TODO: write csv from db sheet or ssd
+#TODO: multi-dim indexing (col A: 1,1,1,2,1,1,2 | col B: A,A,B,C,A,A,A | col D: 10,20,30,40,50,60,70)
+#       give me results where col A = 2 and col B = 'C' in col D -> [40,]  also optional arg to return indexes
+#TODO: function that output data in pandas like data format (in-case someone needed to convert to pandas)
+#TODO: matrix function to output 2D data lists
 
 
 ########################################################################################################
@@ -1234,7 +1237,7 @@ class Worksheet():
         self.maxrow = 0
         self.maxcol = 0
         self._calc_size()
-        self.emptycell = ''
+        self._emptycell = ''
 
     def __repr__(self):
         return 'pylightxl.Database.Worksheet'
@@ -1272,7 +1275,7 @@ class Worksheet():
         :return: None
         """
 
-        self.emptycell = val
+        self._emptycell = val
 
     @property
     def size(self):
@@ -1300,7 +1303,7 @@ class Worksheet():
                 rv = '=' + self._data[address]['f']
         except KeyError:
             # no data was parsed, return empty cell value
-            rv = self.emptycell
+            rv = self._emptycell
 
         return rv
 
@@ -1322,7 +1325,7 @@ class Worksheet():
                 rv = '=' + self._data[address]['f']
         except KeyError:
             # no data was parsed, return empty cell value
-            rv = self.emptycell
+            rv = self._emptycell
 
         return rv
 

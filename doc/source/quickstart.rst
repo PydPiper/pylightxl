@@ -51,6 +51,13 @@ following cell content:
     >>> 10
     db.ws(ws='Sheet1').address(address='A1', formula=True)
     >>> ''
+    # note index a empty cell will return an empty string
+    db.ws(ws='Sheet1').address(address='A100')
+    >>> ''
+    # however default empty value can be overwritten for each worksheet
+    db.ws(ws='Sheet1').set_emptycell(val=0)
+    db.ws(ws='Sheet1').address(address='A100')
+    >>> 0
 
 - access by worksheet name (tab name) and cell index
 
@@ -60,6 +67,13 @@ following cell content:
     >>> 20
     db.ws(ws='Sheet1').index(row=1, col=2, formula=True)
     >>> '=A1+10'
+    # note index a empty cell will return an empty string
+    db.ws(ws='Sheet1').index(row=100, col=1)
+    >>> ''
+    # however default empty value can be overwritten for each worksheet
+    db.ws(ws='Sheet1').set_emptycell(val=0)
+    db.ws(ws='Sheet1').index(row=100, col=1)
+    >>> 0
 
 - access an entire row/col (note: empty cells are returned as '')
 

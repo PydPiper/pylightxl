@@ -1,8 +1,17 @@
 Revision Log
 ============
 
-pypi version 1.45 (in-work)
-------------
+pypi version 1.47 (in-work)
+---------------------------
+- add/remove rows/cols
+
+pypi version 1.46
+------------------
+- bug fix: added ability to input an empty string into the cell update functions
+  (previously entering val='') threw and error
+
+pypi version 1.45
+-----------------
 - added support for cell values that have multiple formats within a single cell.
   previous versions did not support this functionality since it is logged differently in sharedString.xml
 - added support for updating formulas and viewing them:
