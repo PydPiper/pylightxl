@@ -45,6 +45,8 @@
 to python-awesome list. Follow the [LINK](https://github.com/vinta/awesome-python/pull/1449) and upvote
 the pull request in the top right corner**
 
+Project featured on [PythonBytes Podcast Episode #165](https://pythonbytes.fm/episodes/show/165/ranges-as-dictionary-keys-oh-my)
+
 ---
 
 #### **Supports**:
