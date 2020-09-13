@@ -17,7 +17,7 @@ pylightxl.egg-info
 *.coverage
 coverage.xml
 htmlcov
-
+99_SCRATCH
 test.py
 test.xlsx
 ~$test.xlsx

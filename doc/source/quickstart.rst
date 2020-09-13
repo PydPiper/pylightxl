@@ -37,13 +37,9 @@ following cell content:
 | 2  |    | 30 | 40 |
 +----+----+----+----+
 
-.. code-block:: python
 
-    import pylightxl as xl
-
-    db = xl.readxl(fn='excelfile.xlsx')
-
-- access by worksheet name (tab name) and cell address
+Via Cell Address
+^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -59,7 +55,8 @@ following cell content:
     db.ws(ws='Sheet1').address(address='A100')
     >>> 0
 
-- access by worksheet name (tab name) and cell index
+Via Cell Index
+^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -75,7 +72,8 @@ following cell content:
     db.ws(ws='Sheet1').index(row=100, col=1)
     >>> 0
 
-- access an entire row/col (note: empty cells are returned as '')
+Get entire row or column
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -85,7 +83,8 @@ following cell content:
     db.ws(ws='Sheet1').col(col=1)
     >>> [10,'']
 
-- update cell value via address or index
+Update Cell Value
+^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -99,7 +98,9 @@ following cell content:
    db.ws(ws='Sheet1').index(row=1, col=1)
    >>> 10
 
-- update cell formula: same as update cell value except the entry must begin with a equal sign "="
+Update Cell Formula
+^^^^^^^^^^^^^^^^^^^
+Same as update cell value except the entry must begin with a equal sign "="
 
 .. note:: updating a cell formula will clear the previously read in cell value. Formulas will
           not calculate their cell value until the excel file is opened.
@@ -109,7 +110,10 @@ following cell content:
    db.ws(ws='Sheet1').update_address(address='A1', val='=B1+100')
    db.ws(ws='Sheet1').update_index(row=1, col=1, val='=B1+100')
 
-- get an entire row/col based on key-value (note: key is type sensitive)
+
+Get row/col based on key-value
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Note: key is type sensitive
 
 .. code-block:: python
 
@@ -125,7 +129,8 @@ following cell content:
     db.ws(ws='Sheet1').keyrow(key='', keyindex=1)
     >>> ['',30,40]
 
-- get the size of a worksheet
+Get the size of a worksheet
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -133,7 +138,8 @@ following cell content:
     >>> [2,3]
 
 
-- iterate through rows/cols
+Iterate through rows/cols
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
