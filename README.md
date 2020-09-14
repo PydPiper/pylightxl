@@ -87,9 +87,12 @@ and/or download restrictions, see [docs - installation](https://pylightxl.readth
 
 ---
 
-#### **Future Tasks**
-- additional database indexing features
-- performance
+#### **Future Version**
+- added new function: ``db.nr('table1')`` returns the contents of named range "table1"
+- added new function: ``db.ws('Sheet1').range('A1:C3')`` that returns the contents of a range
+  it also has the ability to return the formulas of the range
+- updated ``db.ws('Sheet1').row()`` and ``db.ws('Sheet1').col()`` to take in a new argument ``formual``
+  that returns the formulas of a row or col
 
 #### **pypi version 1.46**
 

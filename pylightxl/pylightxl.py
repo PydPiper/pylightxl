@@ -1224,6 +1224,23 @@ class Database:
 
         return self._NamedRange
 
+    def nr(self, name, formula=False):
+        """
+        Returns the contents of a name range in a nest list form [row][col]
+
+        :param str name: NamedRange name
+        :param bool formula: flag to return the formula of this cell
+        :return list: nest list form [row][col]
+        """
+
+        try:
+            full_address = self._NamedRange[name]
+        except KeyError:
+            return [[]]
+
+        ws, address = full_address.split('!')
+        return self.ws(ws).range(address, formula=formula)
+
 
 class Worksheet():
 
@@ -1296,6 +1313,8 @@ class Worksheet():
         :return: cell value
         """
 
+        address = address.replace('$', '')
+
         try:
             if not formula:
                 rv = self._data[address]['v']
@@ -1304,6 +1323,39 @@ class Worksheet():
         except KeyError:
             # no data was parsed, return empty cell value
             rv = self._emptycell
+
+        return rv
+
+    def range(self, address, formula=False):
+        """
+        Takes an range (ex: "A1:A2") and returns a nested list [row][col]
+
+        :param str address: cell range (ex: "A1:A2", or "A1")
+        :param bool formula: returns the values if false, or formulas if true of cells
+        :return list: nested list [row][col] regardless if range is a single cell or a range
+        """
+
+        rv = []
+
+        if ':' in address:
+            address_start, address_end = address.split(':')
+            row_start, col_start = utility_address2index(address_start)
+            row_end, col_end = utility_address2index(address_end)
+
+            # +1 to include the end
+            for n_row in range(row_start, row_end + 1):
+                # -1 to drop index count from excel (start start at 1 to python at 0)
+                # +1 to include the end
+                if col_end <= self.size[1]:
+                    row = self.row(n_row, formula)[(col_start - 1):(col_end - 1 + 1)]
+                else:
+                    # add extra empty cells on since self.row will only return up to the size of ws data
+                    row = self.row(n_row, formula)[col_start - 1:]
+                    while len(row) < col_end - (col_start - 1):
+                        row.append(self._emptycell)
+                rv.append(row)
+        else:
+            rv.append([self.address(address, formula)])
 
         return rv
 
@@ -1366,34 +1418,36 @@ class Worksheet():
         else:
             self._data.update({address: {'v': val, 'f': '', 's': ''}})
 
-    def row(self, row):
+    def row(self, row, formula=False):
         """
         Takes a row index input and returns a list of cell data
 
         :param int row: row index (starting at 1)
+        :param bool formula: flag to return the formula of this cell
         :return: list of cell data
         """
 
         rv = []
 
         for c in range(1, self.maxcol + 1):
-            val = self.index(row, c)
+            val = self.index(row, c, formula)
             rv.append(val)
 
         return rv
 
-    def col(self, col):
+    def col(self, col, formula=False):
         """
         Takes a col index input and returns a list of cell data
 
         :param int col: col index (start at 1 that corresponds to column "A")
+        :param bool formula: flag to return the formula of this cell
         :return: list of cell data
         """
 
         rv = []
 
         for r in range(1, self.maxrow + 1):
-            val = self.index(r, col)
+            val = self.index(r, col, formula)
             rv.append(val)
 
         return rv

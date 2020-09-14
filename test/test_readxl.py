@@ -277,6 +277,27 @@ class TestDatabase(TestCase):
         db.add_nr(ws='three', name='r3', address='$A$4')
         self.assertEqual({'r3': 'three!A4', 'r2': 'two!A2:A3'}, db.nr_names)
 
+    def test_namedrange_val(self):
+        db = xl.Database()
+        db.add_ws('sh1')
+        db.ws('sh1').update_address('A1', 11)
+        db.ws('sh1').update_address('B1', 12)
+        db.ws('sh1').update_address('C2', 23)
+
+        db.add_nr(name='table1', ws='sh1', address='A1')
+        db.add_nr(name='table2', ws='sh1', address='A1:C2')
+
+        self.assertEqual([[11]], db.nr(name='table1'))
+        self.assertEqual([[11, 12, ''], ['', '', 23]], db.nr(name='table2'))
+
+        db.ws('sh1').update_address('A1', '=11')
+        db.ws('sh1').update_address('B1', '=12')
+        db.ws('sh1').update_address('C2', '=23')
+
+        self.assertEqual([['=11']], db.nr(name='table1', formula=True))
+        self.assertEqual([['=11', '=12', ''], ['', '', '=23']], db.nr(name='table2', formula=True))
+
+
     def test_rename_ws(self):
         db = xl.Database()
         db.add_ws('one')
@@ -354,11 +375,35 @@ class TestWorksheet(TestCase):
         ws = xl.Worksheet({'A1': {'v': 1}})
         self.assertEqual(ws.address(address='A1'), 1)
         self.assertEqual(ws.address('A2'), '')
+        self.assertEqual(1, ws.address('$A$1'))
 
     def test_ws_index(self):
         ws = xl.Worksheet({'A1': {'v': 1}})
         self.assertEqual(ws.index(row=1, col=1), 1)
         self.assertEqual(ws.index(1, 2), '')
+
+    def test_ws_range(self):
+        db = xl.Database()
+        db.add_ws('sh1')
+        db.ws('sh1').update_address('A1', 11)
+        db.ws('sh1').update_address('B1', 12)
+        db.ws('sh1').update_address('C2', 23)
+
+        self.assertEqual([[11]], db.ws('sh1').range('A1'))
+        self.assertEqual([['']], db.ws('sh1').range('AA1'))
+        self.assertEqual([[11, 12]], db.ws('sh1').range('A1:B1'))
+        self.assertEqual([[11], ['']], db.ws('sh1').range('A1:A2'))
+        self.assertEqual([[11, 12], ['', '']], db.ws('sh1').range('A1:B2'))
+        self.assertEqual([[11, 12, ''], ['', '', 23]], db.ws('sh1').range('A1:C2'))
+        self.assertEqual([[12, '', ''], ['', 23, ''], ['', '', '']], db.ws('sh1').range('B1:D3'))
+
+        db.ws('sh1').update_address('A1', '=11')
+        db.ws('sh1').update_address('B1', '=12')
+        db.ws('sh1').update_address('C2', '=23')
+
+        self.assertEqual([['=11']], db.ws('sh1').range('A1', formula=True))
+        self.assertEqual([['=11', '=12', ''], ['', '', '=23']], db.ws('sh1').range('A1:C2', formula=True))
+
 
     def test_ws_row(self):
         ws = xl.Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
@@ -366,11 +411,27 @@ class TestWorksheet(TestCase):
         self.assertEqual(ws.row(2), [21, ''])
         self.assertEqual(ws.row(3), ['', ''])
 
+        db = xl.Database()
+        db.add_ws('sh1')
+        db.ws('sh1').update_index(1, 1, '=A1')
+        db.ws('sh1').update_index(2, 1, '=A2')
+        db.ws('sh1').update_index(2, 2, '=B2')
+        self.assertEqual(['=A1', ''], db.ws('sh1').row(1, formula=True))
+        self.assertEqual(['=A2', '=B2'], db.ws('sh1').row(2, formula=True))
+
     def test_ws_col(self):
         ws = xl.Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
         self.assertEqual(ws.col(col=1), [11, 21])
         self.assertEqual(ws.col(2), [12, ''])
         self.assertEqual(ws.col(3), ['', ''])
+
+        db = xl.Database()
+        db.add_ws('sh1')
+        db.ws('sh1').update_index(1, 1, '=A1')
+        db.ws('sh1').update_index(2, 1, '=A2')
+        db.ws('sh1').update_index(2, 2, '=B2')
+        self.assertEqual(['=A1', '=A2'], db.ws('sh1').col(1, formula=True))
+        self.assertEqual(['', '=B2'], db.ws('sh1').col(2, formula=True))
 
     def test_ws_rows(self):
         ws = xl.Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
