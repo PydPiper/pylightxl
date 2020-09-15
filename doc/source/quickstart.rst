@@ -72,6 +72,18 @@ Via Cell Index
     db.ws(ws='Sheet1').index(row=100, col=1)
     >>> 0
 
+Via Cell Range
+^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    db.ws(ws='Sheet1').range(address='A1', formula=False)
+    >>> 10
+    db.ws(ws='Sheet1').range(address='A1:C2', formula=False)
+    >>> [[10, 20, ''], ['', 30, 40]]
+    db.ws(ws='Sheet1').range(address='A1:B1', formula=True)
+    >>> [['=10', '=A1+10']]
+
 Get entire row or column
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -82,6 +94,24 @@ Get entire row or column
 
     db.ws(ws='Sheet1').col(col=1)
     >>> [10,'']
+
+Iterate through rows/cols
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    for row in db.ws(ws='Sheet1').rows:
+        print(row)
+
+    >>> [10,20,'']
+    >>> ['',30,40]
+
+    for col in db.ws(ws='Sheet1').cols:
+        print(col)
+
+    >>> [10,'']
+    >>> [20,30]
+    >>> ['',40]
 
 Update Cell Value
 ^^^^^^^^^^^^^^^^^
@@ -110,6 +140,22 @@ Same as update cell value except the entry must begin with a equal sign "="
    db.ws(ws='Sheet1').update_address(address='A1', val='=B1+100')
    db.ws(ws='Sheet1').update_index(row=1, col=1, val='=B1+100')
 
+Get Named Ranges
+^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    # define a named range
+    db.add_nr(name='Table1', ws='Sheet1', address='A1:B2')
+    # see all existing named ranges
+    db.nr_names
+    >>> {'Table1': 'Sheet1!A1:B2'}
+    # get the contents of a named ranges
+    db.nr(name='Table1', formula=False)
+    >>> [[10, 20], ['', 30]]
+    # remove a named range
+    db.remove_nr(name='Table1')
+
 
 Get row/col based on key-value
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -129,32 +175,6 @@ Note: key is type sensitive
     db.ws(ws='Sheet1').keyrow(key='', keyindex=1)
     >>> ['',30,40]
 
-Get the size of a worksheet
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-    db.ws(ws='Sheet1').size
-    >>> [2,3]
-
-
-Iterate through rows/cols
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-    for row in db.ws(ws='Sheet1').rows:
-        print(row)
-
-    >>> [10,20,'']
-    >>> ['',30,40]
-
-    for col in db.ws(ws='Sheet1').cols:
-        print(col)
-
-    >>> [10,'']
-    >>> [20,30]
-    >>> ['',40]
 
 Read Semi-Structured Data
 -------------------------
