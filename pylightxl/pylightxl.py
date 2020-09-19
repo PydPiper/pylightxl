@@ -540,7 +540,7 @@ def writexl_alt_app_text(db, filepath):
         # does not contain namedranges
         tag_vt_vector = root.find('./default:HeadingPairs//vt:vector', ns)
         tag_vt_vector.clear()
-        tag_vt_vector.set('size', '"2"')
+        tag_vt_vector.set('size', '2')
         tag_vt_vector.set('baseType', 'variant')
 
         tag_vt_variant = ET.Element('vt:variant')
