@@ -459,3 +459,59 @@ class TestWritexlExisting(TestCase):
         self.assertEqual('one', db_alt.ws('sh3').address('A1'))
 
 
+class TestWriteCSV(TestCase):
+
+    def test_writecsv(self):
+
+        db = xl.Database()
+        db.add_ws('sh1')
+        db.add_ws('sh2')
+        db.ws('sh1').update_index(1,1, 10)
+        db.ws('sh1').update_index(1,2, 10.0)
+        db.ws('sh1').update_index(1,3, '10.0')
+        db.ws('sh1').update_index(1,4, True)
+        db.ws('sh1').update_index(2,1, 20)
+        db.ws('sh1').update_index(2,2, 20.0)
+        db.ws('sh1').update_index(2,3, '20.0')
+        db.ws('sh1').update_index(2,4, False)
+        db.ws('sh1').update_index(3,5, ' ')
+
+
+        if 'outcsv_sh1.csv' in os.listdir('.'):
+            os.remove('outcsv_sh1.csv')
+        if 'outcsv_sh2.csv' in os.listdir('.'):
+            os.remove('outcsv_sh2.csv')
+
+        xl.writecsv(db=db, fn='outcsv', delimiter='\t', ws='sh1')
+
+        with open('outcsv_sh1.csv', 'r') as f:
+            lines = []
+            while True:
+                line = f.readline()
+
+                if not line:
+                    break
+
+                line = line.replace('\n', '').replace('\r', '')
+
+                lines.append(line.split('\t'))
+
+        self.assertEqual(['10', '10.0', '10.0', 'True', ''], lines[0])
+        self.assertEqual(['20', '20.0', '20.0', 'False', ''], lines[1])
+        self.assertEqual(['', '', '', '', ' '], lines[2])
+
+        if 'outcsv_sh1.csv' in os.listdir('.'):
+            os.remove('outcsv_sh1.csv')
+        if 'outcsv_sh2.csv' in os.listdir('.'):
+            os.remove('outcsv_sh2.csv')
+
+        xl.writecsv(db=db, fn='outcsv')
+
+        self.assertTrue('outcsv_sh1.csv' in os.listdir('.'))
+        self.assertTrue('outcsv_sh2.csv' in os.listdir('.'))
+
+        if 'outcsv_sh1.csv' in os.listdir('.'):
+            os.remove('outcsv_sh1.csv')
+        if 'outcsv_sh2.csv' in os.listdir('.'):
+            os.remove('outcsv_sh2.csv')
+

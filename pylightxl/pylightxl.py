@@ -2,10 +2,10 @@
 # SEC-00: PREFACE
 ########################################################################################################
 """
-
 Title: pylightxl
-
-Version: 1.46
+Developed by: pydpiper
+Version: 1.47
+License: MIT
 
 Source: https://github.com/PydPiper/pylightxl
 
@@ -31,17 +31,7 @@ Code Structure:
     - SEC-04: DATABASE FUNCTIONS
     - SEC-05: UTILITY FUNCTIONS
 
-TODO MASTER LIST:
 """
-#TODO: integrate namedrange into ssd function
-#TODO: add/remove row/col
-#TODO: read csv into db
-#TODO: write csv from db sheet or ssd
-#TODO: multi-dim indexing (col A: 1,1,1,2,1,1,2 | col B: A,A,B,C,A,A,A | col D: 10,20,30,40,50,60,70)
-#       give me results where col A = 2 and col B = 'C' in col D -> [40,]  also optional arg to return indexes
-#TODO: function that output data in pandas like data format (in-case someone needed to convert to pandas)
-#TODO: matrix function to output 2D data lists
-
 
 ########################################################################################################
 # SEC-01: IMPORTS
@@ -359,6 +349,61 @@ def readxl_scrape(f, sharedString):
 
     return data
 
+
+def readcsv(fn, delimiter=',', ws='Sheet1'):
+    """
+    Reads an xlsx or xlsm file and returns a pylightxl database
+
+    :param str fn: Excel file name
+    :param str delimiter=',': csv file delimiter
+    :param str ws='Sheet1': worksheet name that the csv data will be stored in
+    :return: pylightxl.Database class
+    """
+
+    # declare a db
+    db = Database()
+
+    # test that file entered was a valid excel file
+    if 'pathlib' in str(type(fn)):
+        fn = str(fn)
+
+    # data = {'A1': data1, 'A2': data2...}
+    data = {}
+
+    with open(fn, 'r') as f:
+        i_row = 0
+        while True:
+            i_row += 1
+
+            line = f.readline()
+
+            if not line:
+                break
+
+            line = line.replace('\n', '').replace('\r', '')
+
+            items = line.split(delimiter)
+
+            for i_col, item in enumerate(items, 1):
+                address = utility_num2columnletters(i_col) + str(i_row)
+
+                # data conditioning
+                try:
+                    if '.' in item:
+                        item = float(item)
+                    else:
+                        item = int(item)
+                except ValueError:
+                    if 'true' in item.strip().lower():
+                        item = True
+                    elif 'false' in item.strip().lower():
+                        item = False
+
+                data[address] = {'v': item, 'f': None, 's': None}
+
+    db.add_ws(ws, data)
+
+    return db
 
 ########################################################################################################
 # SEC-04: WRITEXL FUNCTIONS
@@ -1069,6 +1114,49 @@ def writexl_new_content_types_text(db):
                          tag_sharedStrings=tag_sharedStrings)
 
     return rv
+
+
+def writecsv(db, fn, ws=(), delimiter=','):
+    """
+    Writes a csv file from pylightxl database. For db that have more than one sheet, will write out,
+    multiple files with the sheetname tagged on the end (ex: "fn_sh2.csv")
+
+    :param pylightxl.Database db:
+    :param str fn: output file name (without extension; ie. no '.csv')
+    :param str or tuple ws=(): sheetname(s) to read into the database, if not specified - all sheets are read
+    :param delimiter=',': csv delimiter
+    :return: None
+    """
+
+    if ws == ():
+        # write all worksheets
+        worksheets = db.ws_names
+    else:
+        # write only specified worksheets
+        worksheets = (ws,) if type(ws) is str else ws
+
+    for sheet in worksheets:
+            new_fn = fn + '_' + sheet + '.csv'
+
+            try:
+                f = open(new_fn, 'w')
+            except PermissionError:
+                # file is open, adjust name and print warning
+                print('pylightxl - Cannot write to existing file <{}> that is open in excel.'.format(new_fn))
+                print('     New temporary file was written to <{}>'.format('new_' + new_fn))
+                new_fn = 'new_' + new_fn
+                f = open(new_fn, 'w')
+            finally:
+                max_row, max_col = db.ws(sheet).size
+                for r in range(1, max_row + 1):
+                    row = []
+                    for c in range(1, max_col + 1):
+                        val = db.ws(sheet).index(r, c)
+                        row.append(str(val))
+
+                    f.write(delimiter.join(row))
+                    f.write('\n')
+                f.close()
 
 
 ########################################################################################################

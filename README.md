@@ -87,17 +87,18 @@ and/or download restrictions, see [docs - installation](https://pylightxl.readth
 
 ---
 
-#### **Future Version**
+#### **pypi version 1.47**
+
 - added new function: ``db.nr('table1')`` returns the contents of named range "table1"
 - added new function: ``db.ws('Sheet1').range('A1:C3')`` that returns the contents of a range
   it also has the ability to return the formulas of the range
 - updated ``db.ws('Sheet1').row()`` and ``db.ws('Sheet1').col()`` to take in a new argument ``formual``
   that returns the formulas of a row or col
-
-#### **pypi version 1.46**
-
-- bug fix: added ability to input an empty string into the cell update functions 
-  (previously entering val='') threw and error
+- bugfix: write to existing without named ranges was throwing a "repair" error. Fixed typo on xml for it
+  and added unit tests to capture it
+- added new function: ``xl.readcsv(fn, delimiter, ws)`` to read csv files and create a pylightxl db out
+  of it (type converted)
+- added new function: ``xl.writecsv(db, fn, ws, delimiter)`` to write out a pylightxl worksheet as a csv
 
 See full history log of revisions: [Here](https://pylightxl.readthedocs.io/en/latest/revlog.html)
 

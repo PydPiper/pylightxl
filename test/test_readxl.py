@@ -44,6 +44,37 @@ class TestReadxl_BadInput(TestCase):
             self.assertRaises(e, 'Error - Sheetname ({}) is not in the workbook.'.format('not-a-sheet'))
 
 
+class TestReadCSV(TestCase):
+
+    def test_readcsv(self):
+
+        db = xl.readcsv(fn='input.csv', delimiter='\t', ws='sh2')
+
+        self.assertEqual(11, db.ws('sh2').index(1, 1))
+        self.assertEqual(12.0, db.ws('sh2').index(1, 2))
+        self.assertEqual(0.13, db.ws('sh2').index(1, 3))
+        self.assertEqual("'14'", db.ws('sh2').index(1, 4))
+        self.assertEqual(" ", db.ws('sh2').index(1, 5))
+        self.assertEqual(16, db.ws('sh2').index(1, 6))
+        self.assertEqual('', db.ws('sh2').index(2, 1))
+        self.assertEqual('', db.ws('sh2').index(2, 2))
+        self.assertEqual('', db.ws('sh2').index(2, 3))
+        self.assertEqual('', db.ws('sh2').index(2, 4))
+        self.assertEqual('', db.ws('sh2').index(2, 5))
+        self.assertEqual('', db.ws('sh2').index(2, 6))
+
+        self.assertEqual(31, db.ws('sh2').index(4, 1))
+        self.assertEqual('', db.ws('sh2').index(4, 2))
+        self.assertEqual(False, db.ws('sh2').index(4, 3))
+        self.assertEqual('', db.ws('sh2').index(4, 4))
+        self.assertEqual(True, db.ws('sh2').index(4, 5))
+        self.assertEqual('', db.ws('sh2').index(4, 6))
+        self.assertEqual(42, db.ws('sh2').index(5, 2))
+        self.assertEqual(' ', db.ws('sh2').index(5, 4))
+
+        self.assertEqual([5, 6], db.ws('sh2').size)
+
+
 class TestIntegration(TestCase):
 
     def test_pathlib_readxl(self):
@@ -308,6 +339,7 @@ class TestDatabase(TestCase):
         db.rename_ws('one', 'two')
         self.assertEqual(['two'], db.ws_names)
         self.assertEqual(10, db.ws('two').address('A1'))
+
 
 class TestWorksheet(TestCase):
 
