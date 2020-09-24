@@ -5,7 +5,25 @@ Get up and running in less than 5 minutes with pylightxl!
 .. figure:: _static/readme_demo.gif
    :align: center
 
+Read/Write CSV File
+-------------------
+Read a csv file with contents:
 
+.. code-block::
+
+    45/90/-45/0/0/-45/90/45
+    90/45/0/-45/0/45/90
+
+.. code-block:: python
+
+    import pylightxl as xl
+
+    # set the delimiter of the CSV to be the value of your choosing
+    # set the default worksheet to write the read in CSV data to
+    db = xl.readcsv(fn='input.csv', delimiter='/', ws='sh2')
+    # make modifications to it then,
+    # now write it back out as a csv; or as an excel file, see xl.writexl()
+    xl.writecsv(db=db, fn='new.csv', ws=('sh2'), delimiter=',')
 
 Read Excel File
 ---------------
