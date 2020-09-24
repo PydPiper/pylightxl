@@ -79,7 +79,7 @@ Project featured on [PythonBytes Podcast Episode #165](https://pythonbytes.fm/ep
 ---
 
 #### **Setup**
-pylightxl is officially published on [pypi.org](pypi.org), however one of the
+pylightxl is officially published on [pypi.org](https://pypi.org), however one of the
 key features of pylightxl is that it is packed light in case the user has pip
 and/or download restrictions, see [docs - installation](https://pylightxl.readthedocs.io/en/latest/installation.html)
 
