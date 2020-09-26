@@ -22,6 +22,8 @@ Developers Notes:
     - strive for simple/intuitive API interface
     - write docstrings with type annotations (unfortunately type-hints are not python2 compatible)
     - write documentation as a function is developed
+    - zipfile from python 2.7.18 comes with zipfile 1.6 that doesnt come with file.seek method
+      this is why readxl function open zip files 2x (once for namespace and once for tree)
 
 Code Structure:
     - SEC-00: PREFACE
@@ -65,74 +67,63 @@ else:
 # SEC-03: READXL FUNCTIONS
 ########################################################################################################
 
-def readxl(fn, ws=()):
+def readxl(fn, ws=None):
     """
     Reads an xlsx or xlsm file and returns a pylightxl database
 
     :param str fn: Excel file name
-    :param tuple ws: sheetnames to read into the database, if not specified - all sheets are read
+    :param str or list ws: sheetnames to read into the database, if not specified - all sheets are read
+                            entry support single ws name (ex: ws='sh1') or multi (ex: ws=['sh1', 'sh2'])
     :return: pylightxl.Database class
     """
+
+    if type(ws) is str:
+        ws = (ws,)
 
     # declare a db
     db = Database()
 
-    # test that file entered was a valid excel file
-    if 'pathlib' in str(type(fn)):
-        fn = str(fn)
+    fn = readxl_check_excelfile(fn)
 
-    readxl_check_excelfile(fn)
+    # {'ws': ws1: {'ws': str, 'rId': str, 'order': str, 'fn_ws': str}, ...
+    #  'nr': {nr1: {'nr': str, 'ws': str, 'address': str}, ...}
+    wb_rels = readxl_get_workbook(fn)
 
-    # zip up the excel file to expose the xml files
-    with zipfile.ZipFile(fn, 'r') as f_zip:
+    for nr_dict in wb_rels['nr'].values():
+        name = nr_dict['nr']
+        worksheet = nr_dict['ws']
+        address = nr_dict['address']
+        db.add_nr(name=name, ws=worksheet, address=address)
 
-        # get custom sheetnames
-        with f_zip.open('xl/workbook.xml', 'r') as f:
-            sh_names, namedranges = readxl_get_workbook(f, f_zip)
+    # get common string cell value table
+    sharedString = readxl_get_sharedStrings(fn)
 
-        # unload the namedranges
-        for name, fulladdress in namedranges.items():
-            try:
-                sheetname, address = fulladdress.split('!')
-            except ValueError:
-                raise UserWarning('pylightxl - Ill formatted workbook.xml. '
-                                  'NamedRange does not contain sheet reference (ex: "Sheet1!A1"): '
-                                  '{name} - {fulladdress}'.format(name=name, fulladdress=fulladdress))
-            db.add_nr(ws=sheetname, name=name, address=address)
+    # put the ws in order
+    ordered_ws = {}
+    for worksheet in wb_rels['ws'].keys():
+        order = wb_rels['ws'][worksheet]['order']
+        ordered_ws[order] = worksheet
 
-        # get all of the zip'ed xml sheetnames, sort in because python27 reads these out of order
-        zip_sheetnames = readxl_get_zipsheetnames(f_zip)
-        zip_sheetnames.sort()
-        # sort again in case there are more than 9 sheets, otherwise sort will be 1,10,2,3,4
-        zip_sheetnames.sort(key=len)
-
-        # remove all names not in entry sheetnames
-        if ws != ():
-            temp = []
-            for sn in ws:
-                try:
-                    pop_index = sh_names.index(sn)
-                    temp.append(zip_sheetnames[pop_index])
-                except ValueError:
-                    raise ValueError('Error - Sheetname ({}) is not in the workbook.'.format(sn))
-            zip_sheetnames = temp
-
-        # get common string cell value table
-        if 'xl/sharedStrings.xml' in f_zip.NameToInfo.keys():
-            with f_zip.open('xl/sharedStrings.xml') as f:
-                sharedString = readxl_get_sharedStrings(f, f_zip)
-        else:
-            sharedString = {}
-
-        # scrape each sheet#.xml file
-        if ws == ():
-            for i, zip_sheetname in enumerate(zip_sheetnames):
-                with f_zip.open(zip_sheetname, 'r') as f:
-                    db.add_ws(ws=str(sh_names[i]), data=readxl_scrape(f, sharedString))
-        else:
-            for sn, zip_sheetname in zip(ws, zip_sheetnames):
-                with f_zip.open(zip_sheetname, 'r') as f:
-                    db.add_ws(ws=sn, data=readxl_scrape(f, sharedString))
+    # scrape each sheet#.xml file
+    if ws is None:
+        # get all worksheets
+        for order in range(1, len(ordered_ws) + 1):
+            worksheet = ordered_ws[order]
+            fn_ws = wb_rels['ws'][worksheet]['fn_ws']
+            data = readxl_scrape(fn, fn_ws, sharedString)
+            db.add_ws(ws=worksheet, data=data)
+    else:
+        # get only user specified worksheets
+        # run through inputs and see if they are within the db read in
+        for worksheet in ws:
+            if worksheet not in wb_rels['ws'].keys():
+                raise ValueError('Error - Sheetname ({}) is not in the workbook.'.format(worksheet))
+        for order in range(1, len(ordered_ws) + 1):
+            worksheet = ordered_ws[order]
+            if worksheet in ws:
+                fn_ws = wb_rels['ws'][worksheet]['fn_ws']
+                data = readxl_scrape(fn, fn_ws, sharedString)
+                db.add_ws(ws=worksheet, data=data)
 
     return db
 
@@ -142,8 +133,12 @@ def readxl_check_excelfile(fn):
     Takes a file-path and raises error if the file is not found/unsupported.
 
     :param str fn: Excel file path
-    :return: None
+    :return str: filename conditioned
     """
+
+    # test that file entered was a valid excel file
+    if 'pathlib' in str(type(fn)):
+        fn = str(fn)
 
     if type(fn) is not str:
         raise ValueError('Error - Incorrect file entry ({}).'.format(fn))
@@ -157,85 +152,113 @@ def readxl_check_excelfile(fn):
         raise ValueError('Error - Incorrect Excel file extension ({}). '
                          'File extension supported: .xlsx .xlsm'.format(extension))
 
+    return fn
 
-def readxl_get_workbook(file, f_zip):
+
+def readxl_get_workbook(fn):
     """
     Takes a file-handle of xl/workbook.xml and returns a list of sheetnames
 
-    :param open-filehanle file: xl/workbook.xml file-handle
-    :param open-zip-filehanle f_zip: zip file-handle for workbook (to reopen for python 2.7)
-    :return list, dict: list of sheetnames and dict of NamedRanges {rangename: fulladdress,}
+    :param str fn: Excel file path
+    :return dict: {'ws': {ws1: {'ws': str, 'rId': str, 'order': str, 'fn_ws': str}}, ...
+                   'nr': {nr1: {'nr': str, 'ws': str, 'address': str}}, ...}
     """
 
-    sheetnames = []
-    # {namedrange: fulladdress,}
-    namedrange = {}
+    # {'ws': ws1: {'ws': str, 'rId': str, 'order': str, 'fn_ws': str}, ...
+    #  'nr': {nr1: {'nr': str, 'ws': str, 'address': str}, ...}
+    rv = {'ws': {}, 'nr': {}}
 
-    # extract text from existing app.xml
-    ns = utility_xml_namespace(file)
-    for prefix, uri in ns.items():
-        ET.register_namespace(prefix, uri)
+    # zip up the excel file to expose the xml files
+    with zipfile.ZipFile(fn, 'r') as f_zip:
 
-    try:
-        file.seek(0)
-        tree = ET.parse(file)
-    except:
-        # zipfile from python 2.7.18 comes with zipfile 1.6 doesnt come with file.seek method
-        # raises UnsupportedOperation error
+        with f_zip.open('xl/workbook.xml') as file:
+            ns = utility_xml_namespace(file)
+            for prefix, uri in ns.items():
+                ET.register_namespace(prefix, uri)
+
         with f_zip.open('xl/workbook.xml') as file:
             tree = ET.parse(file)
+            root = tree.getroot()
 
-    root = tree.getroot()
     for tag_sheet in root.findall('./default:sheets/default:sheet', ns):
-        sheetnames.append(tag_sheet.get('name'))
+        name = tag_sheet.get('name')
+        rId = tag_sheet.get('{' + ns['r'] + '}id')
+        sheetId = int(rId.replace('rId', ''))
+        wbrels = readxl_get_workbookxmlrels(fn)
+        rv['ws'][name] = {'ws': name, 'rId': rId, 'order': sheetId, 'fn_ws': wbrels[rId]}
 
     for tag_sheet in root.findall('./default:definedNames/default:definedName', ns):
         name = tag_sheet.get('name')
-        # for user friendly entry $ for locked cell-locations are removed
-        address = tag_sheet.text.replace('$', '')
-        namedrange.update({name: address})
+        # for user friendly entry, the "$" for locked cell-locations are removed
+        fulladdress = tag_sheet.text.replace('$', '')
+        try:
+            ws, address = fulladdress.split('!')
+        except ValueError:
+            raise UserWarning('pylightxl - Ill formatted workbook.xml. '
+                              'NamedRange does not contain sheet reference (ex: "Sheet1!A1"): '
+                              '{name} - {fulladdress}'.format(name=name, fulladdress=fulladdress))
 
-    return sheetnames, namedrange
+        rv['nr'][name] = {'nr': name, 'ws': ws, 'address': address}
+
+    return rv
 
 
-def readxl_get_zipsheetnames(zipfile):
+def readxl_get_workbookxmlrels(fn):
     """
-    Takes a zip-file-handle and returns a list of default xl sheetnames (ie, Sheet1, Sheet2...)
+    Reads through the contents f xl/_rels/workbook.xml.rels file and gets the sheet#.xml to rId relations
 
-    :param zip-filehandle zipfile: zip file-handle of the excel file
-    :return: list of zip xl sheetname paths
+    :param str fn: Excel file name
+    :return dict: {rId: fn_ws,...}
     """
 
-    # rels files will also be created by excel for printer settings, these should not be logged
-    return [name for name in zipfile.NameToInfo.keys() if 'sheet' in name and 'rels' not in name]
+    # {rId: fn_ws,...}
+    rv = {}
+
+    # zip up the excel file to expose the xml files
+    with zipfile.ZipFile(fn, 'r') as f_zip:
+
+        with f_zip.open('xl/_rels/workbook.xml.rels') as file:
+            ns = utility_xml_namespace(file)
+            for prefix, uri in ns.items():
+                ET.register_namespace(prefix, uri)
+
+        with f_zip.open('xl/_rels/workbook.xml.rels') as file:
+            tree = ET.parse(file)
+            root = tree.getroot()
+
+    for relationship in root.findall('./default:Relationship', ns):
+        fn_ws = relationship.get('Target')
+        rId = relationship.get('Id')
+        rv[rId] = fn_ws
+
+    return rv
 
 
-def readxl_get_sharedStrings(file, f_zip):
+def readxl_get_sharedStrings(fn):
     """
     Takes a file-handle of xl/sharedStrings.xml and returns a dictionary of commonly used strings
 
-    :param open-filehandle file: xl/sharedString.xml file-handle
+    :param str fn: Excel file name
     :return: dict of commonly used strings
     """
 
     sharedStrings = {}
 
-    # extract text from existing app.xml
-    ns = utility_xml_namespace(file)
-    for prefix, uri in ns.items():
-        ET.register_namespace(prefix, uri)
+    # zip up the excel file to expose the xml files
+    with zipfile.ZipFile(fn, 'r') as f_zip:
 
-    try:
-        file.seek(0)
-        tree = ET.parse(file)
-    except:
-        # zipfile from python 2.7.18 comes with zipfile 1.6 doesnt come with file.seek method
-        # raises UnsupportedOperation error
+        if 'xl/sharedStrings.xml' not in f_zip.NameToInfo.keys():
+            return sharedStrings
+
+        with f_zip.open('xl/sharedStrings.xml') as file:
+            ns = utility_xml_namespace(file)
+            for prefix, uri in ns.items():
+                ET.register_namespace(prefix, uri)
+
         with f_zip.open('xl/sharedStrings.xml') as file:
             tree = ET.parse(file)
+            root = tree.getroot()
 
-    root = tree.getroot()
-    pass
     for i, tag_si in enumerate(root.findall('./default:si', ns)):
         tag_t = tag_si.findall('./default:r//default:t', ns)
         if tag_t:
@@ -247,105 +270,60 @@ def readxl_get_sharedStrings(file, f_zip):
     return sharedStrings
 
 
-def readxl_scrape(f, sharedString):
+def readxl_scrape(fn, fn_ws, sharedString):
     """
     Takes a file-handle of xl/worksheets/sheet#.xml and returns a dict of cell data
 
-    :param open-filehandle file: xl/worksheets/sheet#.xml file-handle
+    :param str fn: Excel file name
+    :param str fn_ws: file path for worksheet (ex: xl/worksheets/sheet1.xml)
     :param dict sharedString: shared string dict lookup table from xl/sharedStrings.xml for string only cell values
-    :return: yields a dict of cell data {cellAddress: cellVal}
+    :return dict: dict of cell data {address: {'v': cell_val, 'f': cell_formula, 's': ''}}
     """
 
-
+    # {address: {'v': cell_val, 'f': cell_formula, 's': ''}}
     data = {}
 
-    sample_size = 10000
+    # zip up the excel file to expose the xml files
+    with zipfile.ZipFile(fn, 'r') as f_zip:
 
-    re_cr_tag = re.compile(r'(?<=<c r=)(.+?)(?=</c>)')
-    re_cell_val = re.compile(r'(?<=<v>)(.*)(?=</v>)')
-    re_cell_formula = re.compile(r'(?<=<f>)(.*)(?=</f>)')
+        with f_zip.open('xl/' + fn_ws) as file:
+            ns = utility_xml_namespace(file)
+            for prefix, uri in ns.items():
+                ET.register_namespace(prefix, uri)
 
-    # read and dump data till "sheetData" is reached
-    while True:
+        with f_zip.open('xl/' + fn_ws) as file:
+            tree = ET.parse(file)
+            root = tree.getroot()
 
-        text_buff = f.read(sample_size).decode()
+    for tag_cell in root.findall('./default:sheetData/default:row/default:c', ns):
+        cell_address = tag_cell.get('r')
+        # t="e" is for error cells "#N/A"
+        # t="s" is for common strings
+        # t="str" is for equation strings (ex: =A1 & "this")
+        # t="b" is for bool, bool is not logged as a commonString in xml, 0 == FALSE, 1 == TRUE
+        cell_type = tag_cell.get('t')
+        tag_val = tag_cell.find('./default:v', ns)
+        cell_val = tag_val.text if tag_val is not None else ''
+        tag_formula = tag_cell.find('./default:f', ns)
+        cell_formula = tag_formula.text if tag_formula is not None else ''
 
-        # if sample reading catches "sheetData" entirely
-        if 'sheetData' in text_buff:
-            break
+        if cell_type == 's':
+            # commonString
+            cell_val = sharedString[int(cell_val)]
+        elif cell_type == 'b':
+            # bool
+            cell_val = 'True' if cell_val == '1' else 'False'
+        elif cell_val == '' or cell_type == 'str':
+            # cell is either empty, or is a str formula - leave cell_val as a string
+            pass
         else:
-            # it is possible to slice through "sheetData" during sampling but 2x slices cannot miss
-            #   "sheetData" b/c len("sheetData")=9 char which is way less than 2x sample_size
-            text_buff += f.read(sample_size).decode()
-            if 'sheetData' in text_buff:
-                break
-            # if "sheetData" was not found, dump text_buff from memory
-
-    # "sheetData" reach, log address/val
-    while True:
-        match = re_cr_tag.findall(text_buff)
-
-        # capture further breakdown of xml where <c r .... /> is used and re_cr_tag doesnt split it
-        # re.compile(r'(?<=<c r=)(.+?)(?=</c>|/>)') was removed since it was prematurely splitting c r tags
-        # when a formula is closed by a /> as well
-        match_splits = []
-
-        while True:
-            if match or len(match_splits) != 0:
-                if len(match_splits) == 0:
-                    first_match = match.pop(0)
-                else:
-                    first_match = match_splits.pop(0)
-                    if '<c r' in first_match:
-                        temp = first_match.split('<c r')[0]
-                        match_splits += first_match.split('<c r')[1:]
-                        first_match = temp
-                if '<c r=' in first_match:
-                    match_splits = first_match.split('<c r=')
-                    continue
-                cell_address = str(first_match.split('"')[1])
-                is_commonString = True if 't="s"' in first_match else False
-                # bool "FALSE" "TRUE" is not logged as a commonString in xml, 0 == FALSE, 1 == TRUE
-                is_bool = True if 't="b"' in first_match else False
-                # 't="e"' is for error cells "#N/A"
-                is_string = True if 't="str"' in first_match or 't="e"' in first_match else False
-
-                try:
-                    cell_val = str(re_cell_val.findall(first_match)[0])
-                except IndexError:
-                    # current cell doesn't have a value
-                    cell_val = ''
-                    is_string = True
-
-                try:
-                    cell_formula = str(re_cell_formula.findall(first_match)[0])
-                except IndexError:
-                    # current tag does not have a formula
-                    cell_formula = ''
-
-                if is_commonString:
-                    cell_val = str(sharedString[int(cell_val)])
-                elif is_bool:
-                    cell_val = 'True' if cell_val == '1' else 'False'
-                elif not is_commonString and not is_string:
-                    if cell_val.isdigit():
-                        cell_val = int(cell_val)
-                    else:
-                        cell_val = float(cell_val)
-
-                data.update({cell_address: {'v': cell_val, 'f': cell_formula, 's': ''}})
+            # int or float
+            if cell_val.isdigit():
+                cell_val = int(cell_val)
             else:
-                # only carry forward the reminder unmatched text
+                cell_val = float(cell_val)
 
-                text_buff = re_cr_tag.split(text_buff)[-1]
-
-                next_buff = f.read(sample_size).decode()
-                text_buff += next_buff
-
-                break
-
-        if not next_buff:
-            break
+        data.update({cell_address: {'v': cell_val, 'f': cell_formula, 's': ''}})
 
     return data
 
@@ -918,7 +896,7 @@ def writexl_new_workbook_text(db):
     # location: worksheet tag for xml_base
     # inserts: name, sheet_id, order_id
     #   note id=rId# is referenced by .rels that points to the file locations of each sheet,
-    #        while sheetId is sheet order number, name= is the custom name
+    #        it is also the sheet order number, name= is the custom name
     xml_tag_sheet = '<sheet name="{sheet_name}" sheetId="{order_id}" r:id="rId{ref_id}"/>\r\n'
 
     many_tag_sheets = ''
@@ -1170,8 +1148,8 @@ class Database:
         # keys are worksheet names, values are Workbook classes
         self._ws = {}
         self._sharedStrings = []
-        # list to preserve insertion order <3.6 and easier to reorder for users than keys of dict
-        self._ws_names = []
+        # {order: ws}
+        self._wsorder = {}
 
         # Named Ranges: checking for unique names and unique address for single worksheet
         # {unique_name: unique_address, ...}
@@ -1201,7 +1179,12 @@ class Database:
         :return: list of worksheet names
         """
 
-        return self._ws_names
+        rv = []
+
+        for i in range(len(self._wsorder)):
+            rv.append(self._wsorder[i+1])
+
+        return rv
 
     def add_ws(self, ws, data=None):
         """
@@ -1214,8 +1197,9 @@ class Database:
 
         if data is None:
             data = {'A1': {'v': '', 'f': '', 's': ''}}
-        self._ws.update({ws: Worksheet(data)})
-        self._ws_names.append(ws)
+        self._ws[ws] = Worksheet(data)
+        if ws not in self._wsorder.values():
+            self._wsorder[len(self._wsorder) + 1] = ws
 
     def remove_ws(self, ws):
         """
@@ -1231,8 +1215,21 @@ class Database:
             pass
 
         try:
-            self._ws_names.remove(ws)
+            # get the order of the ws
+            order_index = list(self._wsorder.values()).index(ws)
+            order = list(self._wsorder.keys())[order_index]
+            # remove the ws from _wsorder
+            del(self._wsorder[order])
+            # decrease the order of all higher order ws's
+            # 1 2 3 4 5
+            # 1 x 3 4 5 = 4
+            # range 2, 4
+            for i in range(order, len(self._wsorder) + 1):
+                self._wsorder.update({i: self._wsorder[i+1]})
+            # remove the last index
+            del(self._wsorder[len(self._wsorder)])
         except ValueError:
+            # ws not in db
             pass
 
     def rename_ws(self, old, new):
@@ -1245,12 +1242,21 @@ class Database:
         """
 
         try:
-            data = self._ws[old]._data
+            self._ws[new] = self._ws[old]
             del(self._ws[old])
-            self.remove_ws(old)
-            if new in self.ws_names:
-                _ = self._ws_names.pop(self._ws_names.index(new))
-            self.add_ws(new, data)
+
+            order_index = list(self._wsorder.values()).index(old)
+            order = list(self._wsorder.keys())[order_index]
+            if new in self._wsorder.values():
+                # delete old out, keep existing name and order (this is a ws overwrite)
+                del(self._wsorder[order])
+                # update all high order ws's
+                for i in range(order, len(self._wsorder) + 1):
+                    self._wsorder.update({i: self._wsorder[i + 1]})
+                # remove the last index
+                del (self._wsorder[len(self._wsorder)])
+            else:
+                self._wsorder[order] = new
         except KeyError:
             pass
 

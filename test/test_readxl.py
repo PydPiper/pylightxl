@@ -1,5 +1,3 @@
-# TODO: nr integration into ssd
-
 # standard lib imports
 from unittest import TestCase
 import os, sys
@@ -24,30 +22,29 @@ class TestReadxl_BadInput(TestCase):
 
     def test_bad_fn_type(self):
         with self.assertRaises(ValueError) as e:
-            db = xl.readxl(fn=1)
-            self.assertEqual(e, 'Error - Incorrect file entry ({}).'.format('1'))
+            _ = xl.readxl(fn=1)
+            self.assertEqual('Error - Incorrect file entry ({}).'.format('1'), e)
 
     def test_bad_fn_exist(self):
         with self.assertRaises(ValueError) as e:
-            db = xl.readxl('bad')
-            self.assertEqual(e, 'Error - File ({}) does not exit.'.format('bad'))
+            _ = xl.readxl('bad')
+            self.assertEqual('Error - File ({}) does not exit.'.format('bad'), e)
 
     def test_bad_fn_ext(self):
         with self.assertRaises(ValueError) as e:
-            db = xl.readxl('test_read.py')
-            self.assertEqual(e, 'Error - Incorrect Excel file extension ({}). '
-                                'File extension supported: .xlsx .xlsm'.format('py'))
+            _ = xl.readxl('test_read.py')
+            self.assertEqual('Error - Incorrect Excel file extension ({}). '
+                             'File extension supported: .xlsx .xlsm'.format('py'), e)
 
     def test_bad_readxl_sheetnames(self):
         with self.assertRaises(ValueError) as e:
-            db = xl.readxl('./testbook.xlsx', ('not-a-sheet',))
-            self.assertRaises(e, 'Error - Sheetname ({}) is not in the workbook.'.format('not-a-sheet'))
+            _ = xl.readxl(fn='./testbook.xlsx', ws='not-a-sheet')
+            self.assertRaises('Error - Sheetname ({}) is not in the workbook.'.format('not-a-sheet'), e)
 
 
 class TestReadCSV(TestCase):
 
     def test_readcsv(self):
-
         db = xl.readcsv(fn='input.csv', delimiter='\t', ws='sh2')
 
         self.assertEqual(11, db.ws('sh2').index(1, 1))
@@ -80,17 +77,14 @@ class TestIntegration(TestCase):
     def test_pathlib_readxl(self):
         mypath = Path('./testbook.xlsx')
 
-        db = xl.readxl(fn=mypath, ws=['types',])
-        self.assertEqual(db.ws('types').index(1, 1), 11)
+        db = xl.readxl(fn=mypath, ws=['types', ])
+        self.assertEqual(11, db.ws('types').index(1, 1))
 
     def test_AllSheetsRead(self):
         db_ws_names = DB.ws_names
-        db_ws_names.sort()
-        # test 10+ sheets to ensure sorting matches correctly
         true_ws_names = ['empty', 'types', 'scatter', 'merged_cells', 'length', 'sheet_not_to_read',
                          'ssd_error1', 'ssd_error2', 'ssd_error3', 'semistrucdata1', 'semistrucdata2']
-        true_ws_names.sort()
-        self.assertEqual(db_ws_names, true_ws_names)
+        self.assertEqual(true_ws_names, db_ws_names)
 
     def test_SelectedSheetReading(self):
         db = xl.readxl('testbook.xlsx', ('empty', 'types'))
@@ -328,16 +322,17 @@ class TestDatabase(TestCase):
         self.assertEqual([['=11']], db.nr(name='table1', formula=True))
         self.assertEqual([['=11', '=12', ''], ['', '', '=23']], db.nr(name='table2', formula=True))
 
-
     def test_rename_ws(self):
         db = xl.Database()
         db.add_ws('one')
         db.ws('one').update_address('A1', 10)
         db.add_ws('two')
         db.ws('two').update_address('A1', 20)
+        db.add_ws('three')
+        db.ws('three').update_address('A1', 30)
 
         db.rename_ws('one', 'two')
-        self.assertEqual(['two'], db.ws_names)
+        self.assertEqual(['two', 'three'], db.ws_names)
         self.assertEqual(10, db.ws('two').address('A1'))
 
 
@@ -434,8 +429,8 @@ class TestWorksheet(TestCase):
         db.ws('sh1').update_address('C2', '=23')
 
         self.assertEqual([['=11']], db.ws('sh1').range('A1', formula=True))
-        self.assertEqual([['=11', '=12', ''], ['', '', '=23']], db.ws('sh1').range('A1:C2', formula=True))
-
+        self.assertEqual([['=11', '=12', ''], ['', '', '=23']],
+                         db.ws('sh1').range('A1:C2', formula=True))
 
     def test_ws_row(self):
         ws = xl.Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
@@ -479,8 +474,8 @@ class TestWorksheet(TestCase):
 
     def test_ws_keycol(self):
         ws = xl.Worksheet({'A1': {'v': 11}, 'B1': {'v': 11}, 'C1': {'v': 13},
-                        'A2': {'v': 21}, 'B2': {'v': 22}, 'C2': {'v': 23},
-                        'A3': {'v': 11}, 'B3': {'v': 32}, 'C3': {'v': 33}})
+                           'A2': {'v': 21}, 'B2': {'v': 22}, 'C2': {'v': 23},
+                           'A3': {'v': 11}, 'B3': {'v': 32}, 'C3': {'v': 33}})
         self.assertEqual(ws.keycol(key=11), [11, 21, 11])
         self.assertEqual(ws.keycol(key=11, keyindex=1), [11, 21, 11])
         self.assertEqual(ws.keycol(key=11, keyindex=2), [])
