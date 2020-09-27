@@ -1814,4 +1814,6 @@ def utility_xml_namespace(file):
         if event == "start-ns":
             elem = ('default', elem[1]) if elem[0] == '' else elem
             ns_map.append(elem)
+        if event == "start":
+            break
     return dict(ns_map)
