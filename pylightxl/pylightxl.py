@@ -393,9 +393,13 @@ def writexl(db, fn):
     Writes an excel file from pylightxl.Database
 
     :param pylightxl.Database db: database contains sheetnames, and their data
-    :param str fn: file output path
+    :param str/pathlib fn: file output path
     :return: None
     """
+
+    # test that file entered was a valid excel file
+    if 'pathlib' in str(type(fn)):
+        fn = str(fn)
 
     # cleanup existing pylightxl temp files if an error occured
     temp_folders = [folder for folder in os.listdir('.') if '_pylightxl_' in folder]
@@ -1100,11 +1104,15 @@ def writecsv(db, fn, ws=(), delimiter=','):
     multiple files with the sheetname tagged on the end (ex: "fn_sh2.csv")
 
     :param pylightxl.Database db:
-    :param str fn: output file name (without extension; ie. no '.csv')
+    :param str/pathlib/io.StringIO fn: output file name (without extension; ie. no '.csv')
     :param str or tuple ws=(): sheetname(s) to read into the database, if not specified - all sheets are read
     :param delimiter=',': csv delimiter
     :return: None
     """
+
+    # test that file entered was a valid excel file
+    if 'pathlib' in str(type(fn)):
+        fn = str(fn)
 
     if ws == ():
         # write all worksheets
@@ -1114,10 +1122,15 @@ def writecsv(db, fn, ws=(), delimiter=','):
         worksheets = (ws,) if type(ws) is str else ws
 
     for sheet in worksheets:
-            new_fn = fn + '_' + sheet + '.csv'
+            # StringIO will keep on appending each worksheet to the same StringIO
+            if '_io.StringIO' not in str(type(fn)):
+                new_fn = fn + '_' + sheet + '.csv'
 
             try:
-                f = open(new_fn, 'w')
+                if '_io.StringIO' not in str(type(fn)):
+                    f = open(new_fn, 'w')
+                else:
+                    f = fn
             except PermissionError:
                 # file is open, adjust name and print warning
                 print('pylightxl - Cannot write to existing file <{}> that is open in excel.'.format(new_fn))
@@ -1132,9 +1145,15 @@ def writecsv(db, fn, ws=(), delimiter=','):
                         val = db.ws(sheet).index(r, c)
                         row.append(str(val))
 
-                    f.write(delimiter.join(row))
-                    f.write('\n')
-                f.close()
+                    if sys.version_info[0] < 3:
+                        f.write(unicode(delimiter.join(row)))
+                        f.write(unicode('\n'))
+                    else:
+                        f.write(delimiter.join(row))
+                        f.write('\n')
+                # dont close StringIO thats passed in by the user
+                if '_io.StringIO' not in str(type(fn)):
+                    f.close()
 
 
 ########################################################################################################

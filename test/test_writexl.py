@@ -2,7 +2,7 @@
 
 # standard lib imports
 from unittest import TestCase
-import os, sys, shutil
+import os, sys, shutil, io
 
 from pylightxl import pylightxl as xl
 
@@ -475,6 +475,7 @@ class TestWriteCSV(TestCase):
         db.ws('sh1').update_index(2,3, '20.0')
         db.ws('sh1').update_index(2,4, False)
         db.ws('sh1').update_index(3,5, ' ')
+        db.ws('sh2').update_index(1,1, 'sh2')
 
 
         if 'outcsv_sh1.csv' in os.listdir('.'):
@@ -515,3 +516,12 @@ class TestWriteCSV(TestCase):
         if 'outcsv_sh2.csv' in os.listdir('.'):
             os.remove('outcsv_sh2.csv')
 
+        f = io.StringIO()
+
+        xl.writecsv(db=db, fn=f)
+
+        f.seek(0)
+        self.assertEqual('10,10.0,10.0,True,\n', f.readline())
+        self.assertEqual('20,20.0,20.0,False,\n', f.readline())
+        self.assertEqual(',,,, \n', f.readline())
+        self.assertEqual('sh2\n', f.readline())
