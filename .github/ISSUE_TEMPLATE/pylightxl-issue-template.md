@@ -7,14 +7,14 @@ assignees: ''
 
 ---
 
-Pylightxl Version:
-Python Version:
+*Pylightxl Version*:
+*Python Version*:
 
 
-Summary of Bug/Feature:
+*Summary of Bug/Feature*:
 
 
-Traceback:
+*Traceback*:
 
 
-Suggestion for fix:
+*Suggestion for fix*:
