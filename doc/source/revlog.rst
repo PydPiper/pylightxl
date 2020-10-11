@@ -3,7 +3,8 @@ Revision Log
 
 pypi version 1.48 (in-work)
 ---------------------------
-- csv file handle
+- add feature to ``writecsv`` to be able to handle ``pathlib`` object and ``io.StreamIO`` object
+- refactored readxl to remove regex, now readxl is all cElementTree
 
 pypi version 1.47
 -----------------

@@ -458,6 +458,10 @@ class TestWritexlExisting(TestCase):
         self.assertEqual([1, 1], db_alt.ws('sh3').size)
         self.assertEqual('one', db_alt.ws('sh3').address('A1'))
 
+        # cleanup failed test workbook
+        if 'temp_wb.xlsx' in os.listdir('.'):
+            os.remove('temp_wb.xlsx')
+
 
 class TestWriteCSV(TestCase):
 

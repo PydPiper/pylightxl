@@ -46,6 +46,7 @@ import os
 import sys
 import shutil
 from xml.etree import cElementTree as ET
+import time
 
 
 ########################################################################################################
@@ -117,7 +118,7 @@ def readxl(fn, ws=None):
         # run through inputs and see if they are within the db read in
         for worksheet in ws:
             if worksheet not in wb_rels['ws'].keys():
-                raise ValueError('Error - Sheetname ({}) is not in the workbook.'.format(worksheet))
+                raise UserWarning('pylightxl - Sheetname ({}) is not in the workbook.'.format(worksheet))
         for order in range(1, len(ordered_ws) + 1):
             worksheet = ordered_ws[order]
             if worksheet in ws:
@@ -141,15 +142,15 @@ def readxl_check_excelfile(fn):
         fn = str(fn)
 
     if type(fn) is not str:
-        raise ValueError('Error - Incorrect file entry ({}).'.format(fn))
+        raise UserWarning('pylightxl - Incorrect file entry ({}).'.format(fn))
 
     if not os.path.isfile(fn):
-        raise ValueError('Error - File ({}) does not exit.'.format(fn))
+        raise UserWarning('pylightxl - File ({}) does not exit.'.format(fn))
 
     extension = fn.split('.')[-1]
 
     if extension.lower() not in ['xlsx', 'xlsm']:
-        raise ValueError('Error - Incorrect Excel file extension ({}). '
+        raise UserWarning('pylightxl - Incorrect Excel file extension ({}). '
                          'File extension supported: .xlsx .xlsm'.format(extension))
 
     return fn
@@ -157,7 +158,7 @@ def readxl_check_excelfile(fn):
 
 def readxl_get_workbook(fn):
     """
-    Takes a file-handle of xl/workbook.xml and returns a list of sheetnames
+    Takes a file-path for xl/workbook.xml and returns a list of sheetnames
 
     :param str fn: Excel file path
     :return dict: {'ws': {ws1: {'ws': str, 'rId': str, 'order': str, 'fn_ws': str}}, ...
@@ -205,7 +206,7 @@ def readxl_get_workbook(fn):
 
 def readxl_get_workbookxmlrels(fn):
     """
-    Reads through the contents f xl/_rels/workbook.xml.rels file and gets the sheet#.xml to rId relations
+    Takes a file-path for xl/_rels/workbook.xml.rels file and gets the sheet#.xml to rId relations
 
     :param str fn: Excel file name
     :return dict: {rId: fn_ws,...}
@@ -236,7 +237,7 @@ def readxl_get_workbookxmlrels(fn):
 
 def readxl_get_sharedStrings(fn):
     """
-    Takes a file-handle of xl/sharedStrings.xml and returns a dictionary of commonly used strings
+    Takes a file-path for xl/sharedStrings.xml and returns a dictionary of commonly used strings
 
     :param str fn: Excel file name
     :return: dict of commonly used strings
@@ -272,7 +273,7 @@ def readxl_get_sharedStrings(fn):
 
 def readxl_scrape(fn, fn_ws, sharedString):
     """
-    Takes a file-handle of xl/worksheets/sheet#.xml and returns a dict of cell data
+    Takes a file-path for xl/worksheets/sheet#.xml and returns a dict of cell data
 
     :param str fn: Excel file name
     :param str fn_ws: file path for worksheet (ex: xl/worksheets/sheet1.xml)
@@ -312,7 +313,7 @@ def readxl_scrape(fn, fn_ws, sharedString):
             cell_val = sharedString[int(cell_val)]
         elif cell_type == 'b':
             # bool
-            cell_val = 'True' if cell_val == '1' else 'False'
+            cell_val = True if cell_val == '1' else False
         elif cell_val == '' or cell_type == 'str':
             # cell is either empty, or is a str formula - leave cell_val as a string
             pass
@@ -522,7 +523,7 @@ def writexl_alt_writer(db, path):
 
     # log old wd before changing it to temp folder for zipping
     old_dir = os.getcwd()
-    # wd must be change to be within the temp folder to get zipfile to prevent the top level temp folder
+    # wd must be changed to be within the temp folder to get zipfile to prevent the top level temp folder
     #  from being zipped as well
     os.chdir(temp_folder)
     with zipfile.ZipFile(filename, 'w') as f:
@@ -540,7 +541,11 @@ def writexl_alt_writer(db, path):
         shutil.move(filename, old_dir)
     os.chdir(old_dir)
     # remove temp folder
-    shutil.rmtree(temp_folder)
+    try:
+        shutil.rmtree(temp_folder)
+    except PermissionError:
+        # windows sometimes messes up cleaning this up in python3
+        os.system(r'rmdir test\_pylightxl_temp_wb.xlsx /s /q')
 
 
 def writexl_alt_app_text(db, filepath):
@@ -1188,7 +1193,7 @@ class Database:
         try:
             return self._ws[ws]
         except KeyError:
-            raise ValueError('Error - Sheetname ({}) is not in the database'.format(ws))
+            raise UserWarning('pylightxl - Sheetname ({}) is not in the database'.format(ws))
 
     @property
     def ws_names(self):
@@ -1606,7 +1611,7 @@ class Worksheet():
         """
 
         if not keyindex > 0 and not keyindex <= self.size[0]:
-            raise ValueError('Error - keyindex ({}) entered must be >0 and <= worksheet size ({}.'.format(keyindex,self.size))
+            raise UserWarning('pylightxl - keyindex ({}) entered must be >0 and <= worksheet size ({}.'.format(keyindex,self.size))
 
         # find first key match, get its column index and return col list
         for col_i in range(1, self.size[1] + 1):
@@ -1625,7 +1630,7 @@ class Worksheet():
         """
 
         if not keyindex > 0 and not keyindex <= self.size[1]:
-            raise ValueError('Error - keyindex ({}) entered must be >0 and <= worksheet size ({}.'.format(keyindex,self.size))
+            raise UserWarning('pylightxl - keyindex ({}) entered must be >0 and <= worksheet size ({}.'.format(keyindex,self.size))
 
         # find first key match, get its column index and return col list
         for row_i in range(1, self.size[1] + 1):
@@ -1672,7 +1677,7 @@ class Worksheet():
         kc_indexIDs = temp
 
         if len(kr_indexIDs) != len(kc_indexIDs):
-            raise ValueError('Error - keyrows != keycols most likely due to missing keyword '
+            raise UserWarning('pylightxl - keyrows != keycols most likely due to missing keyword '
                              'flag keyrow IDs: {}, keycol IDs: {}'.format(kr_indexIDs, kc_indexIDs))
 
         # datas structure: [{'keycols': ..., 'keyrows': ..., 'data'},...]
@@ -1726,9 +1731,9 @@ def utility_address2index(address):
     :return: list of [row, col]
     """
     if type(address) is not str:
-        raise ValueError('Error - Address ({}) must be a string.'.format(address))
+        raise UserWarning('pylightxl - Address ({}) must be a string.'.format(address))
     if address == '':
-        raise ValueError('Error - Address ({}) cannot be an empty str.'.format(address))
+        raise UserWarning('pylightxl - Address ({}) cannot be an empty str.'.format(address))
 
     address = address.upper()
 
@@ -1736,11 +1741,11 @@ def utility_address2index(address):
     try:
         colstr = strVSnum.findall(address)[0]
     except IndexError:
-        raise ValueError('Error - Incorrect address ({}) entry. Address must be an alphanumeric '
+        raise UserWarning('pylightxl - Incorrect address ({}) entry. Address must be an alphanumeric '
                          'where the starting character(s) are alpha characters a-z'.format(address))
 
     if not colstr.isalpha():
-        raise ValueError('Error - Incorrect address ({}) entry. Address must be an alphanumeric '
+        raise UserWarning('pylightxl - Incorrect address ({}) entry. Address must be an alphanumeric '
                          'where the starting character(s) are alpha characters a-z'.format(address))
 
     col = utility_columnletter2num(colstr)
@@ -1748,7 +1753,7 @@ def utility_address2index(address):
     try:
         row = int(strVSnum.split(address)[1])
     except (IndexError, ValueError):
-        raise ValueError('Error - Incorrect address ({}) entry. Address must be an alphanumeric '
+        raise UserWarning('pylightxl - Incorrect address ({}) entry. Address must be an alphanumeric '
                          'where the trailing character(s) are numeric characters 1-9'.format(address))
 
     return [row, col]
@@ -1763,11 +1768,11 @@ def utility_index2address(row, col):
     :return: str excel address
     """
     if type(row) is not int and type(row) is not float:
-        raise ValueError('Error - Incorrect row ({}) entry. Row must either be a int or float'.format(row))
+        raise UserWarning('pylightxl - Incorrect row ({}) entry. Row must either be a int or float'.format(row))
     if type(col) is not int and type(col) is not float:
-        raise ValueError('Error - Incorrect col ({}) entry. Col must either be a int or float'.format(col))
+        raise UserWarning('pylightxl - Incorrect col ({}) entry. Col must either be a int or float'.format(col))
     if row <= 0 or col <= 0:
-        raise ValueError('Error - Row ({}) and Col ({}) entry cannot be less than 1'.format(row, col))
+        raise UserWarning('pylightxl - Row ({}) and Col ({}) entry cannot be less than 1'.format(row, col))
 
     # values over 26 are outside the A-Z range, reduce them
     colname = utility_num2columnletters(col)

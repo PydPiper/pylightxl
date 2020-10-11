@@ -106,7 +106,7 @@ See full history log of revisions: [Here](https://pylightxl.readthedocs.io/en/la
 
 #### **Contact/Questions/Suggestions**
 If you have any questions or feedback, we would love to hear from you - send us 
-an realpydpiper@gmail.com or post directly on [GitHub](https://github.com/PydPiper/pylightxl).
+a post directly on [GitHub](https://github.com/PydPiper/pylightxl/issues/new?assignees=&labels=&template=pylightxl-issue-template.md&title=).
 
 We try to keep an active lookout for users trying to solve Microsoft Excel related problems with
 python on Stack Overflow. Please help us build on the great community that python already is by
