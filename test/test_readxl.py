@@ -99,7 +99,6 @@ class TestIntegration(TestCase):
         db = xl.readcsv(fn=mypath, delimiter='\t', ws='sh1')
         self.assertEqual(11, db.ws('sh1').index(1, 1))
 
-
     def test_AllSheetsRead(self):
         db_ws_names = DB.ws_names
         true_ws_names = ['empty', 'types', 'scatter', 'merged_cells', 'length', 'sheet_not_to_read',
@@ -306,6 +305,8 @@ class TestDatabase(TestCase):
 
         self.assertEqual(['one', 'three'], db.ws_names)
         self.assertEqual(False, 'two' in db._ws.keys())
+        # remove one thats not in the db
+        self.assertEqual(None, db.remove_ws('not real'))
 
     def test_namedranges(self):
         db = xl.Database()
@@ -328,6 +329,12 @@ class TestDatabase(TestCase):
         # remove $ references
         db.add_nr(ws='three', name='r3', address='$A$4')
         self.assertEqual({'r3': 'three!A4', 'r2': 'two!A2:A3'}, db.nr_names)
+
+        # remove a nr
+        db.remove_nr(name='r3')
+        self.assertEqual({'r2': 'two!A2:A3'}, db.nr_names)
+        # call a nr that is not in there
+        self.assertEqual([[]], db.nr('not real'))
 
     def test_namedrange_val(self):
         db = xl.Database()
@@ -358,10 +365,15 @@ class TestDatabase(TestCase):
         db.add_ws('three')
         db.ws('three').update_address('A1', 30)
 
+        # rename to overlapping name should keep the data of the "two", "one" should be removed
         db.rename_ws('one', 'two')
         self.assertEqual(['two', 'three'], db.ws_names)
         self.assertEqual(10, db.ws('two').address('A1'))
-
+        # name a ws thats not in db
+        self.assertEqual(None, db.rename_ws('not real', 'new'))
+        # rename to new sheet
+        db.rename_ws('three', 'four')
+        self.assertEqual(['two', 'four'], db.ws_names)
 
 class TestWorksheet(TestCase):
 
