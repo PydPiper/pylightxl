@@ -1362,13 +1362,13 @@ class Database:
 
 class Worksheet():
 
-    def __init__(self, data):
+    def __init__(self, data=None):
         """
         Takes a data dict of worksheet cell data (ex: {'A1': 1})
 
         :param dict data: worksheet cell data (ex: {'A1': 1})
         """
-        self._data = data
+        self._data = data if data != None else {}
         self.maxrow = 0
         self.maxcol = 0
         self._calc_size()

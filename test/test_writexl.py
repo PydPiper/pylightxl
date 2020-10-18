@@ -1,5 +1,3 @@
-# TODO: if excel has file open it writes it with a _new tag
-
 # standard lib imports
 from unittest import TestCase
 import os, sys, shutil, io

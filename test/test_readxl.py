@@ -378,76 +378,78 @@ class TestDatabase(TestCase):
 class TestWorksheet(TestCase):
 
     def test_ws_init(self):
-        ws = xl.Worksheet(data={})
+        ws = xl.Worksheet()
         self.assertEqual({}, ws._data)
         self.assertEqual(0, ws.maxrow)
         self.assertEqual(0, ws.maxcol)
 
     def test_ws_repr(self):
-        ws = xl.Worksheet({})
+        ws = xl.Worksheet()
         self.assertEqual('pylightxl.Database.Worksheet', str(ws))
 
     def test_ws_calc_size(self):
-        ws = xl.Worksheet({})
-        # force calc size
-        ws._calc_size()
+        ws = xl.Worksheet()
         self.assertEqual(0, ws.maxrow)
         self.assertEqual(0, ws.maxcol)
 
-        ws._data = {'A1': {'v': 11}}
-        ws._calc_size()
+        ws.update_address('A1', 11)
         self.assertEqual(1, ws.maxrow)
         self.assertEqual(1, ws.maxcol)
 
-        ws._data = {'A1': {'v': 11}, 'A2': {'v': 21}}
-        ws._calc_size()
+        ws.update_address('A2', 21)
         self.assertEqual(2, ws.maxrow)
         self.assertEqual(1, ws.maxcol)
 
-        ws._data = {'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}}
-        ws._calc_size()
+        ws.update_address('B1', 12)
         self.assertEqual(2, ws.maxrow)
         self.assertEqual(2, ws.maxcol)
 
-        ws._data = {'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}, 'B2': {'v': 22}}
-        ws._calc_size()
+        ws.update_address('B2', 22)
         self.assertEqual(2, ws.maxrow)
         self.assertEqual(2, ws.maxcol)
 
-        ws._data = {'A1': {'v': 1}, 'AA1': {'v': 27}, 'AAA1': {'v': 703}}
-        ws._calc_size()
+        ws = xl.Worksheet()
+        ws.update_address('AA1', 27)
+        ws.update_address('AAA1', 703)
         self.assertEqual(1, ws.maxrow)
         self.assertEqual(703, ws.maxcol)
 
-        ws._data = {'A1': {'v': 1}, 'A1000': {'v': 1000}, 'A1048576': {'v': 1048576}}
-        ws._calc_size()
+        ws = xl.Worksheet()
+        ws.update_address('A1', 1)
+        ws.update_address('A1000', 1000)
+        ws.update_address('A1048576', 1048576)
         self.assertEqual(1048576, ws.maxrow)
         self.assertEqual(1, ws.maxcol)
 
-        ws._data = {'A1': {'v': 1}, 'AA1': {'v': 27}, 'AAA1': {'v': 703}, 'XFD1': {'v': 16384},
-                    'A1048576': {'v': 1048576}}
-        ws._calc_size()
+        ws = xl.Worksheet()
+        ws.update_address('A1', 1)
+        ws.update_address('AA1', 27)
+        ws.update_address('AAA1', 703)
+        ws.update_address('XFD1', 16384)
+        ws.update_address('A1048576', 1048576)
         self.assertEqual(1048576, ws.maxrow)
         self.assertEqual(16384, ws.maxcol)
 
     def test_ws_size(self):
-        ws = xl.Worksheet({})
+        ws = xl.Worksheet()
         self.assertEqual([0, 0], ws.size)
-        ws._data = {'A1': {'v': 11}, 'A2': {'v': 21}}
-        ws._calc_size()
+        ws.update_address('A1', 11)
+        ws.update_address('A2', 21)
         self.assertEqual([2, 1], ws.size)
 
     def test_ws_address(self):
-        ws = xl.Worksheet({'A1': {'v': 1}})
-        self.assertEqual(1, ws.address(address='A1'))
-        self.assertEqual(1, ws.address('$A$1'))
-        self.assertEqual(1, ws.address('$A1'))
-        self.assertEqual(1, ws.address('A$1'))
+        ws = xl.Worksheet()
+        ws.update_address('A1', 11)
+        self.assertEqual(11, ws.address(address='A1'))
+        self.assertEqual(11, ws.address('$A$1'))
+        self.assertEqual(11, ws.address('$A1'))
+        self.assertEqual(11, ws.address('A$1'))
         self.assertEqual('', ws.address('A2'))
 
     def test_ws_index(self):
-        ws = xl.Worksheet({'A1': {'v': 1}})
-        self.assertEqual(1, ws.index(row=1, col=1))
+        ws = xl.Worksheet()
+        ws.update_address('A1', 11)
+        self.assertEqual(11, ws.index(row=1, col=1))
         self.assertEqual('', ws.index(1, 2))
 
     def test_ws_range(self):
@@ -474,7 +476,10 @@ class TestWorksheet(TestCase):
                          db.ws('sh1').range('A1:C2', formula=True))
 
     def test_ws_row(self):
-        ws = xl.Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
+        ws = xl.Worksheet()
+        ws.update_address('A1', 11)
+        ws.update_address('A2', 21)
+        ws.update_address('B1', 12)
         self.assertEqual([11, 12], ws.row(row=1))
         self.assertEqual([21, ''], ws.row(2))
         self.assertEqual(['', ''], ws.row(3))
@@ -488,7 +493,10 @@ class TestWorksheet(TestCase):
         self.assertEqual(['=A2', '=B2'], db.ws('sh1').row(2, formula=True))
 
     def test_ws_col(self):
-        ws = xl.Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
+        ws = xl.Worksheet()
+        ws.update_address('A1', 11)
+        ws.update_address('A2', 21)
+        ws.update_address('B1', 12)
         self.assertEqual([11, 21], ws.col(col=1))
         self.assertEqual([12, ''], ws.col(2))
         self.assertEqual(['', ''], ws.col(3))
@@ -502,21 +510,35 @@ class TestWorksheet(TestCase):
         self.assertEqual(['', '=B2'], db.ws('sh1').col(2, formula=True))
 
     def test_ws_rows(self):
-        ws = xl.Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
+        ws = xl.Worksheet()
+        ws.update_address('A1', 11)
+        ws.update_address('A2', 21)
+        ws.update_address('B1', 12)
         correct_list = [[11, 12], [21, '']]
         for i, row in enumerate(ws.rows):
             self.assertEqual(correct_list[i], row)
 
     def test_ws_cols(self):
-        ws = xl.Worksheet({'A1': {'v': 11}, 'A2': {'v': 21}, 'B1': {'v': 12}})
+        ws = xl.Worksheet()
+        ws.update_address('A1', 11)
+        ws.update_address('A2', 21)
+        ws.update_address('B1', 12)
         correct_list = [[11, 21], [12, '']]
         for i, col in enumerate(ws.cols):
             self.assertEqual(correct_list[i], col)
 
     def test_ws_keycol(self):
-        ws = xl.Worksheet({'A1': {'v': 11}, 'B1': {'v': 11}, 'C1': {'v': 13},
-                           'A2': {'v': 21}, 'B2': {'v': 22}, 'C2': {'v': 23},
-                           'A3': {'v': 11}, 'B3': {'v': 32}, 'C3': {'v': 33}})
+        ws = xl.Worksheet()
+        ws.update_address('A1', 11)
+        ws.update_address('A2', 21)
+        ws.update_address('A3', 11)
+        ws.update_address('B1', 11)
+        ws.update_address('B2', 22)
+        ws.update_address('B3', 32)
+        ws.update_address('C1', 13)
+        ws.update_address('C2', 23)
+        ws.update_address('C3', 33)
+
         self.assertEqual([11, 21, 11], ws.keycol(key=11))
         self.assertEqual([11, 21, 11], ws.keycol(key=11, keyindex=1))
         self.assertEqual([], ws.keycol(key=11, keyindex=2))
@@ -529,7 +551,7 @@ class TestWorksheet(TestCase):
         self.assertEqual([], ws.keyrow(key=22, keyindex=3))
 
     def test_update_index(self):
-        ws = xl.Worksheet({})
+        ws = xl.Worksheet()
         ws.update_index(row=4, col=2, val=42)
         self.assertEqual([4, 2], ws.size)
         self.assertEqual(42, ws.index(4, 2))
@@ -544,7 +566,7 @@ class TestWorksheet(TestCase):
         self.assertEqual('=A2', ws.index(1, 1, formula=True))
 
     def test_update_address(self):
-        ws = xl.Worksheet({})
+        ws = xl.Worksheet()
         ws.update_address(address='B4', val=42)
         self.assertEqual([4, 2], ws.size)
         self.assertEqual(42, ws.index(4, 2))
