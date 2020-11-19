@@ -1,10 +1,16 @@
 Revision Log
 ============
 
-pypi version 1.48 (in-work)
+pypi version 1.49 (in-work)
 ---------------------------
+- speed improvements
+
+pypi version 1.48
+-----------------
 - add feature to ``writecsv`` to be able to handle ``pathlib`` object and ``io.StreamIO`` object
 - refactored readxl to remove regex, now readxl is all cElementTree
+- refactored readxl/writexl to able to handle excel files written by openpyxl that is generated
+  differently than how excel write files.
 
 pypi version 1.47
 -----------------

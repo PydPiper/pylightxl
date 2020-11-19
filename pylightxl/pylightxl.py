@@ -229,6 +229,9 @@ def readxl_get_workbookxmlrels(fn):
 
     for relationship in root.findall('./default:Relationship', ns):
         fn_ws = relationship.get('Target')
+        # openpyxl write its xl/_rels/workbook.xml.rels file differently than excel itself. It adds on /xl/ at the start of the file path
+        if fn_ws[:4] == '/xl/':
+            fn_ws = fn_ws[4:]
         rId = relationship.get('Id')
         rv[rId] = fn_ws
 
@@ -570,7 +573,12 @@ def writexl_alt_app_text(db, filepath):
 
     if db.nr_names == {}:
         # does not contain namedranges
-        tag_vt_vector = root.find('./default:HeadingPairs//vt:vector', ns)
+        try:
+            tag_vt_vector = root.find('./default:HeadingPairs//vt:vector', ns)
+        except SyntaxError:
+            # this occurs when excel file was created by another program like openpyxl
+            # where not all information was written to docProps/app.xml
+            return writexl_new_app_text(db)
         tag_vt_vector.clear()
         tag_vt_vector.set('size', '2')
         tag_vt_vector.set('baseType', 'variant')
@@ -587,10 +595,14 @@ def writexl_alt_app_text(db, filepath):
         tag_vt_lpstr.text = str(len(db.ws_names))
         tag_vt_variant.append(tag_vt_lpstr)
 
-
     else:
         # contains namedranges
-        tag_vt_vector = root.find('./default:HeadingPairs//vt:vector', ns)
+        try:
+            tag_vt_vector = root.find('./default:HeadingPairs//vt:vector', ns)
+        except SyntaxError:
+            # this occurs when excel file was created by another program like openpyxl
+            # where not all information was written to docProps/app.xml
+            return writexl_new_app_text(db)
         tag_vt_vector.clear()
         tag_vt_vector.set('size', '4')
         tag_vt_vector.set('baseType', 'variant')

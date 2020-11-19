@@ -333,6 +333,13 @@ class TestWritexlNew(TestCase):
         db._sharedStrings = ['text']
         self.assertEqual(xl.writexl_new_content_types_text(db), xml_base.format(many_tag_sheets=many_tag_sheets, tag_sharedStrings=xml_tag_sharedStrings))
 
+    def test_openpyxl(self):
+        # test that pylightxl is able to write to a openpyxl output excel file (docProps/app.xml) is different than expected
+        db = xl.readxl('openpyxl.xlsx')
+
+        xl.writexl(db, 'newopenpyxl.xlsx')
+
+
 
 class TestWritexlExisting(TestCase):
 
