@@ -46,7 +46,6 @@ import os
 import sys
 import shutil
 from xml.etree import cElementTree as ET
-import html
 import time
 
 
@@ -60,9 +59,11 @@ if sys.version_info[0] < 3:
     FileNotFoundError = IOError
     PermissionError = Exception
     WindowsError = Exception
+    import cgi as html
 else:
     unicode = str
     WindowsError = Exception
+    import html
 
 
 ########################################################################################################
