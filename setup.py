@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pylightxl", # Replace with your own username
-    version="1.49",
+    version="1.50",
     author="Viktor Kis",
     author_email="",
     description="A light weight excel read/writer for python27 and python3 with no dependencies",

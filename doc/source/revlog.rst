@@ -5,6 +5,10 @@ pypi version 1.50 (in-work)
 ---------------------------
 - speed improvements
 
+pypi version 1.50 (in-work)
+---------------------------
+- hot-fix: added python2 support for encoding with cgi instead of html
+
 pypi version 1.49
 -----------------
 - bug-fix: updated encoding for string cells that contained xml-like data (ex: cell A1 "<cell content>")

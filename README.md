@@ -87,9 +87,9 @@ and/or download restrictions, see [docs - installation](https://pylightxl.readth
 
 ---
 
-#### **pypi version 1.49**
+#### **pypi version 1.50**
 
-- bug-fix: updated encoding for string cells that contained xml-like data (ex: cell A1 "<cell content>")
+- hot-fix: added python2 support for encoding with cgi instead of html
 
 See full history log of revisions: [Here](https://pylightxl.readthedocs.io/en/latest/revlog.html)
 
