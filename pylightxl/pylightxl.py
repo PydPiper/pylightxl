@@ -46,6 +46,7 @@ import os
 import sys
 import shutil
 from xml.etree import cElementTree as ET
+import html
 import time
 
 
@@ -449,7 +450,11 @@ def writexl_alt_writer(db, path):
         if '.xml' in file:
             old_name = temp_folder + '/xl/worksheets/' + file
             new_name = temp_folder + '/xl/worksheets/' + 'temp_' + file
-            os.rename(old_name, new_name)
+            try:
+                os.rename(old_name, new_name)
+            except FileExistsError:
+                os.remove('./' + new_name)
+                os.rename(old_name, new_name)
     # get filename to xml rId associations
     sheetref = writexl_alt_getsheetref(path_wbrels=temp_folder + '/xl/_rels/workbook.xml.rels',
                                        path_wb=temp_folder + '/xl/workbook.xml')
@@ -1067,7 +1072,7 @@ def writexl_new_sharedStrings_text(db):
             space_preserve = 'xml:space="preserve"'
         else:
             space_preserve = ''
-        many_tag_si += xml_tag_si.format(space_preserve=space_preserve, val=val)
+        many_tag_si += xml_tag_si.format(space_preserve=space_preserve, val=html.escape(val))
 
     rv = xml_base.format(sharedString_len=sharedString_len, many_tag_si=many_tag_si)
     return rv

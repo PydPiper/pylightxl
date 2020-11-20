@@ -1,9 +1,13 @@
 Revision Log
 ============
 
-pypi version 1.49 (in-work)
+pypi version 1.50 (in-work)
 ---------------------------
 - speed improvements
+
+pypi version 1.49
+-----------------
+- bug-fix: updated encoding for string cells that contained xml-like data (ex: cell A1 "<cell content>")
 
 pypi version 1.48
 -----------------

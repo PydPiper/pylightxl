@@ -87,12 +87,9 @@ and/or download restrictions, see [docs - installation](https://pylightxl.readth
 
 ---
 
-#### **pypi version 1.48**
+#### **pypi version 1.49**
 
-- add feature to ``writecsv`` to be able to handle ``pathlib`` object and ``io.StreamIO`` object
-- refactored readxl to remove regex, now readxl is all cElementTree
-- refactored readxl/writexl to able to handle excel files written by openpyxl that is generated 
-  differently than how excel write files. 
+- bug-fix: updated encoding for string cells that contained xml-like data (ex: cell A1 "<cell content>")
 
 See full history log of revisions: [Here](https://pylightxl.readthedocs.io/en/latest/revlog.html)
 
