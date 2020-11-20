@@ -451,7 +451,7 @@ class TestWritexlExisting(TestCase):
         self.assertEqual('two', db_alt.ws('sh1').address('B1'))
         self.assertEqual(2, db_alt.ws('sh1').address('B2'))
         self.assertEqual(2.0, db_alt.ws('sh1').address('B3'))
-        self.assertEqual('A1&"_"&"two"', db_alt.ws('sh1').address('B4'))
+        self.assertEqual('A1&amp;"_"&amp;"two"', db_alt.ws('sh1').address('B4'))
         self.assertEqual('', db_alt.ws('sh1')._data['B4']['f'])
         self.assertEqual('', db_alt.ws('sh1').address('B5'))
         self.assertEqual('A2+10', db_alt.ws('sh1')._data['B5']['f'])
