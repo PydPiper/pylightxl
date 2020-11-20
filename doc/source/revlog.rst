@@ -1,12 +1,12 @@
 Revision Log
 ============
 
-pypi version 1.50 (in-work)
+pypi version 1.51 (in-work)
 ---------------------------
 - speed improvements
 
-pypi version 1.50 (in-work)
----------------------------
+pypi version 1.50
+-----------------
 - hot-fix: added python2 support for encoding with cgi instead of html
 
 pypi version 1.49
