@@ -87,9 +87,9 @@ and/or download restrictions, see [docs - installation](https://pylightxl.readth
 
 ---
 
-#### **pypi version 1.50**
+#### **pypi version 1.51**
 
-- hot-fix: added python2 support for encoding with cgi instead of html
+- license update within setup.py
 
 See full history log of revisions: [Here](https://pylightxl.readthedocs.io/en/latest/revlog.html)
 

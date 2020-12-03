@@ -1,9 +1,14 @@
 Revision Log
 ============
 
-pypi version 1.51 (in-work)
+pypi version 1.52 (in-work)
 ---------------------------
 - speed improvements
+- context manager for database (tear down for memory management)
+
+pypi version 1.51
+---------------------------
+- license update within setup.py
 
 pypi version 1.50
 -----------------
