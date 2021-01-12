@@ -339,7 +339,7 @@ def readxl_scrape(fn, fn_ws, sharedString):
         elif cell_type == 'b':
             # bool
             cell_val = True if cell_val == '1' else False
-        elif cell_val == '' or cell_type == 'str':
+        elif cell_val == '' or cell_type == 'str' or cell_type == 'e':
             # cell is either empty, or is a str formula - leave cell_val as a string
             pass
         else:
