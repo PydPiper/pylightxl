@@ -87,9 +87,10 @@ and/or download restrictions, see [docs - installation](https://pylightxl.readth
 
 ---
 
-#### **pypi version 1.51**
+#### **pypi version 1.52**
 
-- license update within setup.py
+- updated reading error'ed cells "#N/A"
+- updated workbook indexing bug from program generated workbooks that did not index from 1
 
 See full history log of revisions: [Here](https://pylightxl.readthedocs.io/en/latest/revlog.html)
 

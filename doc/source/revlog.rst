@@ -1,10 +1,15 @@
 Revision Log
 ============
 
-pypi version 1.52 (in-work)
+pypi version 1.53 (in-work)
 ---------------------------
 - speed improvements
-- context manager for database (tear down for memory management)
+- context management definition to auto close databases
+
+pypi version 1.52
+-----------------
+- updated reading error'ed cells "#N/A"
+- updated workbook indexing bug from program generated workbooks that did not index from 1
 
 pypi version 1.51
 ---------------------------
