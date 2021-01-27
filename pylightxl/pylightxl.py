@@ -130,7 +130,7 @@ def readxl(fn, ws=None):
     # scrape each sheet#.xml file
     if ws is None:
         # get all worksheets
-        for order in range(1, len(ordered_ws) + 1):
+        for order in sorted(ordered_ws.keys()):
             worksheet = ordered_ws[order]
             fn_ws = wb_rels['ws'][worksheet]['fn_ws']
             data = readxl_scrape(fn, fn_ws, sharedString)
@@ -141,7 +141,7 @@ def readxl(fn, ws=None):
         for worksheet in ws:
             if worksheet not in wb_rels['ws'].keys():
                 raise UserWarning('pylightxl - Sheetname ({}) is not in the workbook.'.format(worksheet))
-        for order in range(1, len(ordered_ws) + 1):
+        for order in sorted(ordered_ws.keys()):
             worksheet = ordered_ws[order]
             if worksheet in ws:
                 fn_ws = wb_rels['ws'][worksheet]['fn_ws']

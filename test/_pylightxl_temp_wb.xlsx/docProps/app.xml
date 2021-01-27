@@ -4,9 +4,9 @@
 <DocSecurity>0</DocSecurity>
 <ScaleCrop>false</ScaleCrop>
 <HeadingPairs>
-<vt:vector size="2" baseType="variant"><vt:variant><vt:lpstr>Worksheets</vt:lpstr></vt:variant><vt:variant><vt:i4>1</vt:i4></vt:variant></vt:vector></HeadingPairs>
+<vt:vector size="2" baseType="variant"><vt:variant><vt:lpstr>Worksheets</vt:lpstr></vt:variant><vt:variant><vt:i4>3</vt:i4></vt:variant></vt:vector></HeadingPairs>
 <TitlesOfParts>
-<vt:vector size="1" baseType="lpstr"><vt:lpstr>Sheet</vt:lpstr></vt:vector></TitlesOfParts>
+<vt:vector size="3" baseType="lpstr"><vt:lpstr>sh1</vt:lpstr><vt:lpstr>sh2</vt:lpstr><vt:lpstr>sh3</vt:lpstr></vt:vector></TitlesOfParts>
 <Company />
 <LinksUpToDate>false</LinksUpToDate>
 <SharedDoc>false</SharedDoc>
