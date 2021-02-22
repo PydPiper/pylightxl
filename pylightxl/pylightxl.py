@@ -4,7 +4,7 @@
 """
 Title: pylightxl
 Developed by: pydpiper
-Version: 1.51
+Version: 1.53
 License: MIT
 
 Copyright (c) 2019 Viktor Kis
@@ -194,12 +194,12 @@ def readxl_get_workbook(fn):
     # zip up the excel file to expose the xml files
     with zipfile.ZipFile(fn, 'r') as f_zip:
 
-        with f_zip.open('xl/workbook.xml') as file:
+        with f_zip.open('xl/workbook.xml', 'r') as file:
             ns = utility_xml_namespace(file)
             for prefix, uri in ns.items():
                 ET.register_namespace(prefix, uri)
 
-        with f_zip.open('xl/workbook.xml') as file:
+        with f_zip.open('xl/workbook.xml', 'r') as file:
             tree = ET.parse(file)
             root = tree.getroot()
 
@@ -240,12 +240,12 @@ def readxl_get_workbookxmlrels(fn):
     # zip up the excel file to expose the xml files
     with zipfile.ZipFile(fn, 'r') as f_zip:
 
-        with f_zip.open('xl/_rels/workbook.xml.rels') as file:
+        with f_zip.open('xl/_rels/workbook.xml.rels', 'r') as file:
             ns = utility_xml_namespace(file)
             for prefix, uri in ns.items():
                 ET.register_namespace(prefix, uri)
 
-        with f_zip.open('xl/_rels/workbook.xml.rels') as file:
+        with f_zip.open('xl/_rels/workbook.xml.rels', 'r') as file:
             tree = ET.parse(file)
             root = tree.getroot()
 
@@ -276,12 +276,12 @@ def readxl_get_sharedStrings(fn):
         if 'xl/sharedStrings.xml' not in f_zip.NameToInfo.keys():
             return sharedStrings
 
-        with f_zip.open('xl/sharedStrings.xml') as file:
+        with f_zip.open('xl/sharedStrings.xml', 'r') as file:
             ns = utility_xml_namespace(file)
             for prefix, uri in ns.items():
                 ET.register_namespace(prefix, uri)
 
-        with f_zip.open('xl/sharedStrings.xml') as file:
+        with f_zip.open('xl/sharedStrings.xml', 'r') as file:
             tree = ET.parse(file)
             root = tree.getroot()
 
@@ -312,12 +312,12 @@ def readxl_scrape(fn, fn_ws, sharedString):
     # zip up the excel file to expose the xml files
     with zipfile.ZipFile(fn, 'r') as f_zip:
 
-        with f_zip.open('xl/' + fn_ws) as file:
+        with f_zip.open('xl/' + fn_ws, 'r') as file:
             ns = utility_xml_namespace(file)
             for prefix, uri in ns.items():
                 ET.register_namespace(prefix, uri)
 
-        with f_zip.open('xl/' + fn_ws) as file:
+        with f_zip.open('xl/' + fn_ws, 'r') as file:
             tree = ET.parse(file)
             root = tree.getroot()
 
@@ -427,10 +427,6 @@ def writexl(db, fn):
     if 'pathlib' in str(type(fn)):
         fn = str(fn)
 
-    # cleanup existing pylightxl temp files if an error occured
-    temp_folders = [folder for folder in os.listdir('.') if '_pylightxl_' in folder]
-    for folder in temp_folders:
-        shutil.rmtree(folder)
 
     if not os.path.isfile(fn):
         # write to new excel
@@ -438,6 +434,16 @@ def writexl(db, fn):
     else:
         # write to existing excel
         writexl_alt_writer(db, fn)
+
+    # cleanup existing pylightxl temp files if an error occurred
+    temp_folders = [folder for folder in os.listdir('.') if '_pylightxl_' in folder]
+    for folder in temp_folders:
+        try:
+            shutil.rmtree(folder)
+        except PermissionError:
+            # windows sometimes messes up cleaning this up in python3
+            time.sleep(1)
+            os.system(r'rmdir /s /q {}'.format(folder))
 
 
 def writexl_alt_writer(db, path):
@@ -452,10 +458,6 @@ def writexl_alt_writer(db, path):
     filename = os.path.split(path)[-1]
     filename = filename if filename.split('.')[-1] == 'xlsx' else '.'.join(filename.split('.')[:-1] + ['xlsx'])
     temp_folder = '_pylightxl_' + filename
-    # cleanup old fies
-    for file in os.listdir('.'):
-        if '_pylightxl_' in file:
-            shutil.rmtree(file)
 
     # have to extract all first to modify
     with zipfile.ZipFile(path, 'r') as f:
@@ -548,10 +550,9 @@ def writexl_alt_writer(db, path):
         print('     New temporary file was written to <{}>'.format('new_' + filename))
         filename = 'new_' + filename
 
-
-
     # log old wd before changing it to temp folder for zipping
-    old_dir = os.getcwd()
+    exe_dir = os.getcwd()
+    old_dir = os.path.split(os.path.abspath(path))[0]
     # wd must be changed to be within the temp folder to get zipfile to prevent the top level temp folder
     #  from being zipped as well
     os.chdir(temp_folder)
@@ -566,16 +567,16 @@ def writexl_alt_writer(db, path):
     try:
         shutil.move(filename, old_dir)
     except Exception:
-        os.remove(old_dir + '\\' + filename)
+        os.remove(os.path.join(old_dir, filename))
         shutil.move(filename, old_dir)
-    os.chdir(old_dir)
+    os.chdir(exe_dir)
     # remove temp folder
     try:
         shutil.rmtree(temp_folder)
     except PermissionError:
         # windows sometimes messes up cleaning this up in python3
-        os.system(r'rmdir test\_pylightxl_temp_wb.xlsx /s /q')
-
+        #os.system(r'rmdir /s /q {}'.format(temp_folder))
+        time.sleep(1)
 
 def writexl_alt_app_text(db, filepath):
     """
@@ -591,7 +592,8 @@ def writexl_alt_app_text(db, filepath):
     """
 
     # extract text from existing app.xml
-    ns = utility_xml_namespace(filepath)
+    with open(filepath, 'r') as f:
+        ns = utility_xml_namespace(f)
     for prefix, uri in ns.items():
         ET.register_namespace(prefix, uri)
     tree = ET.parse(filepath)
@@ -703,7 +705,8 @@ def writexl_alt_getsheetref(path_wbrels, path_wb):
 
     # -------------------------------------------------------------
     # get worksheet filenames and Ids
-    ns = utility_xml_namespace(path_wbrels)
+    with open(path_wbrels, 'r') as f:
+        ns = utility_xml_namespace(f)
     for prefix, uri in ns.items():
         ET.register_namespace(prefix, uri)
     tree = ET.parse(path_wbrels)
@@ -717,7 +720,8 @@ def writexl_alt_getsheetref(path_wbrels, path_wb):
 
     # -------------------------------------------------------------
     # get custom worksheet names
-    ns = utility_xml_namespace(path_wb)
+    with open(path_wb, 'r') as f:
+        ns = utility_xml_namespace(f)
     for prefix, uri in ns.items():
         ET.register_namespace(prefix, uri)
     tree = ET.parse(path_wb)
