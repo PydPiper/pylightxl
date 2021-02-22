@@ -90,7 +90,7 @@ and/or download restrictions, see [docs - installation](https://pylightxl.readth
 #### **pypi version 1.53**
 
 - bug fix: writing to existing file previously would only write to the current working directory, it 
-  now can handle subdirs. In addition inadvertenally discovered a bug in python source code ElementTree.iterparse
+  now can handle subdirs. In addition inadvertently discovered a bug in python source code ElementTree.iterparse
   where ``source`` passed as a string was not closing the file properly. We submitted a issue to python issue tracker.
   
 See full history log of revisions: [Here](https://pylightxl.readthedocs.io/en/latest/revlog.html)
