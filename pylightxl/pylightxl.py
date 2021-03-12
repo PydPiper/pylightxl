@@ -295,6 +295,22 @@ def readxl_get_sharedStrings(fn):
 
     return sharedStrings
 
+def xl_cellname_to_idx(name):
+    """
+    Converts an excel cell name into a row and column integer index
+    ie.  A1   -> (1,1)
+         B1   -> (1,2)
+         AB10 -> (10, 27)
+         :return:  The row column index of the referenced cell
+    """
+    index =  re.split(r'(\d+)', name.lower())
+    c = index[0]
+    row = int(index[1])
+    col = 0
+    for ch in c:
+        col *=26
+        col += ord(ch)-ord("a")+1
+    return row, col
 
 def readxl_scrape(fn, fn_ws, sharedString):
     """
@@ -350,6 +366,16 @@ def readxl_scrape(fn, fn_ws, sharedString):
                 cell_val = float(cell_val)
 
         data.update({cell_address: {'v': cell_val, 'f': cell_formula, 's': ''}})
+
+    merged_cells = []
+    for merge_cell in root.findall('./default:mergeCells/default:mergeCell', ns):
+        rng = merge_cell.get("ref")
+        if rng:
+            low,high = rng.split(":")
+            rlo, clo = xl_cellname_to_idx(low)
+            rhi, chi = xl_cellname_to_idx(high)
+            merged_cells.append((rlo, rhi,clo,chi))
+    data.update({"_merged_cells": tuple(merged_cells )})
 
     return data
 
@@ -1411,6 +1437,7 @@ class Worksheet():
         :param dict data: worksheet cell data (ex: {'A1': 1})
         """
         self._data = data if data != None else {}
+        self._merged_cells = self._data.pop("_merged_cells") or ()
         self.maxrow = 0
         self.maxcol = 0
         self._calc_size()
@@ -1641,6 +1668,16 @@ class Worksheet():
             rv.append(self.col(c))
 
         return iter(rv)
+
+    @property
+    def merged_cells(self):
+        """
+        Returns a list of merged cell ranges in the form (r_low, r_high, c_low, c_high)
+          A1:B1   -> (1,1,1,2)
+          B1:C2   -> (1,2,2,3)
+        :return: list of merged cells
+        """
+        return self._merged_cells
 
     def keycol(self, key, keyindex=1):
         """
