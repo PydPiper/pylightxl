@@ -295,22 +295,6 @@ def readxl_get_sharedStrings(fn):
 
     return sharedStrings
 
-def xl_cellname_to_idx(name):
-    """
-    Converts an excel cell name into a row and column integer index
-    ie.  A1   -> (1,1)
-         B1   -> (1,2)
-         AB10 -> (10, 27)
-         :return:  The row column index of the referenced cell
-    """
-    index =  re.split(r'(\d+)', name.lower())
-    c = index[0]
-    row = int(index[1])
-    col = 0
-    for ch in c:
-        col *=26
-        col += ord(ch)-ord("a")+1
-    return row, col
 
 def readxl_scrape(fn, fn_ws, sharedString):
     """
@@ -372,8 +356,8 @@ def readxl_scrape(fn, fn_ws, sharedString):
         rng = merge_cell.get("ref")
         if rng:
             low,high = rng.split(":")
-            rlo, clo = xl_cellname_to_idx(low)
-            rhi, chi = xl_cellname_to_idx(high)
+            rlo, clo = utility_address2index(low)
+            rhi, chi = utility_address2index(high)
             merged_cells.append((rlo, rhi,clo,chi))
     data.update({"_merged_cells": tuple(merged_cells )})
 
