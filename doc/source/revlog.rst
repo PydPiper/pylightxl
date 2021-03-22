@@ -1,10 +1,21 @@
 Revision Log
 ============
 
-pypi version 1.52 (in-work)
+pypi version 1.54 (in-work)
 ---------------------------
 - speed improvements
-- context manager for database (tear down for memory management)
+- context management definition to auto close databases
+
+pypi version 1.53
+-----------------
+- bug fix: writing to existing file previously would only write to the current working directory, it
+  now can handle subdirs. In addition inadvertently discovered a bug in python source code ElementTree.iterparse
+  where ``source`` passed as a string was not closing the file properly. We submitted a issue to python issue tracker.
+
+pypi version 1.52
+-----------------
+- updated reading error'ed cells "#N/A"
+- updated workbook indexing bug from program generated workbooks that did not index from 1
 
 pypi version 1.51
 ---------------------------
