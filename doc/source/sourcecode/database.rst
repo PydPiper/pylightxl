@@ -17,12 +17,12 @@ Worksheet Class
 Support Functions
 -----------------
 
-.. autofunction:: pylightxl.pylightxl.address2index
+.. autofunction:: pylightxl.pylightxl.utility_address2index
 
-.. autofunction:: pylightxl.pylightxl.index2address
+.. autofunction:: pylightxl.pylightxl.utility_index2address
 
-.. autofunction:: pylightxl.pylightxl.columnletter2num
+.. autofunction:: pylightxl.pylightxl.utility_columnletter2num
 
-.. autofunction:: pylightxl.pylightxl.num2columnletters
+.. autofunction:: pylightxl.pylightxl.utility_num2columnletters
 
 
