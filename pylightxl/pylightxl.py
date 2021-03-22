@@ -1656,10 +1656,11 @@ class Worksheet():
     @property
     def merged_cells(self):
         """
-        Returns a list of merged cell ranges in the form (r_low, r_high, c_low, c_high)
+        Returns a tuple of merged cell ranges in the form (r_low, r_high, c_low, c_high)
           A1:B1   -> (1,1,1,2)
           B1:C2   -> (1,2,2,3)
-        :return: list of merged cells
+
+        :return tuple: tuple of merged cells
         """
         return self._merged_cells
 
