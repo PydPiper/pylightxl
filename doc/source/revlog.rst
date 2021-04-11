@@ -1,10 +1,13 @@
 Revision Log
 ============
 
-pypi version 1.54 (in-work)
+pypi version 1.55 (in-work)
 ---------------------------
-- speed improvements
-- context management definition to auto close databases
+- TBD
+
+pypi version 1.54
+-----------------
+- added handling for datetime parsing
 
 pypi version 1.53
 -----------------

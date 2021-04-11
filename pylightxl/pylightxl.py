@@ -67,6 +67,9 @@ import sys
 import shutil
 from xml.etree import cElementTree as ET
 import time
+from datetime import datetime, timedelta
+
+EXCEL_STARTDATE = datetime(1899,12,30)
 
 
 ########################################################################################################
@@ -120,6 +123,8 @@ def readxl(fn, ws=None):
 
     # get common string cell value table
     sharedString = readxl_get_sharedStrings(fn)
+    # get styles for datetime parsing
+    styles = readxl_get_styles(fn)
 
     # put the ws in order
     ordered_ws = {}
@@ -133,7 +138,7 @@ def readxl(fn, ws=None):
         for order in sorted(ordered_ws.keys()):
             worksheet = ordered_ws[order]
             fn_ws = wb_rels['ws'][worksheet]['fn_ws']
-            data = readxl_scrape(fn, fn_ws, sharedString)
+            data = readxl_scrape(fn, fn_ws, sharedString, styles)
             db.add_ws(ws=worksheet, data=data)
     else:
         # get only user specified worksheets
@@ -145,7 +150,7 @@ def readxl(fn, ws=None):
             worksheet = ordered_ws[order]
             if worksheet in ws:
                 fn_ws = wb_rels['ws'][worksheet]['fn_ws']
-                data = readxl_scrape(fn, fn_ws, sharedString)
+                data = readxl_scrape(fn, fn_ws, sharedString, styles)
                 db.add_ws(ws=worksheet, data=data)
 
     return db
@@ -296,7 +301,39 @@ def readxl_get_sharedStrings(fn):
     return sharedStrings
 
 
-def readxl_scrape(fn, fn_ws, sharedString):
+def readxl_get_styles(fn):
+    """
+    Takes a file-path for xl/styles.xml and returns a dictionary of commonly used strings
+
+    :param str fn: Excel file name
+    :return: dict of commonly used strings
+    """
+
+    styles = {0: '0'}
+
+    # zip up the excel file to expose the xml files
+    with zipfile.ZipFile(fn, 'r') as f_zip:
+
+        if 'xl/styles.xml' not in f_zip.NameToInfo.keys():
+            return styles
+
+        with f_zip.open('xl/styles.xml', 'r') as file:
+            ns = utility_xml_namespace(file)
+            for prefix, uri in ns.items():
+                ET.register_namespace(prefix, uri)
+
+        with f_zip.open('xl/styles.xml', 'r') as file:
+            tree = ET.parse(file)
+            root = tree.getroot()
+
+    for i, tag_cellXfs in enumerate(root.findall('./default:cellXfs', ns)[0]):
+        numFmtId = tag_cellXfs.get('numFmtId')
+        styles.update({i: numFmtId})
+
+    return styles
+
+
+def readxl_scrape(fn, fn_ws, sharedString, styles):
     """
     Takes a file-path for xl/worksheets/sheet#.xml and returns a dict of cell data
 
@@ -328,6 +365,7 @@ def readxl_scrape(fn, fn_ws, sharedString):
         # t="str" is for equation strings (ex: =A1 & "this")
         # t="b" is for bool, bool is not logged as a commonString in xml, 0 == FALSE, 1 == TRUE
         cell_type = tag_cell.get('t')
+        cell_style = int(tag_cell.get('s')) if tag_cell.get('s') is not None else 0
         tag_val = tag_cell.find('./default:v', ns)
         cell_val = tag_val.text if tag_val is not None else ''
         tag_formula = tag_cell.find('./default:f', ns)
@@ -345,9 +383,20 @@ def readxl_scrape(fn, fn_ws, sharedString):
         else:
             # int or float
             if cell_val.isdigit():
-                cell_val = int(cell_val)
+                if styles[cell_style] in ['14', '15', '16', '17']:
+                    cell_val = (EXCEL_STARTDATE + timedelta(days=int(cell_val))).strftime('%Y/%m/%d')
+                else:
+                    cell_val = int(cell_val)
             else:
-                cell_val = float(cell_val)
+                if styles[cell_style] in ['18', '19', '20', '21']:
+                    partialday = float(cell_val) % 1
+                    cell_val = (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).strftime('%H:%M:%S')
+                elif styles[cell_style] in ['22']:
+                    partialday = float(cell_val) % 1
+                    cell_val = (EXCEL_STARTDATE + timedelta(days=int(cell_val.split('.')[0]))).strftime('%Y/%m/%d') + ' ' + \
+                               (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).strftime('%H:%M:%S')
+                else:
+                    cell_val = float(cell_val)
 
         data.update({cell_address: {'v': cell_val, 'f': cell_formula, 's': ''}})
 
