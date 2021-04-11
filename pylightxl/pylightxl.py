@@ -4,7 +4,7 @@
 """
 Title: pylightxl
 Developed by: pydpiper
-Version: 1.53
+Version: 1.54
 License: MIT
 
 Copyright (c) 2019 Viktor Kis
@@ -83,10 +83,12 @@ if sys.version_info[0] < 3:
     PermissionError = Exception
     WindowsError = Exception
     import cgi as html
+    PYVER = 2
 else:
     unicode = str
     WindowsError = Exception
     import html
+    PYVER = 3
 
 
 ########################################################################################################
@@ -384,17 +386,23 @@ def readxl_scrape(fn, fn_ws, sharedString, styles):
             # int or float
             if cell_val.isdigit():
                 if styles[cell_style] in ['14', '15', '16', '17']:
-                    cell_val = (EXCEL_STARTDATE + timedelta(days=int(cell_val))).strftime('%Y/%m/%d')
+                    if PYVER > 3:
+                        cell_val = (EXCEL_STARTDATE + timedelta(days=int(cell_val))).strftime('%Y/%m/%d')
+                    else:
+                        cell_val = '/'.join((EXCEL_STARTDATE + timedelta(days=int(cell_val))).isoformat().split('T')[0].split('-'))
                 else:
                     cell_val = int(cell_val)
             else:
                 if styles[cell_style] in ['18', '19', '20', '21']:
                     partialday = float(cell_val) % 1
-                    cell_val = (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).strftime('%H:%M:%S')
+                    if PYVER > 3:
+                        cell_val = (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).strftime('%H:%M:%S')
+                    else:
+                        cell_val = (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).isoformat().split('T')[1]
                 elif styles[cell_style] in ['22']:
                     partialday = float(cell_val) % 1
-                    cell_val = (EXCEL_STARTDATE + timedelta(days=int(cell_val.split('.')[0]))).strftime('%Y/%m/%d') + ' ' + \
-                               (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).strftime('%H:%M:%S')
+                    cell_val = '/'.join((EXCEL_STARTDATE + timedelta(days=int(cell_val))).isoformat().split('T')[0].split('-')) + ' ' + \
+                               (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).isoformat().split('T')[1]
                 else:
                     cell_val = float(cell_val)
 
