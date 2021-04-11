@@ -401,7 +401,7 @@ def readxl_scrape(fn, fn_ws, sharedString, styles):
                         cell_val = (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).isoformat().split('T')[1]
                 elif styles[cell_style] in ['22']:
                     partialday = float(cell_val) % 1
-                    cell_val = '/'.join((EXCEL_STARTDATE + timedelta(days=int(cell_val))).isoformat().split('T')[0].split('-')) + ' ' + \
+                    cell_val = '/'.join((EXCEL_STARTDATE + timedelta(days=int(cell_val.split('.')[0]))).isoformat().split('T')[0].split('-')) + ' ' + \
                                (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).isoformat().split('T')[1]
                 else:
                     cell_val = float(cell_val)
