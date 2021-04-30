@@ -212,7 +212,11 @@ def readxl_get_workbook(fn):
 
     for tag_sheet in root.findall('./default:sheets/default:sheet', ns):
         name = tag_sheet.get('name')
-        rId = tag_sheet.get('{' + ns['r'] + '}id')
+        try:
+            rId = tag_sheet.get('{' + ns['r'] + '}id')
+        except KeyError:
+            # the output of openpyxl can sometimes not write the schema for "r" relationship
+            rId = tag_sheet.get('id')
         sheetId = int(rId.replace('rId', ''))
         wbrels = readxl_get_workbookxmlrels(fn)
         rv['ws'][name] = {'ws': name, 'rId': rId, 'order': sheetId, 'fn_ws': wbrels[rId]}
@@ -634,6 +638,7 @@ def writexl_alt_writer(db, path):
         # windows sometimes messes up cleaning this up in python3
         #os.system(r'rmdir /s /q {}'.format(temp_folder))
         time.sleep(1)
+
 
 def writexl_alt_app_text(db, filepath):
     """
