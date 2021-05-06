@@ -388,7 +388,8 @@ def readxl_scrape(fn, fn_ws, sharedString, styles):
             pass
         else:
             # int or float
-            if cell_val.isdigit():
+            test_cell = cell_val if '-' not in cell_val else cell_val[1:]
+            if test_cell.isdigit():
                 if styles[cell_style] in ['14', '15', '16', '17']:
                     if PYVER > 3:
                         cell_val = (EXCEL_STARTDATE + timedelta(days=int(cell_val))).strftime('%Y/%m/%d')
