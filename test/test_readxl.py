@@ -136,7 +136,11 @@ class TestIntegration(TestCase):
         self.assertEqual('string from A2 copy', DB.ws('types').index(5, 1))
         self.assertEqual(True, DB.ws('types').index(6, 1))
         self.assertEqual(' true', DB.ws('types').index(7, 1))
-        self.assertEqual('', DB.ws('types').index(8, 1))
+        self.assertEqual('2021/04/10', DB.ws('types').index(8, 1))
+        self.assertEqual('2021/04/10', DB.ws('types').index(9, 1))
+        self.assertEqual('02:48:02', DB.ws('types').index(10, 1))
+        self.assertEqual('2021/04/10 05:12:00', DB.ws('types').index(11, 1))
+        self.assertEqual('', DB.ws('types').index(12, 1))
 
         self.assertEqual(12.1, DB.ws('types').index(1, 2))
         self.assertEqual('"22"', DB.ws('types').index(2, 2))
@@ -149,7 +153,7 @@ class TestIntegration(TestCase):
 
 
         self.assertEqual('', DB.ws('types').index(1, 3))
-        self.assertEqual([7, 2], DB.ws('types').size)
+        self.assertEqual([11, 2], DB.ws('types').size)
 
         self.assertEqual([11, 12.1], DB.ws('types').row(1))
         self.assertEqual(['copy', '"22"'], DB.ws('types').row(2))
@@ -158,18 +162,24 @@ class TestIntegration(TestCase):
         self.assertEqual(['string from A2 copy', ''], DB.ws('types').row(5))
         self.assertEqual([True, False], DB.ws('types').row(6))
         self.assertEqual([' true', '"false"'], DB.ws('types').row(7))
-        self.assertEqual(['', ''], DB.ws('types').row(8))
+        self.assertEqual(['2021/04/10', ''], DB.ws('types').row(8))
+        self.assertEqual(['2021/04/10', ''], DB.ws('types').row(9))
+        self.assertEqual(['02:48:02', ''], DB.ws('types').row(10))
+        self.assertEqual(['2021/04/10 05:12:00', ''], DB.ws('types').row(11))
+        self.assertEqual(['', ''], DB.ws('types').row(12))
 
-        self.assertEqual([11, 'copy', 31, 41, 'string from A2 copy', True, ' true'], DB.ws('types').col(1))
-        self.assertEqual([12.1, '"22"', ' leadingspace', 'copy', '',  False, '"false"'], DB.ws('types').col(2))
-        self.assertEqual(['', '', '', '', '', '', ''], DB.ws('types').col(3))
+        self.assertEqual([11, 'copy', 31, 41, 'string from A2 copy', True, ' true',
+                          '2021/04/10', '2021/04/10', '02:48:02', '2021/04/10 05:12:00'], DB.ws('types').col(1))
+        self.assertEqual([12.1, '"22"', ' leadingspace', 'copy', '',  False, '"false"', '', '', '', ''], DB.ws('types').col(2))
+        self.assertEqual(['', '', '', '', '', '', '', '', '', '', ''], DB.ws('types').col(3))
 
         for i, row in enumerate(DB.ws('types').rows, start=1):
             self.assertEqual(DB.ws('types').row(i), row)
         for i, col in enumerate(DB.ws('types').cols, start=1):
             self.assertEqual(DB.ws('types').col(i), col)
 
-        self.assertEqual([11, 'copy', 31, 41, 'string from A2 copy', True, ' true'], DB.ws('types').keycol(11))
+        self.assertEqual([11, 'copy', 31, 41, 'string from A2 copy', True, ' true',
+                          '2021/04/10', '2021/04/10', '02:48:02', '2021/04/10 05:12:00'], DB.ws('types').keycol(11))
         self.assertEqual([11, 12.1], DB.ws('types').keyrow(11))
 
     def test_ws_scatter(self):
