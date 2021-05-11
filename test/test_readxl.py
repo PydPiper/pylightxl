@@ -130,10 +130,14 @@ class TestIntegration(TestCase):
 
     def test_ws_types(self):
         self.assertEqual(11, DB.ws('types').index(1, 1))
+        self.assertEqual('comment1', DB.ws('types').index(1, 1, output='c'))
         self.assertEqual('copy', DB.ws('types').index(2, 1))
         self.assertEqual(31, DB.ws('types').index(3, 1))
+        self.assertEqual('=31', DB.ws('types').index(3, 1, output='f'))
         self.assertEqual(41, DB.ws('types').index(4, 1))
+        self.assertEqual('=A1+30', DB.ws('types').index(4, 1, output='f'))
         self.assertEqual('string from A2 copy', DB.ws('types').index(5, 1))
+        self.assertEqual('="string from A2 "&A2', DB.ws('types').index(5, 1, output='f'))
         self.assertEqual(True, DB.ws('types').index(6, 1))
         self.assertEqual(' true', DB.ws('types').index(7, 1))
         self.assertEqual('2021/04/10', DB.ws('types').index(8, 1))
@@ -152,26 +156,28 @@ class TestIntegration(TestCase):
         self.assertEqual('', DB.ws('types').index(8, 2))
 
 
-        self.assertEqual('', DB.ws('types').index(1, 3))
-        self.assertEqual([11, 2], DB.ws('types').size)
+        self.assertEqual(-1, DB.ws('types').index(1, 3))
+        self.assertEqual('comment2', DB.ws('types').index(1, 3, output='c'))
+        self.assertEqual('', DB.ws('types').index(1, 4))
+        self.assertEqual([11, 3], DB.ws('types').size)
 
-        self.assertEqual([11, 12.1], DB.ws('types').row(1))
-        self.assertEqual(['copy', '"22"'], DB.ws('types').row(2))
-        self.assertEqual([31, ' leadingspace'], DB.ws('types').row(3))
-        self.assertEqual([41, 'copy'], DB.ws('types').row(4))
-        self.assertEqual(['string from A2 copy', ''], DB.ws('types').row(5))
-        self.assertEqual([True, False], DB.ws('types').row(6))
-        self.assertEqual([' true', '"false"'], DB.ws('types').row(7))
-        self.assertEqual(['2021/04/10', ''], DB.ws('types').row(8))
-        self.assertEqual(['2021/04/10', ''], DB.ws('types').row(9))
-        self.assertEqual(['02:48:02', ''], DB.ws('types').row(10))
-        self.assertEqual(['2021/04/10 05:12:00', ''], DB.ws('types').row(11))
-        self.assertEqual(['', ''], DB.ws('types').row(12))
+        self.assertEqual([11, 12.1, -1], DB.ws('types').row(1))
+        self.assertEqual(['copy', '"22"', ''], DB.ws('types').row(2))
+        self.assertEqual([31, ' leadingspace', ''], DB.ws('types').row(3))
+        self.assertEqual([41, 'copy', ''], DB.ws('types').row(4))
+        self.assertEqual(['string from A2 copy', '', ''], DB.ws('types').row(5))
+        self.assertEqual([True, False, ''], DB.ws('types').row(6))
+        self.assertEqual([' true', '"false"', ''], DB.ws('types').row(7))
+        self.assertEqual(['2021/04/10', '', ''], DB.ws('types').row(8))
+        self.assertEqual(['2021/04/10', '', ''], DB.ws('types').row(9))
+        self.assertEqual(['02:48:02', '', ''], DB.ws('types').row(10))
+        self.assertEqual(['2021/04/10 05:12:00', '', ''], DB.ws('types').row(11))
+        self.assertEqual(['', '', ''], DB.ws('types').row(12))
 
         self.assertEqual([11, 'copy', 31, 41, 'string from A2 copy', True, ' true',
                           '2021/04/10', '2021/04/10', '02:48:02', '2021/04/10 05:12:00'], DB.ws('types').col(1))
         self.assertEqual([12.1, '"22"', ' leadingspace', 'copy', '',  False, '"false"', '', '', '', ''], DB.ws('types').col(2))
-        self.assertEqual(['', '', '', '', '', '', '', '', '', '', ''], DB.ws('types').col(3))
+        self.assertEqual([-1, '', '', '', '', '', '', '', '', '', ''], DB.ws('types').col(3))
 
         for i, row in enumerate(DB.ws('types').rows, start=1):
             self.assertEqual(DB.ws('types').row(i), row)
@@ -180,35 +186,18 @@ class TestIntegration(TestCase):
 
         self.assertEqual([11, 'copy', 31, 41, 'string from A2 copy', True, ' true',
                           '2021/04/10', '2021/04/10', '02:48:02', '2021/04/10 05:12:00'], DB.ws('types').keycol(11))
-        self.assertEqual([11, 12.1], DB.ws('types').keyrow(11))
+        self.assertEqual([11, 12.1, -1], DB.ws('types').keyrow(11))
 
     def test_ws_scatter(self):
         self.assertEqual('', DB.ws('scatter').index(1, 1))
         self.assertEqual(22, DB.ws('scatter').index(2, 2))
+        self.assertEqual('comment3', DB.ws('scatter').index(2, 2, output='c'))
         self.assertEqual(33, DB.ws('scatter').index(3, 3))
         self.assertEqual(34, DB.ws('scatter').index(3, 4))
         self.assertEqual(66, DB.ws('scatter').index(6, 6))
         self.assertEqual('', DB.ws('scatter').index(5, 6))
 
         self.assertEqual([6, 6], DB.ws('scatter').size)
-
-    def test_ws_merged_cells(self):
-        self.assertEqual('', DB.ws('merged_cells').index(1, 1))
-        self.assertEqual(12, DB.ws('merged_cells').index(1, 2))
-        self.assertEqual(13, DB.ws('merged_cells').index(1, 3))
-        self.assertEqual(21, DB.ws('merged_cells').index(2, 1))
-        self.assertEqual(22, DB.ws('merged_cells').index(2, 2))
-        self.assertEqual(23, DB.ws('merged_cells').index(2, 3))
-        self.assertEqual(32, DB.ws('merged_cells').index(3, 2))
-        self.assertEqual(43, DB.ws('merged_cells').index(4, 3))
-        self.assertEqual(52, DB.ws('merged_cells').index(5, 2))
-        self.assertEqual(61, DB.ws('merged_cells').index(6, 1))
-        self.assertEqual(72, DB.ws('merged_cells').index(7, 2))
-        self.assertEqual(73, DB.ws('merged_cells').index(7, 3))
-        self.assertEqual(83, DB.ws('merged_cells').index(8, 3))
-        self.assertEqual(91, DB.ws('merged_cells').index(9, 1))
-        self.assertEqual(93, DB.ws('merged_cells').index(9, 3))
-        self.assertEqual(103, DB.ws('merged_cells').index(10, 3))
 
     def test_ws_length(self):
         self.assertEqual([1048576, 16384], DB.ws('length').size)
@@ -363,8 +352,8 @@ class TestDatabase(TestCase):
         db.ws('sh1').update_address('B1', '=12')
         db.ws('sh1').update_address('C2', '=23')
 
-        self.assertEqual([['=11']], db.nr(name='table1', formula=True))
-        self.assertEqual([['=11', '=12', ''], ['', '', '=23']], db.nr(name='table2', formula=True))
+        self.assertEqual([['=11']], db.nr(name='table1', output='f'))
+        self.assertEqual([['=11', '=12', ''], ['', '', '=23']], db.nr(name='table2', output='f'))
 
     def test_rename_ws(self):
         db = xl.Database()
@@ -481,9 +470,9 @@ class TestWorksheet(TestCase):
         db.ws('sh1').update_address('B1', '=12')
         db.ws('sh1').update_address('C2', '=23')
 
-        self.assertEqual([['=11']], db.ws('sh1').range('A1', formula=True))
+        self.assertEqual([['=11']], db.ws('sh1').range('A1', output='f'))
         self.assertEqual([['=11', '=12', ''], ['', '', '=23']],
-                         db.ws('sh1').range('A1:C2', formula=True))
+                         db.ws('sh1').range('A1:C2', output='f'))
 
     def test_ws_row(self):
         ws = xl.Worksheet()
@@ -499,8 +488,8 @@ class TestWorksheet(TestCase):
         db.ws('sh1').update_index(1, 1, '=A1')
         db.ws('sh1').update_index(2, 1, '=A2')
         db.ws('sh1').update_index(2, 2, '=B2')
-        self.assertEqual(['=A1', ''], db.ws('sh1').row(1, formula=True))
-        self.assertEqual(['=A2', '=B2'], db.ws('sh1').row(2, formula=True))
+        self.assertEqual(['=A1', ''], db.ws('sh1').row(1, output='f'))
+        self.assertEqual(['=A2', '=B2'], db.ws('sh1').row(2, output='f'))
 
     def test_ws_col(self):
         ws = xl.Worksheet()
@@ -516,8 +505,8 @@ class TestWorksheet(TestCase):
         db.ws('sh1').update_index(1, 1, '=A1')
         db.ws('sh1').update_index(2, 1, '=A2')
         db.ws('sh1').update_index(2, 2, '=B2')
-        self.assertEqual(['=A1', '=A2'], db.ws('sh1').col(1, formula=True))
-        self.assertEqual(['', '=B2'], db.ws('sh1').col(2, formula=True))
+        self.assertEqual(['=A1', '=A2'], db.ws('sh1').col(1, output='f'))
+        self.assertEqual(['', '=B2'], db.ws('sh1').col(2, output='f'))
 
     def test_ws_rows(self):
         ws = xl.Worksheet()
@@ -573,7 +562,7 @@ class TestWorksheet(TestCase):
         self.assertEqual('', ws.index(1, 1))
         # update with formula
         ws.update_index(1, 1, '=A2')
-        self.assertEqual('=A2', ws.index(1, 1, formula=True))
+        self.assertEqual('=A2', ws.index(1, 1, output='f'))
 
     def test_update_address(self):
         ws = xl.Worksheet()
@@ -588,7 +577,7 @@ class TestWorksheet(TestCase):
         self.assertEqual('', ws.address('A1'))
         # update with formula
         ws.update_address('A1', '=A2')
-        self.assertEqual('=A2', ws.address('A1', formula=True))
+        self.assertEqual('=A2', ws.address('A1', output='f'))
 
 
 class TestConversion(TestCase):
