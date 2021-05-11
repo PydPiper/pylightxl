@@ -63,8 +63,12 @@ Via Cell Address
 
     db.ws(ws='Sheet1').address(address='A1')
     >>> 10
-    db.ws(ws='Sheet1').address(address='A1', formula=True)
+    # access the cell's formula (if there is one)
+    db.ws(ws='Sheet1').address(address='A1', output='f')
     >>> ''
+    # access the cell's comment (if there is one)
+    db.ws(ws='Sheet1').address(address='A1', output='c')
+    >>> 'this is a comment on cell A1!'
     # note index a empty cell will return an empty string
     db.ws(ws='Sheet1').address(address='A100')
     >>> ''
@@ -80,7 +84,8 @@ Via Cell Index
 
     db.ws(ws='Sheet1').index(row=1, col=2)
     >>> 20
-    db.ws(ws='Sheet1').index(row=1, col=2, formula=True)
+    # access the cell's formula (if there is one)
+    db.ws(ws='Sheet1').index(row=1, col=2, output='f')
     >>> '=A1+10'
     # note index a empty cell will return an empty string
     db.ws(ws='Sheet1').index(row=100, col=1)
@@ -95,11 +100,12 @@ Via Cell Range
 
 .. code-block:: python
 
-    db.ws(ws='Sheet1').range(address='A1', formula=False)
+    db.ws(ws='Sheet1').range(address='A1')
     >>> 10
-    db.ws(ws='Sheet1').range(address='A1:C2', formula=False)
+    db.ws(ws='Sheet1').range(address='A1:C2')
     >>> [[10, 20, ''], ['', 30, 40]]
-    db.ws(ws='Sheet1').range(address='A1:B1', formula=True)
+    # get the range's formulas
+    db.ws(ws='Sheet1').range(address='A1:B1', output='f')
     >>> [['=10', '=A1+10']]
 
 Get entire row or column
@@ -169,7 +175,7 @@ Get Named Ranges
     db.nr_names
     >>> {'Table1': 'Sheet1!A1:B2'}
     # get the contents of a named ranges
-    db.nr(name='Table1', formula=False)
+    db.nr(name='Table1')
     >>> [[10, 20], ['', 30]]
     # remove a named range
     db.remove_nr(name='Table1')
