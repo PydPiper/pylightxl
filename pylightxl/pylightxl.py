@@ -140,7 +140,8 @@ def readxl(fn, ws=None):
         for order in sorted(ordered_ws.keys()):
             worksheet = ordered_ws[order]
             fn_ws = wb_rels['ws'][worksheet]['fn_ws']
-            data = readxl_scrape(fn, fn_ws, sharedString, styles)
+            comments = readxl_get_ws_rels(fn, fn_ws)
+            data = readxl_scrape(fn, fn_ws, sharedString, styles, comments)
             db.add_ws(ws=worksheet, data=data)
     else:
         # get only user specified worksheets
@@ -152,7 +153,8 @@ def readxl(fn, ws=None):
             worksheet = ordered_ws[order]
             if worksheet in ws:
                 fn_ws = wb_rels['ws'][worksheet]['fn_ws']
-                data = readxl_scrape(fn, fn_ws, sharedString, styles)
+                comments = readxl_get_ws_rels(fn, fn_ws)
+                data = readxl_scrape(fn, fn_ws, sharedString, styles, comments)
                 db.add_ws(ws=worksheet, data=data)
 
     return db
@@ -339,17 +341,78 @@ def readxl_get_styles(fn):
     return styles
 
 
-def readxl_scrape(fn, fn_ws, sharedString, styles):
+def readxl_get_ws_rels(fn, fn_ws):
+    """
+    Takes a file-path for xl/worksheets/sheet#.xml and returns a dict of cell data
+
+    :param str fn: Excel file name
+    :param str fn_ws: file path for worksheet (ex: xl/worksheets/sheet1.xml)
+    :return:
+    """
+
+    rv = {}
+
+    fn_ws_parts = fn_ws.split('/')
+    fn_wsrels = '/'.join(fn_ws_parts[:-1]) + '/_rels/' + fn_ws_parts[-1] + '.rels'
+
+    # zip up the excel file to expose the xml files
+    with zipfile.ZipFile(fn, 'r') as f_zip:
+
+        if 'xl/' + fn_wsrels not in f_zip.NameToInfo.keys():
+            return rv
+
+        with f_zip.open('xl/' + fn_wsrels, 'r') as file:
+            ns = utility_xml_namespace(file)
+            for prefix, uri in ns.items():
+                ET.register_namespace(prefix, uri)
+
+        with f_zip.open('xl/' + fn_wsrels, 'r') as file:
+            tree = ET.parse(file)
+            root = tree.getroot()
+
+    comment_fn = ''
+    for tag_rel in root.findall('./default:Relationship', ns):
+        target = tag_rel.get('Target')
+        if 'comments' in target:
+            comment_fn = target.split('/')[-1]
+
+    if comment_fn:
+        # zip up the excel file to expose the xml files
+        with zipfile.ZipFile(fn, 'r') as f_zip:
+
+            with f_zip.open('xl/' + comment_fn, 'r') as file:
+                ns = utility_xml_namespace(file)
+                for prefix, uri in ns.items():
+                    ET.register_namespace(prefix, uri)
+
+            with f_zip.open('xl/' + comment_fn, 'r') as file:
+                tree = ET.parse(file)
+                root = tree.getroot()
+
+        for tag_comment in root.findall('./default:commentList/default:comment', ns):
+            celladdress = tag_comment.get('ref')
+            comment = ''
+            for tag_t in tag_comment.findall('.//default:t', ns):
+                text = tag_t.text
+                if '[Threaded comment]' in text:
+                    text = text.split('Comment:\n')[1]
+                comment += text
+            rv[celladdress] = comment
+
+    return rv
+
+
+def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
     """
     Takes a file-path for xl/worksheets/sheet#.xml and returns a dict of cell data
 
     :param str fn: Excel file name
     :param str fn_ws: file path for worksheet (ex: xl/worksheets/sheet1.xml)
     :param dict sharedString: shared string dict lookup table from xl/sharedStrings.xml for string only cell values
-    :return dict: dict of cell data {address: {'v': cell_val, 'f': cell_formula, 's': ''}}
+    :return dict: dict of cell data {address: {'v': cell_val, 'f': cell_formula, 's': '', 'c': cell_comment}}
     """
 
-    # {address: {'v': cell_val, 'f': cell_formula, 's': ''}}
+    # {address: {'v': cell_val, 'f': cell_formula, 's': '', 'c': cell_comment}}
     data = {}
 
     # zip up the excel file to expose the xml files
@@ -411,7 +474,8 @@ def readxl_scrape(fn, fn_ws, sharedString, styles):
                 else:
                     cell_val = float(cell_val)
 
-        data.update({cell_address: {'v': cell_val, 'f': cell_formula, 's': ''}})
+        comment = comments[cell_address] if cell_address in comments.keys() else ''
+        data.update({cell_address: {'v': cell_val, 'f': cell_formula, 's': '', 'c': comment}})
 
     return data
 
@@ -1320,12 +1384,12 @@ class Database:
         Logs worksheet name and its data in the database
 
         :param str ws: worksheet name
-        :param data: dictionary of worksheet cell values (ex: {'A1': {'v':10,'f':'','s':''}, 'A2': {'v':20,'f':'','s':''}})
+        :param data: dictionary of worksheet cell values (ex: {'A1': {'v':10,'f':'','s':'', 'c': ''}, 'A2': {'v':20,'f':'','s':'', 'c': ''}})
         :return: None
         """
 
         if data is None:
-            data = {'A1': {'v': '', 'f': '', 's': ''}}
+            data = {'A1': {'v': '', 'f': '', 's': '', 'c': ''}}
         self._ws[ws] = Worksheet(data)
         if ws not in self._wsorder.values():
             self._wsorder[len(self._wsorder) + 1] = ws
@@ -1447,14 +1511,26 @@ class Database:
 
         return self._NamedRange
 
-    def nr(self, name, formula=False):
+    def nr(self, name, formula=False, output='v'):
         """
         Returns the contents of a name range in a nest list form [row][col]
 
         :param str name: NamedRange name
         :param bool formula: flag to return the formula of this cell
+        :param str output: output request "v" for value, "f" for formula, "c" for comment
         :return list: nest list form [row][col]
         """
+
+        output = output.lower()
+        if output not in ['v', 'f', 'c']:
+            raise UserWarning('pylightxl - incorrect address(output={output}) argument. '
+                              'Valid options = "v", "f", "c"'.format(output=output))
+
+        if formula:
+            print('DEPRECATION WARNING: address(formula=) argument has been replaced by address(output="f"). '
+                  'Please update code base to use "output" argument')
+            output = 'f'
+
 
         try:
             full_address = self._NamedRange[name]
@@ -1462,7 +1538,7 @@ class Database:
             return [[]]
 
         ws, address = full_address.split('!')
-        return self.ws(ws).range(address, formula=formula)
+        return self.ws(ws).range(address, output=output)
 
 
 class Worksheet():
@@ -1527,38 +1603,62 @@ class Worksheet():
 
         return [self.maxrow, self.maxcol]
 
-    def address(self, address, formula=False):
+    def address(self, address, formula=False, output='v'):
         """
         Takes an excel address and returns the worksheet stored value
 
         :param str address: Excel address (ex: "A1")
         :param bool formula: flag to return the formula of this cell
+        :param str output: output request "v" for value, "f" for formula, "c" for comment
         :return: cell value
         """
 
         address = address.replace('$', '')
 
+        output = output.lower()
+        if output not in ['v', 'f', 'c']:
+            raise UserWarning('pylightxl - incorrect address(output={output}) argument. '
+                              'Valid options = "v", "f", "c"'.format(output=output))
+
+        if formula:
+            print('DEPRECATION WARNING: address(formula=) argument has been replaced by address(output="f"). '
+                  'Please update code base to use "output" argument')
+            output = 'f'
+
         try:
-            if not formula:
+            if output == 'v':
                 rv = self._data[address]['v']
-            else:
+            elif output == 'f':
                 rv = '=' + self._data[address]['f']
+            else:
+                rv = self._data[address]['c']
         except KeyError:
             # no data was parsed, return empty cell value
             rv = self._emptycell
 
         return rv
 
-    def range(self, address, formula=False):
+    def range(self, address, formula=False, output='v'):
         """
         Takes an range (ex: "A1:A2") and returns a nested list [row][col]
 
         :param str address: cell range (ex: "A1:A2", or "A1")
         :param bool formula: returns the values if false, or formulas if true of cells
+        :param str output: output request "v" for value, "f" for formula, "c" for comment
         :return list: nested list [row][col] regardless if range is a single cell or a range
         """
 
         rv = []
+
+        output = output.lower()
+        if output not in ['v', 'f', 'c']:
+            raise UserWarning('pylightxl - incorrect range(output={output}) argument. '
+                              'Valid options = "v", "f", "c"'.format(output=output))
+
+        if formula:
+            print('DEPRECATION WARNING: range(formula=) argument has been replaced by range(output="f"). '
+                  'Please update code base to use "output" argument')
+            output = 'f'
 
         if ':' in address:
             address_start, address_end = address.split(':')
@@ -1570,39 +1670,42 @@ class Worksheet():
                 # -1 to drop index count from excel (start start at 1 to python at 0)
                 # +1 to include the end
                 if col_end <= self.size[1]:
-                    row = self.row(n_row, formula)[(col_start - 1):(col_end - 1 + 1)]
+                    row = self.row(n_row, output=output)[(col_start - 1):(col_end - 1 + 1)]
                 else:
                     # add extra empty cells on since self.row will only return up to the size of ws data
-                    row = self.row(n_row, formula)[col_start - 1:]
+                    row = self.row(n_row, output=output)[col_start - 1:]
                     while len(row) < col_end - (col_start - 1):
                         row.append(self._emptycell)
                 rv.append(row)
         else:
-            rv.append([self.address(address, formula)])
+            rv.append([self.address(address, output=output)])
 
         return rv
 
-    def index(self, row, col, formula=False):
+    def index(self, row, col, formula=False, output='v'):
         """
         Takes an excel row and col starting at index 1 and returns the worksheet stored value
 
         :param int row: row index (starting at 1)
         :param int col: col index (start at 1 that corresponds to column "A")
         :param bool formula: flag to return the formula of this cell
+        :param str output: output request "v" for value, "f" for formula, "c" for comment
         :return: cell value
         """
 
         address = utility_index2address(row, col)
-        try:
-            if not formula:
-                rv = self._data[address]['v']
-            else:
-                rv = '=' + self._data[address]['f']
-        except KeyError:
-            # no data was parsed, return empty cell value
-            rv = self._emptycell
 
-        return rv
+        output = output.lower()
+        if output not in ['v', 'f', 'c']:
+            raise UserWarning('pylightxl - incorrect index(output={output}) argument. '
+                              'Valid options = "v", "f", "c"'.format(output=output))
+
+        if formula:
+            print('DEPRECATION WARNING: index(formula=) argument has been replaced by index(output="f"). '
+                  'Please update code base to use "output" argument')
+            output = 'f'
+
+        return self.address(address, output=output)
 
     def update_index(self, row, col, val):
         """
@@ -1641,36 +1744,58 @@ class Worksheet():
         else:
             self._data.update({address: {'v': val, 'f': '', 's': ''}})
 
-    def row(self, row, formula=False):
+    def row(self, row, formula=False, output='v'):
         """
         Takes a row index input and returns a list of cell data
 
         :param int row: row index (starting at 1)
         :param bool formula: flag to return the formula of this cell
+        :param str output: output request "v" for value, "f" for formula, "c" for comment
         :return: list of cell data
         """
 
         rv = []
 
+        output = output.lower()
+        if output not in ['v', 'f', 'c']:
+            raise UserWarning('pylightxl - incorrect row(output={output}) argument. '
+                              'Valid options = "v", "f", "c"'.format(output=output))
+
+        if formula:
+            print('DEPRECATION WARNING: row(formula=) argument has been replaced by row(output="f"). '
+                  'Please update code base to use "output" argument')
+            output = 'f'
+
         for c in range(1, self.maxcol + 1):
-            val = self.index(row, c, formula)
+            val = self.index(row, c, output=output)
             rv.append(val)
 
         return rv
 
-    def col(self, col, formula=False):
+    def col(self, col, formula=False, output='v'):
         """
         Takes a col index input and returns a list of cell data
 
         :param int col: col index (start at 1 that corresponds to column "A")
         :param bool formula: flag to return the formula of this cell
+        :param str output: output request "v" for value, "f" for formula, "c" for comment
         :return: list of cell data
         """
 
         rv = []
 
+        output = output.lower()
+        if output not in ['v', 'f', 'c']:
+            raise UserWarning('pylightxl - incorrect col(output={output}) argument. '
+                              'Valid options = "v", "f", "c"'.format(output=output))
+
+        if formula:
+            print('DEPRECATION WARNING: col(formula=) argument has been replaced by col(output="f"). '
+                  'Please update code base to use "output" argument')
+            output = 'f'
+
         for r in range(1, self.maxrow + 1):
-            val = self.index(r, col, formula)
+            val = self.index(r, col, output=output)
             rv.append(val)
 
         return rv
