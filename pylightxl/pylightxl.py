@@ -4,7 +4,7 @@
 """
 Title: pylightxl
 Developed by: pydpiper
-Version: 1.54
+Version: 1.55
 License: MIT
 
 Copyright (c) 2019 Viktor Kis
@@ -99,7 +99,7 @@ def readxl(fn, ws=None):
     """
     Reads an xlsx or xlsm file and returns a pylightxl database
 
-    :param str fn: Excel file name
+    :param str fn: Excel file path, also supports Pathlib.Path object, as well as file-like object from with/open
     :param str or list ws: sheetnames to read into the database, if not specified - all sheets are read
                             entry support single ws name (ex: ws='sh1') or multi (ex: ws=['sh1', 'sh2'])
     :return: pylightxl.Database class
@@ -157,6 +157,9 @@ def readxl(fn, ws=None):
                 data = readxl_scrape(fn, fn_ws, sharedString, styles, comments)
                 db.add_ws(ws=worksheet, data=data)
 
+    if '.temp_' in fn:
+        os.remove(fn)
+
     return db
 
 
@@ -164,13 +167,21 @@ def readxl_check_excelfile(fn):
     """
     Takes a file-path and raises error if the file is not found/unsupported.
 
-    :param str fn: Excel file path
+    :param str fn: Excel file path, also supports Pathlib.Path object, as well as file-like object from with/open
     :return str: filename conditioned
     """
 
     # test that file entered was a valid excel file
     if 'pathlib' in str(type(fn)):
         fn = str(fn)
+
+    try:
+        io_fn = os.path.split(fn.name)[-1]
+        with open('.temp_' + io_fn, 'wb') as f:
+            f.write(fn.read())
+        fn = '.temp_' + io_fn
+    except AttributeError:
+        pass
 
     if type(fn) is not str:
         raise UserWarning('pylightxl - Incorrect file entry ({}).'.format(fn))

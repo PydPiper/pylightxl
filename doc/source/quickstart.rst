@@ -34,6 +34,12 @@ Read Excel File
 
     # readxl returns a pylightxl database that holds all worksheets and its data
     db = xl.readxl(fn='folder1/folder2/excelfile.xlsx')
+    # pylightxl also supports pathlib as well
+    my_pathlib = pathlib.Path('folder1/folder2/excelfile.xlsx')
+    db = xl.readxl(my_pathlib)
+    # pylightxl also supports file-like objects for django users
+    with open('excelfile.xlsx', 'rb') as f:
+        db = xl.readxl(f)
 
     # read only selective sheetnames
     db = xl.readxl(fn='folder1/folder2/excelfile.xlsx', ws=('Sheet1','Sheet3'))
