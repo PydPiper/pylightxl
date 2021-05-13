@@ -171,17 +171,21 @@ def readxl_check_excelfile(fn):
     :return str: filename conditioned
     """
 
-    # test that file entered was a valid excel file
+    # test for pathlib
     if 'pathlib' in str(type(fn)):
         fn = str(fn)
-
-    try:
+    # test for django already downloaded file
+    elif 'path' in dir(fn):
+        io_fn = os.path.split(fn.path)[-1]
+        with open('.temp_' + io_fn, 'wb') as f:
+            f.write(fn.read())
+        fn = '.temp_' + io_fn
+    # test for django stream only file or non-django open file object
+    elif 'name' in dir(fn):
         io_fn = os.path.split(fn.name)[-1]
         with open('.temp_' + io_fn, 'wb') as f:
             f.write(fn.read())
         fn = '.temp_' + io_fn
-    except AttributeError:
-        pass
 
     if type(fn) is not str:
         raise UserWarning('pylightxl - Incorrect file entry ({}).'.format(fn))

@@ -113,6 +113,15 @@ class TestIntegration(TestCase):
         true_ws_names.sort()
         self.assertEqual(true_ws_names, db_ws_names)
 
+    def test_ReadFileStream(self):
+        with open('testbook.xlsx', 'rb') as f:
+            db = xl.readxl(f, ('empty', 'types'))
+        db_ws_names = db.ws_names
+        db_ws_names.sort()
+        true_ws_names = ['empty', 'types']
+        true_ws_names.sort()
+        self.assertEqual(true_ws_names, db_ws_names)
+
     def test_commondString(self):
         # all cells that contain strings (without equations are stored in a commondString.xlm)
         self.assertEqual('copy', DB.ws('types').address('A2'))
