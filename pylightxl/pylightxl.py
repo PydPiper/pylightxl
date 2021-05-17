@@ -176,10 +176,7 @@ def readxl_check_excelfile(fn):
         fn = str(fn)
     # test for django already downloaded file
     elif 'path' in dir(fn):
-        io_fn = os.path.split(fn.path)[-1]
-        with open('.temp_' + io_fn, 'wb') as f:
-            f.write(fn.read())
-        fn = '.temp_' + io_fn
+        fn = fn.path
     # test for django stream only file or non-django open file object
     elif 'name' in dir(fn):
         io_fn = os.path.split(fn.name)[-1]
@@ -1664,6 +1661,7 @@ class Worksheet():
         """
 
         rv = []
+        address = address.replace('$', '')
 
         output = output.lower()
         if output not in ['v', 'f', 'c']:
@@ -1749,6 +1747,7 @@ class Worksheet():
         :param int/float/str val: cell value; equations are strings and must begin with "="
         :return: None
         """
+        address = address.replace('$', '')
         row, col = utility_address2index(address)
         self.maxcol = col if col > self.maxcol else self.maxcol
         self.maxrow = row if row > self.maxrow else self.maxrow

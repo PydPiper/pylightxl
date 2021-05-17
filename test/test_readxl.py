@@ -10,7 +10,11 @@ else:
     from pathlib2 import Path
 
 # local lib imports
-from pylightxl import pylightxl as xl
+try:
+    from pylightxl import pylightxl as xl
+except ModuleNotFoundError:
+    sys.path.append('..')
+    from pylightxl import pylightxl as xl
 
 if 'test' in os.listdir('.'):
     # running from top level

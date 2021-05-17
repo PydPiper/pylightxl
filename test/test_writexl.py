@@ -2,7 +2,11 @@
 from unittest import TestCase
 import os, sys, shutil, io
 
-from pylightxl import pylightxl as xl
+try:
+    from pylightxl import pylightxl as xl
+except ModuleNotFoundError:
+    sys.path.append('..')
+    from pylightxl import pylightxl as xl
 
 if sys.version_info[0] >= 3:
     unicode = str

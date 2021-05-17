@@ -3,12 +3,12 @@ Revision Log
 
 pypi version 1.55 (in-work)
 ---------------------------
-- added comment parsing, see issue #41
+- added comment parsing, see issue `#41 <https://github.com/PydPiper/pylightxl/issues/41>`_
 - DEPRECATION WARNING: all indexing method that use "formula" as an argument will be replaced
   with "output" in future version. Please update your codebase to use "output" instead of "formula".
   This was done to simplify indexing the value (``output='v'``), the formula (``output='f'``) or the
   comment (``output='c'``).
-- added file stream reading for ``readxl`` that now supports ``with block`` for reading. See issue #25
+- added file stream reading for ``readxl`` that now supports ``with block`` for reading. See issue `#25 <https://github.com/PydPiper/pylightxl/issues/25>`_
 
 pypi version 1.54
 -----------------
