@@ -45,6 +45,9 @@
 to python-awesome list. Follow the [LINK](https://github.com/vinta/awesome-python/pull/1449) and upvote
 the pull request in the top right corner**
 
+The project is associated with [Tidelift](https://tidelift.com/). Please consider supporting open-source
+contributions by using the packages with Tidelift's subscription today!
+
 Project featured on [PythonBytes Podcast Episode #165](https://pythonbytes.fm/episodes/show/165/ranges-as-dictionary-keys-oh-my)
 
 ---
