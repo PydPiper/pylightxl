@@ -93,9 +93,10 @@ class TestIntegration(TestCase):
 
     def test_filehandle_readxl(self):
         mypath = Path('./testbook.xlsx')
-        with open(mypath, 'rb') as f:
-            db = xl.readxl(fn=f, ws=['types', ])
-        self.assertEqual(11, db.ws('types').index(1, 1))
+        if sys.version_info[0] == 3:
+            with open(mypath, 'rb') as f:
+                db = xl.readxl(fn=f, ws=['types', ])
+            self.assertEqual(11, db.ws('types').index(1, 1))
 
     def test_pathlib_readxl(self):
         mypath = Path('./testbook.xlsx')
