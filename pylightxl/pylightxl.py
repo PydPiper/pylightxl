@@ -451,6 +451,11 @@ def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
         cell_val = tag_val.text if tag_val is not None else ''
         tag_formula = tag_cell.find('./default:f', ns)
         cell_formula = tag_formula.text if tag_formula is not None else ''
+        comment = comments[cell_address] if cell_address in comments.keys() else ''
+
+        if all([entry == '' or entry is None for entry in [cell_val, cell_formula, comment]]):
+            # this is a style only entry, currently we dont parse style therefore this data would unnecessarily stored
+            continue
 
         if cell_type == 's':
             # commonString
@@ -486,7 +491,6 @@ def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
                 else:
                     cell_val = float(cell_val)
 
-        comment = comments[cell_address] if cell_address in comments.keys() else ''
         data.update({cell_address: {'v': cell_val, 'f': cell_formula, 's': '', 'c': comment}})
 
     return data
@@ -2084,4 +2088,7 @@ def utility_xml_namespace(file):
             ns_map.append(elem)
         if event == "start":
             break
-    return dict(ns_map)
+    ns = dict(ns_map)
+    if 'default' not in ns.keys():
+        ns['default'] = ns['x']
+    return ns

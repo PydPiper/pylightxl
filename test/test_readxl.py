@@ -91,6 +91,12 @@ class TestReadCSV(TestCase):
 
 class TestIntegration(TestCase):
 
+    def test_filehandle_readxl(self):
+        mypath = Path('./testbook.xlsx')
+        with open(mypath, 'rb') as f:
+            db = xl.readxl(fn=f, ws=['types', ])
+        self.assertEqual(11, db.ws('types').index(1, 1))
+
     def test_pathlib_readxl(self):
         mypath = Path('./testbook.xlsx')
 
@@ -386,6 +392,7 @@ class TestDatabase(TestCase):
         # rename to new sheet
         db.rename_ws('three', 'four')
         self.assertEqual(['two', 'four'], db.ws_names)
+
 
 class TestWorksheet(TestCase):
 
