@@ -5,13 +5,21 @@ certain workplaces may not allow externally downloaded content, therefore we mad
 the source code needed to get going as well. Please see License terms of agreement: :doc:`license`
 
 
-pip install
----------------
-Download via Python Package Installer:
+pip install via pypi
+--------------------
+Download via Python Package Installer the latest official release:
 
 .. code-block:: shell
 
     pip install pylightxl
+
+pip install via github
+----------------------
+Download via github the latest master branch release:
+
+.. code-block:: shell
+
+    pip install git+https://github.com/PydPiper/pylightxl.git
 
 
 Git Clone

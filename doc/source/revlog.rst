@@ -1,8 +1,12 @@
 Revision Log
 ============
 
-pypi version 1.55 (in-work)
+pypi version 1.56 (in-work)
 ---------------------------
+- added support for non-standard excel file xml tags, see issue `#44 <https://github.com/PydPiper/pylightxl/issues/44>`_
+
+pypi version 1.55
+-----------------
 - added comment parsing, see issue `#41 <https://github.com/PydPiper/pylightxl/issues/41>`_
 - DEPRECATION WARNING: all indexing method that use "formula" as an argument will be replaced
   with "output" in future version. Please update your codebase to use "output" instead of "formula".

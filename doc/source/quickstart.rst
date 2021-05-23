@@ -21,6 +21,7 @@ Read a csv file with contents:
     # set the delimiter of the CSV to be the value of your choosing
     # set the default worksheet to write the read in CSV data to
     db = xl.readcsv(fn='input.csv', delimiter='/', ws='sh2')
+
     # make modifications to it then,
     # now write it back out as a csv; or as an excel file, see xl.writexl()
     xl.writecsv(db=db, fn='new.csv', ws=('sh2'), delimiter=',')
@@ -34,9 +35,11 @@ Read Excel File
 
     # readxl returns a pylightxl database that holds all worksheets and its data
     db = xl.readxl(fn='folder1/folder2/excelfile.xlsx')
+
     # pylightxl also supports pathlib as well
     my_pathlib = pathlib.Path('folder1/folder2/excelfile.xlsx')
     db = xl.readxl(my_pathlib)
+
     # pylightxl also supports file-like objects for django users
     with open('excelfile.xlsx', 'rb') as f:
         db = xl.readxl(f)

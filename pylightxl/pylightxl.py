@@ -4,7 +4,7 @@
 """
 Title: pylightxl
 Developed by: pydpiper
-Version: 1.55
+Version: 1.56beta
 License: MIT
 
 Copyright (c) 2019 Viktor Kis
