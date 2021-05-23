@@ -86,15 +86,15 @@ Although every effort was made to support a variety of users, the following limi
 
 #### **Why pylightxl over pandas/openpyxl/xlrd**
 
-- **Zero non-standard library dependencies!** |br|
+- **Zero non-standard library dependencies!** 
 
     - No compatibility/version control issues.
 
-- **Python2.7.18 to Python3+ support for life!** |br|
+- **Python2.7.18 to Python3+ support for life!** 
 
     - Don't worry about which python version you are using, pylightxl will support it for life
 
-- **Light-weight single source code file** |br|
+- **Light-weight single source code file** 
 
     - Want your project remain truly dependent-less? Copy the single source file into your project without any extra
       dependency issues or setup.
