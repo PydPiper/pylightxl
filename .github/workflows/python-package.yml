@@ -9,11 +9,18 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.config.runs-on }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        config:
+          - runs-on: windows-latest
+            arch: x86-windows
+          - runs-on: windows-latest
+            arch: x64-windows
+          - runs-on: ubuntu-latest
+          - runs-on: macos-latest
+        python-version: [2.7, 3.7, 3.8, 3.9]
 
     steps:
       - uses: actions/checkout@v2
