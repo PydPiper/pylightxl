@@ -8,6 +8,7 @@ if sys.version_info[0] == 3:
     from pathlib import Path
 else:
     from pathlib2 import Path
+    ModuleNotFoundError = ImportError
 
 # local lib imports
 try:

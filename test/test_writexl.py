@@ -2,16 +2,18 @@
 from unittest import TestCase
 import os, sys, shutil, io
 
+if sys.version_info[0] >= 3:
+    unicode = str
+    FileNotFoundError = IOError
+    PermissionError = Exception
+else:
+    ModuleNotFoundError = ImportError
+
 try:
     from pylightxl import pylightxl as xl
 except ModuleNotFoundError:
     sys.path.append('..')
     from pylightxl import pylightxl as xl
-
-if sys.version_info[0] >= 3:
-    unicode = str
-    FileNotFoundError = IOError
-    PermissionError = Exception
 
 
 if 'test' in os.listdir('.'):
