@@ -346,7 +346,6 @@ class TestWritexlNew(TestCase):
         xl.writexl(db, 'newopenpyxl.xlsx')
 
 
-
 class TestWritexlExisting(TestCase):
 
     def test_writexl_alt_app_text(self):
@@ -364,6 +363,9 @@ class TestWritexlExisting(TestCase):
 
         if sys.version_info[0] < 3:
             with open('correct_app27.xml', 'r') as f:
+                correct_text = f.read()
+        elif sys.version_info[1] == 7:
+            with open('correct_app37.xml', 'r') as f:
                 correct_text = f.read()
         else:
             with open('correct_app3.xml', 'r') as f:
@@ -388,6 +390,9 @@ class TestWritexlExisting(TestCase):
 
         if sys.version_info[0] < 3:
             with open('correct_app27_withNR.xml', 'r') as f:
+                correct_text = f.read()
+        elif sys.version_info[1] == 7:
+            with open('correct_app37_withNR.xml', 'r') as f:
                 correct_text = f.read()
         else:
             with open('correct_app3_withNR.xml', 'r') as f:
