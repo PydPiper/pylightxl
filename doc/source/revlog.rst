@@ -4,6 +4,7 @@ Revision Log
 pypi version 1.56 (in-work)
 ---------------------------
 - added support for non-standard excel file xml tags, see issue `#44 <https://github.com/PydPiper/pylightxl/issues/44>`_
+- fixed bug on keyrow indexing, see issue `#47 <https://github.com/PydPiper/pylightxl/issues/47>`_
 
 pypi version 1.55
 -----------------
