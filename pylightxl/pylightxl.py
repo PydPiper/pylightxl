@@ -1880,8 +1880,8 @@ class Worksheet():
         if not keyindex > 0 and not keyindex <= self.size[1]:
             raise UserWarning('pylightxl - keyindex ({}) entered must be >0 and <= worksheet size ({}.'.format(keyindex,self.size))
 
-        # find first key match, get its column index and return col list
-        for row_i in range(1, self.size[1] + 1):
+        # find first key match, get its row index and return col list
+        for row_i in range(1, self.size[0] + 1):
             if key == self.index(row_i, keyindex):
                 return self.row(row_i)
         return []
