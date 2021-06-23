@@ -82,6 +82,7 @@ if sys.version_info[0] < 3:
     FileNotFoundError = IOError
     PermissionError = Exception
     WindowsError = Exception
+    FileExistsError = Exception
     import cgi as html
     PYVER = 2
 else:

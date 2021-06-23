@@ -3,6 +3,7 @@
 *.pyc
 __pycache__
 .pytest_cache
+*.mypy_cache
 
 venv
 venv27
@@ -13,7 +14,7 @@ build
 dist
 pylightxl.egg-info
 
-~$testbook.xlsx
+~$*.xlsx
 
 *.coverage
 coverage.xml

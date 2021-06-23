@@ -2,16 +2,18 @@
 from unittest import TestCase
 import os, sys, shutil, io
 
+if sys.version_info[0] >= 3:
+    unicode = str
+    FileNotFoundError = IOError
+    PermissionError = Exception
+else:
+    ModuleNotFoundError = ImportError
+
 try:
     from pylightxl import pylightxl as xl
 except ModuleNotFoundError:
     sys.path.append('..')
     from pylightxl import pylightxl as xl
-
-if sys.version_info[0] >= 3:
-    unicode = str
-    FileNotFoundError = IOError
-    PermissionError = Exception
 
 
 if 'test' in os.listdir('.'):
@@ -344,7 +346,6 @@ class TestWritexlNew(TestCase):
         xl.writexl(db, 'newopenpyxl.xlsx')
 
 
-
 class TestWritexlExisting(TestCase):
 
     def test_writexl_alt_app_text(self):
@@ -362,6 +363,9 @@ class TestWritexlExisting(TestCase):
 
         if sys.version_info[0] < 3:
             with open('correct_app27.xml', 'r') as f:
+                correct_text = f.read()
+        elif sys.version_info[1] == 7:
+            with open('correct_app37.xml', 'r') as f:
                 correct_text = f.read()
         else:
             with open('correct_app3.xml', 'r') as f:
@@ -386,6 +390,9 @@ class TestWritexlExisting(TestCase):
 
         if sys.version_info[0] < 3:
             with open('correct_app27_withNR.xml', 'r') as f:
+                correct_text = f.read()
+        elif sys.version_info[1] == 7:
+            with open('correct_app37_withNR.xml', 'r') as f:
                 correct_text = f.read()
         else:
             with open('correct_app3_withNR.xml', 'r') as f:
