@@ -219,9 +219,6 @@ class TestWritexlNew(TestCase):
         xml_base = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
                    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac xr xr2 xr3" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2" xmlns:xr3="http://schemas.microsoft.com/office/spreadsheetml/2016/revision3" xr:uid="{uid}">\r\n' \
                    '<dimension ref="{sizeAddress}"/>\r\n' \
-                   '<sheetViews>\r\n' \
-                   '<sheetView tabSelected="1" workbookViewId="0"/>\r\n' \
-                   '</sheetViews>\r\n' \
                    '<sheetFormatPr defaultRowHeight="15" x14ac:dyDescent="0.25"/>\r\n' \
                    '<sheetData>\r\n' \
                    '{many_tag_row}\r\n' \
@@ -488,7 +485,7 @@ class TestWriteCSV(TestCase):
         db.add_ws('sh2')
         db.ws('sh1').update_index(1,1, 10)
         db.ws('sh1').update_index(1,2, 10.0)
-        db.ws('sh1').update_index(1,3, '10.0')
+        db.ws('sh1').update_index(1,3, '10.0\n')
         db.ws('sh1').update_index(1,4, True)
         db.ws('sh1').update_index(2,1, 20)
         db.ws('sh1').update_index(2,2, 20.0)

@@ -736,7 +736,7 @@ def writexl_alt_app_text(db, filepath):
     """
 
     # extract text from existing app.xml
-    with open(filepath, 'r') as f:
+    with open(filepath, 'r', encoding='utf-8') as f:
         ns = utility_xml_namespace(f)
     for prefix, uri in ns.items():
         ET.register_namespace(prefix, uri)
@@ -1130,9 +1130,6 @@ def writexl_new_worksheet_text(db, sheet_name):
     xml_base =  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' \
                 '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac xr xr2 xr3" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2" xmlns:xr3="http://schemas.microsoft.com/office/spreadsheetml/2016/revision3" xr:uid="{uid}">\r\n' \
                     '<dimension ref="{sizeAddress}"/>\r\n' \
-                    '<sheetViews>\r\n' \
-                        '<sheetView tabSelected="1" workbookViewId="0"/>\r\n' \
-                    '</sheetViews>\r\n' \
                     '<sheetFormatPr defaultRowHeight="15" x14ac:dyDescent="0.25"/>\r\n' \
                     '<sheetData>\r\n' \
                         '{many_tag_row}\r\n' \
@@ -1337,10 +1334,12 @@ def writecsv(db, fn, ws=(), delimiter=','):
                         row.append(str(val))
 
                     if sys.version_info[0] < 3:
-                        f.write(unicode(delimiter.join(row)))
+                        text = unicode(delimiter.join(row)).replace('\n','')
+                        f.write(text)
                         f.write(unicode('\n'))
                     else:
-                        f.write(delimiter.join(row))
+                        text = delimiter.join(row).replace('\n','')
+                        f.write(text)
                         f.write('\n')
                 # dont close StringIO thats passed in by the user
                 if '_io.StringIO' not in str(type(fn)):
