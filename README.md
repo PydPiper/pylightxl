@@ -127,15 +127,14 @@ and/or download restrictions, see [docs - installation](https://pylightxl.readth
 
 ---
 
-#### **pypi version 1.55**
+#### **pypi version 1.56**
 
-- added comment parsing, see issue [#45](https://github.com/PydPiper/pylightxl/issues/41)
-- DEPRECATION WARNING: all indexing method that use "formula" as an argument will be replaced
-  with "output" in future version. Please update your codebase to use "output" instead of "formula".
-  This was done to simplify indexing the value (``output='v'``), the formula (``output='f'``) or the
-  comment (``output='c'``).
-- added file stream reading for ``readxl`` that now supports ``with block`` for reading. See issue [#25](https://github.com/PydPiper/pylightxl/issues/25)
-  
+- imporvement: added support for non-standard excel file xml tags, see issue `#44 <https://github.com/PydPiper/pylightxl/issues/44>`_
+- bug fix: fixed keyrow bug, see issue `#47 <https://github.com/PydPiper/pylightxl/issues/47>`_
+- bug fix: addressed csv writing issue related to cells that contain '\n' that previous started a new row. New version replaces '\n' with '', see issue `#49 <https://github.com/PydPiper/pylightxl/issues/49>`_
+- bug fix: newly written workbooks written by pylightxl could not create new worksheets within excel after opening. The fix was to removed sheetView xml tag, see issue `#50 <https://github.com/PydPiper/pylightxl/issues/50>`_
+- improvement: added encoding='utf-8' to write altworksheets to support chinese encoding error, see issue `#51 <https://github.com/PydPiper/pylightxl/issues/51>`_
+
 See full history log of revisions: [Here](https://pylightxl.readthedocs.io/en/latest/revlog.html)
 
 ---
