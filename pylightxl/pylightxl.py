@@ -736,8 +736,13 @@ def writexl_alt_app_text(db, filepath):
     """
 
     # extract text from existing app.xml
-    with open(filepath, 'r', encoding='utf-8') as f:
-        ns = utility_xml_namespace(f)
+    if PYVER == 3:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            ns = utility_xml_namespace(f)
+    else:
+        # python2 does not support encoding, io.open does however it is extremely slow. if this creates a reading issue address it then.
+        with open(filepath, 'r') as f:
+            ns = utility_xml_namespace(f)
     for prefix, uri in ns.items():
         ET.register_namespace(prefix, uri)
     tree = ET.parse(filepath)
