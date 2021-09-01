@@ -270,7 +270,7 @@ For new python data that did not come from an existing excel speadsheet.
     # take this list for example as our input data that we want to put in column A
     mydata = [10,20,30,40]
 
-    # create a black db
+    # create a blank db
     db = xl.Database()
 
     # add a blank worksheet to the db
