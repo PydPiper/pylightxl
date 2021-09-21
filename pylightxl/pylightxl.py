@@ -4,7 +4,7 @@
 """
 Title: pylightxl
 Developed by: pydpiper
-Version: 1.56
+Version: 1.57
 License: MIT
 
 Copyright (c) 2019 Viktor Kis
@@ -232,7 +232,7 @@ def readxl_get_workbook(fn):
         except KeyError:
             # the output of openpyxl can sometimes not write the schema for "r" relationship
             rId = tag_sheet.get('id')
-        sheetId = int(rId.replace('rId', ''))
+        sheetId = int(rId.split('rId')[-1])
         wbrels = readxl_get_workbookxmlrels(fn)
         rv['ws'][name] = {'ws': name, 'rId': rId, 'order': sheetId, 'fn_ws': wbrels[rId]}
 
@@ -681,6 +681,10 @@ def writexl_alt_writer(db, path):
         pass
     try:
         os.remove(temp_folder + '/xl/vbaProject.bin')
+    except (FileNotFoundError, WindowsError):
+        pass
+    try:
+        os.remove(temp_folder + '/docProps/custom.xml')
     except (FileNotFoundError, WindowsError):
         pass
 

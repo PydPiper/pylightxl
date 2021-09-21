@@ -129,11 +129,9 @@ and/or download restrictions, see [docs - installation](https://pylightxl.readth
 
 #### **pypi version 1.56**
 
-- imporvement: added support for non-standard excel file xml tags, see issue `#44 <https://github.com/PydPiper/pylightxl/issues/44>`_
-- bug fix: fixed keyrow bug, see issue `#47 <https://github.com/PydPiper/pylightxl/issues/47>`_
-- bug fix: addressed csv writing issue related to cells that contain '\n' that previous started a new row. New version replaces '\n' with '', see issue `#49 <https://github.com/PydPiper/pylightxl/issues/49>`_
-- bug fix: newly written workbooks written by pylightxl could not create new worksheets within excel after opening. The fix was to removed sheetView xml tag, see issue `#50 <https://github.com/PydPiper/pylightxl/issues/50>`_
-- improvement: added encoding='utf-8' to write altworksheets to support chinese encoding error, see issue `#51 <https://github.com/PydPiper/pylightxl/issues/51>`_
+- improvement: added support for non-standard sheet ids (created by 3rd party tools), see issue `#53 <https://github.com/PydPiper/pylightxl/issues/53>`_
+- improvement: added support for writing to existing sheets that contain excel customization, see issue `#54 <https://github.com/PydPiper/pylightxl/issues/54>`_
+
 
 See full history log of revisions: [Here](https://pylightxl.readthedocs.io/en/latest/revlog.html)
 

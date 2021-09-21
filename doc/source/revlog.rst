@@ -1,7 +1,16 @@
 Revision Log
 ============
 
-pypi version 1.56 (in-work)
+pypi version 1.58 (in-work)
+---------------------------
+- targeted speed improvements
+
+pypi version 1.57
+-----------------
+- improvement: added support for non-standard sheet ids (created by 3rd party tools), see issue `#53 <https://github.com/PydPiper/pylightxl/issues/53>`_
+- improvement: added support for writing to existing sheets that contain excel customization, see issue `#54 <https://github.com/PydPiper/pylightxl/issues/54>`_
+
+pypi version 1.56
 ---------------------------
 - imporvement: added support for non-standard excel file xml tags, see issue `#44 <https://github.com/PydPiper/pylightxl/issues/44>`_
 - bug fix: fixed keyrow bug, see issue `#47 <https://github.com/PydPiper/pylightxl/issues/47>`_
