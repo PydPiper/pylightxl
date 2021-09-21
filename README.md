@@ -127,7 +127,7 @@ and/or download restrictions, see [docs - installation](https://pylightxl.readth
 
 ---
 
-#### **pypi version 1.56**
+#### **pypi version 1.57**
 
 - improvement: added support for non-standard sheet ids (created by 3rd party tools), see issue [#53](https://github.com/PydPiper/pylightxl/issues/53)
 - improvement: added support for writing to existing sheets that contain excel customization, see issue [#54](https://github.com/PydPiper/pylightxl/issues/54)
