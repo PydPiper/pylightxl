@@ -1,9 +1,13 @@
 Revision Log
 ============
 
-pypi version 1.58 (in-work)
+pypi version 1.59 (in-work)
 ---------------------------
-- targeted speed improvements
+
+pypi version 1.58
+-----------------
+- improvement: added support for non-standard sheet ids, see issue `#55 <https://github.com/PydPiper/pylightxl/issues/55>`_
+- improvement: added support for general IO file type inputs, see issue `#57 <https://github.com/PydPiper/pylightxl/issues/57>`_
 
 pypi version 1.57
 -----------------

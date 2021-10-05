@@ -158,7 +158,7 @@ def readxl(fn, ws=None):
                 data = readxl_scrape(fn, fn_ws, sharedString, styles, comments)
                 db.add_ws(ws=worksheet, data=data)
 
-    if '.temp_' in fn:
+    if 'pylightxlIOtemp_wb' in fn:
         os.remove(fn)
 
     return db
@@ -179,11 +179,10 @@ def readxl_check_excelfile(fn):
     elif 'path' in dir(fn):
         fn = fn.path
     # test for django stream only file or non-django open file object
-    elif 'name' in dir(fn):
-        io_fn = os.path.split(fn.name)[-1]
-        with open('.temp_' + io_fn, 'wb') as f:
+    elif 'read' in dir(fn):
+        with open('pylightxlIOtemp_wb.xlsx', 'wb') as f:
             f.write(fn.read())
-        fn = '.temp_' + io_fn
+        fn = 'pylightxlIOtemp_wb.xlsx'
 
     if type(fn) is not str:
         raise UserWarning('pylightxl - Incorrect file entry ({}).'.format(fn))

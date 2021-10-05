@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pylightxl", # Replace with your own username
-    version="1.57",
+    version="1.58",
     author="Viktor Kis",
     author_email="realpydpiper@gmail.com",
     license="MIT",

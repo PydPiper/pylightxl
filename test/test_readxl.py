@@ -284,6 +284,10 @@ class TestIntegration(TestCase):
         # reset it so other tests run correctly
         DB.set_emptycell(val='')
 
+    def test_readingfromIO(self):
+        with open('openpyxl.xlsx', 'rb') as f:
+            DB = xl.readxl(f)
+        
 
 class TestDatabase(TestCase):
     db = xl.Database()
