@@ -231,7 +231,7 @@ def readxl_get_workbook(fn):
         except KeyError:
             # the output of openpyxl can sometimes not write the schema for "r" relationship
             rId = tag_sheet.get('id')
-        sheetId = int(rId.split('rId')[-1])
+        sheetId = int(re.sub('[^0-9]', '', rId))
         wbrels = readxl_get_workbookxmlrels(fn)
         rv['ws'][name] = {'ws': name, 'rId': rId, 'order': sheetId, 'fn_ws': wbrels[rId]}
 
