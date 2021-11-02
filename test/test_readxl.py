@@ -33,7 +33,7 @@ class TestReadxl_BadInput(TestCase):
     def test_bad_fn_exist(self):
         with self.assertRaises(UserWarning) as e:
             _ = xl.readxl('bad')
-            self.assertEqual('pylightxl - File ({}) does not exit.'.format('bad'), e)
+            self.assertEqual('pylightxl - File ({}) does not exist.'.format('bad'), e)
 
     def test_bad_fn_ext(self):
         with self.assertRaises(UserWarning) as e:

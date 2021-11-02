@@ -188,7 +188,7 @@ def readxl_check_excelfile(fn):
         raise UserWarning('pylightxl - Incorrect file entry ({}).'.format(fn))
 
     if not os.path.isfile(fn):
-        raise UserWarning('pylightxl - File ({}) does not exit.'.format(fn))
+        raise UserWarning('pylightxl - File ({}) does not exist.'.format(fn))
 
     extension = fn.split('.')[-1]
 
