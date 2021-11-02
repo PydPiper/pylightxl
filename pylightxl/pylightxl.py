@@ -448,9 +448,9 @@ def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
         cell_type = tag_cell.get('t')
         cell_style = int(tag_cell.get('s')) if tag_cell.get('s') is not None else 0
         tag_val = tag_cell.find('./default:v', ns)
-        cell_val = tag_val.text if tag_val is not None else ''
+        cell_val = tag_val.text or '' if tag_val is not None else ''
         tag_formula = tag_cell.find('./default:f', ns)
-        cell_formula = tag_formula.text if tag_formula is not None else ''
+        cell_formula = tag_formula.text or '' if tag_formula is not None else ''
         comment = comments[cell_address] if cell_address in comments.keys() else ''
 
         if all([entry == '' or entry is None for entry in [cell_val, cell_formula, comment]]):

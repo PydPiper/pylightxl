@@ -3,6 +3,7 @@ Revision Log
 
 pypi version 1.59 (in-work)
 ---------------------------
+- bug fix: error in printing formulas that were read in as None type, see issue `#59 <https://github.com/PydPiper/pylightxl/issues/59>`_
 
 pypi version 1.58
 -----------------
