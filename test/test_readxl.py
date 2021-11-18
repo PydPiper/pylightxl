@@ -53,11 +53,11 @@ class TestReadxl_BadInput(TestCase):
                               'File extension supported: .xlsx .xlsm'.format('csv'), e)
 
     def test_bad_readxl_workbook_format(self):
-        with self.assertRaises(UserWarning) as e:
+        msg = ('pylightxl - Ill formatted workbook.xml. '
+               'Skipping NamedRange not containing sheet reference (ex: "Sheet1!A1"): '
+               '{name} - {fulladdress}'.format(name='single_nr', fulladdress='$E$6'))
+        with self.assertWarns(UserWarning, msg=msg):
             _ = xl.readxl_get_workbook('./bad_nr_workbook.zip')
-            self.assertRaises('pylightxl - Ill formatted workbook.xml. '
-                              'NamedRange does not contain sheet reference (ex: "Sheet1!A1"): '
-                              '{name} - {fulladdress}'.format(name='single_nr', fulladdress='$E$6'), e)
 
 
 class TestReadCSV(TestCase):

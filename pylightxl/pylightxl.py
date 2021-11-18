@@ -65,6 +65,7 @@ import re
 import os
 import sys
 import shutil
+import warnings
 from xml.etree import cElementTree as ET
 import time
 from datetime import datetime, timedelta
@@ -242,9 +243,11 @@ def readxl_get_workbook(fn):
         try:
             ws, address = fulladdress.split('!')
         except ValueError:
-            raise UserWarning('pylightxl - Ill formatted workbook.xml. '
-                              'NamedRange does not contain sheet reference (ex: "Sheet1!A1"): '
-                              '{name} - {fulladdress}'.format(name=name, fulladdress=fulladdress))
+            msg = ('pylightxl - Ill formatted workbook.xml. '
+                   'Skpping NamedRange not containing sheet reference (ex: "Sheet1!A1"): '
+                   '{name} - {fulladdress}'.format(name=name, fulladdress=fulladdress))
+            warnings.warn(msg, UserWarning)
+            continue
 
         rv['nr'][name] = {'nr': name, 'ws': ws, 'address': address}
 
