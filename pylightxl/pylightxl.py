@@ -244,7 +244,7 @@ def readxl_get_workbook(fn):
             ws, address = fulladdress.split('!')
         except ValueError:
             msg = ('pylightxl - Ill formatted workbook.xml. '
-                   'Skpping NamedRange not containing sheet reference (ex: "Sheet1!A1"): '
+                   'Skipping NamedRange not containing sheet reference (ex: "Sheet1!A1"): '
                    '{name} - {fulladdress}'.format(name=name, fulladdress=fulladdress))
             warnings.warn(msg, UserWarning)
             continue

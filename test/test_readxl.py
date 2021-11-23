@@ -56,8 +56,10 @@ class TestReadxl_BadInput(TestCase):
         msg = ('pylightxl - Ill formatted workbook.xml. '
                'Skipping NamedRange not containing sheet reference (ex: "Sheet1!A1"): '
                '{name} - {fulladdress}'.format(name='single_nr', fulladdress='$E$6'))
-        with self.assertWarns(UserWarning, msg=msg):
-            _ = xl.readxl_get_workbook('./bad_nr_workbook.zip')
+        if sys.version_info[0] > 2:
+            # assertWarns only available in py 3.2+
+            with self.assertWarns(UserWarning, msg=msg):
+                _ = xl.readxl_get_workbook('./bad_nr_workbook.zip')
 
 
 class TestReadCSV(TestCase):
