@@ -4,7 +4,7 @@
 """
 Title: pylightxl
 Developed by: pydpiper
-Version: 1.58
+Version: 1.59
 License: MIT
 
 Copyright (c) 2019 Viktor Kis
@@ -225,6 +225,7 @@ def readxl_get_workbook(fn):
             tree = ET.parse(file)
             root = tree.getroot()
 
+    wbrels = readxl_get_workbookxmlrels(fn)
     for tag_sheet in root.findall('./default:sheets/default:sheet', ns):
         name = tag_sheet.get('name')
         try:
@@ -233,7 +234,6 @@ def readxl_get_workbook(fn):
             # the output of openpyxl can sometimes not write the schema for "r" relationship
             rId = tag_sheet.get('id')
         sheetId = int(re.sub('[^0-9]', '', rId))
-        wbrels = readxl_get_workbookxmlrels(fn)
         rv['ws'][name] = {'ws': name, 'rId': rId, 'order': sheetId, 'fn_ws': wbrels[rId]}
 
     for tag_sheet in root.findall('./default:definedNames/default:definedName', ns):
@@ -316,7 +316,7 @@ def readxl_get_sharedStrings(fn):
     for i, tag_si in enumerate(root.findall('./default:si', ns)):
         tag_t = tag_si.findall('./default:r//default:t', ns)
         if tag_t:
-            text = ''.join([tag.text for tag in tag_t])
+            text = ''.join([tag.text for tag in tag_t if tag.text])
         else:
             text = tag_si.findall('./default:t', ns)[0].text
         sharedStrings.update({i: text})
@@ -349,9 +349,39 @@ def readxl_get_styles(fn):
             tree = ET.parse(file)
             root = tree.getroot()
 
+    custom_styles = {}
+    try:
+        tag_numFmts = root.findall('./default:numFmts', ns)[0]
+    except IndexError:
+        tag_numFmts = []
+    for tag in tag_numFmts:
+        if any([timetype in tag.get('formatCode') for timetype in [
+            r'm/d/yy\ h:mm'
+            ]]):
+            custom_styles[tag.get('numFmtId')] = '22'
+        elif any([datetype in tag.get('formatCode') for datetype in [
+            r'dddd\,\ mmmm\ dd\,\ yyyy',
+            'm/d',
+            r'yyyy\-mm\-dd',
+            'mm/dd/yy',
+            r'd\-mmm',
+            r'mmm\-yy',
+            r'mmmm\ d\,\ yyyy',
+            'mmmmm',
+            r'd\-mmm\-yyyy',
+            ]]):
+            custom_styles[tag.get('numFmtId')] = '14'
+        elif any([timetype in tag.get('formatCode') for timetype in [
+            'mm:ss',
+            'h:mm'
+            ]]):
+            custom_styles[tag.get('numFmtId')] = '18'
+
+
     for i, tag_cellXfs in enumerate(root.findall('./default:cellXfs', ns)[0]):
         numFmtId = tag_cellXfs.get('numFmtId')
-        styles.update({i: numFmtId})
+        styles.update({i: custom_styles[numFmtId] if numFmtId in custom_styles else numFmtId})
+
 
     return styles
 
@@ -478,6 +508,16 @@ def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
                         cell_val = (EXCEL_STARTDATE + timedelta(days=int(cell_val))).strftime('%Y/%m/%d')
                     else:
                         cell_val = '/'.join((EXCEL_STARTDATE + timedelta(days=int(cell_val))).isoformat().split('T')[0].split('-'))
+                elif styles[cell_style] in ['18', '19', '20', '21']:
+                    partialday = float(cell_val) % 1
+                    if PYVER > 3:
+                        cell_val = (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).strftime('%H:%M:%S')
+                    else:
+                        cell_val = (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).isoformat().split('T')[1]
+                elif styles[cell_style] in ['22']:
+                    partialday = float(cell_val) % 1
+                    cell_val = '/'.join((EXCEL_STARTDATE + timedelta(days=int(cell_val.split('.')[0]))).isoformat().split('T')[0].split('-')) + ' ' + \
+                               (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).isoformat().split('T')[1]
                 else:
                     cell_val = int(cell_val)
             else:
@@ -1460,6 +1500,9 @@ class Database:
         :param str new: new name
         :return: None
         """
+
+        if new == "":
+            raise UserWarning('pylightxl - sheetname should not be set to an empty string, excel will cause a warning when trying to open.')
 
         try:
             self._ws[new] = self._ws[old]

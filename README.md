@@ -127,12 +127,12 @@ and/or download restrictions, see [docs - installation](https://pylightxl.readth
 
 ---
 
-#### **pypi version 1.58**
+#### **pypi version 1.59**
 
-pypi version 1.58
+pypi version 1.59
 -----------------
-- improvement: added support for non-standard sheet ids, see issue [#55](https://github.com/PydPiper/pylightxl/issues/55)
-- improvement: added support for general IO file type inputs, see issue [#57](https://github.com/PydPiper/pylightxl/issues/57)
+- bug fix: error in printing formulas that were read in as None type, see issue `#59 <https://github.com/PydPiper/pylightxl/issues/59>`_
+- bug fix: added custom datetime and time style handling, see issue `#36 <https://github.com/PydPiper/pylightxl/issues/36>`_
 
 
 See full history log of revisions: [Here](https://pylightxl.readthedocs.io/en/latest/revlog.html)
