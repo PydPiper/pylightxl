@@ -1427,7 +1427,7 @@ class Database:
         """
 
         try:
-            return self._ws[ws]
+            return self._ws[ws.strip('\'')]
         except KeyError:
             raise UserWarning('pylightxl - Sheetname ({}) is not in the database'.format(ws))
 
@@ -1581,13 +1581,13 @@ class Database:
 
         return self._NamedRange
 
-    def nr(self, name, formula=False, output='v'):
+    def nr(self, name, formula=False, output='v', address_only=False):
         """
         Returns the contents of a name range in a nest list form [row][col]
 
         :param str name: NamedRange name
         :param bool formula: flag to return the formula of this cell
-        :param str output: output request "v" for value, "f" for formula, "c" for comment
+        :param str output: output request "v" for value, "f" for formula, "c" for comment, "a" for address
         :return list: nest list form [row][col]
         """
 
@@ -1608,7 +1608,31 @@ class Database:
             return [[]]
 
         ws, address = full_address.split('!')
-        return self.ws(ws).range(address, output=output)
+
+        if address_only is True:
+            return ws, address
+        else:
+            return self.ws(ws).range(address, output=output)
+
+    def update_nr(self, name, value):
+        """
+        Update worksheet data via name
+
+        :param str name: excel address (ex: "NameThatExistsInWorksheet")
+        :param int/float/str val: cell value; equations are strings and must begin with "="
+        :return: None
+        """
+
+        ws, address = self.nr(name, address_only=True)
+
+        target_ws = Worksheet()
+        try:
+            target_ws = self.ws(ws)
+        except UserWarning:
+            raise UserWarning ('pylightxl - name={name} not found.'
+                              'Cannot update')
+
+        target_ws.update_address(address, value)
 
 
 class Worksheet():
