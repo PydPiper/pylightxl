@@ -117,7 +117,7 @@ class TestIntegration(TestCase):
         db_ws_names = DB.ws_names
         true_ws_names = ['empty', 'types', 'scatter', 'merged_cells', 'length', 'sheet_not_to_read',
                          'ssd_error1', 'ssd_error2', 'ssd_error3', 'semistrucdata1', 'semistrucdata2']
-        self.assertEqual(true_ws_names, db_ws_names)
+        self.assertEqual(sorted(true_ws_names), sorted(db_ws_names))
 
     def test_SelectedSheetReading(self):
         db = xl.readxl('testbook.xlsx', ('empty', 'types'))
@@ -361,6 +361,14 @@ class TestDatabase(TestCase):
         self.assertEqual({'r2': 'two!A2:A3'}, db.nr_names)
         # call a nr that is not in there
         self.assertEqual([[]], db.nr('not real'))
+
+        # check address
+        self.assertEqual(['two', 'A2:A3'], db.nr_loc('r2'))
+
+        # update nr
+        db.update_nr('r2',10)
+        self.assertEqual([[10],[10]], db.nr('r2'))
+
 
     def test_namedrange_val(self):
         db = xl.Database()

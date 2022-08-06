@@ -91,8 +91,8 @@ class TestWritexlNew(TestCase):
                                                                       vt_size=10,
                                                                       many_tag_vt=many_tag_vt))
 
-        db.add_nr('range1', 'sheet1', 'A1')
-        db.add_nr('range2', 'sheet1', 'A2:A5')
+        db.add_nr('range1', 'Sheet1', 'A1')
+        db.add_nr('range2', 'Sheet1', 'A2:A5')
 
         variant_tag_nr = '<vt:variant><vt:lpstr>Named Ranges</vt:lpstr></vt:variant>\r\n' \
                          '<vt:variant><vt:i4>2</vt:i4></vt:variant>\r\n'

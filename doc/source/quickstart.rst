@@ -116,6 +116,8 @@ Via Cell Range
     # get the range's formulas
     db.ws(ws='Sheet1').range(address='A1:B1', output='f')
     >>> [['=10', '=A1+10']]
+    # update a range with a single value
+    db.ws(ws='Sheet1').update_range(address='A1:B1', val=10)
 
 Get entire row or column
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -180,12 +182,17 @@ Get Named Ranges
 
     # define a named range
     db.add_nr(name='Table1', ws='Sheet1', address='A1:B2')
-    # see all existing named ranges
-    db.nr_names
-    >>> {'Table1': 'Sheet1!A1:B2'}
     # get the contents of a named ranges
     db.nr(name='Table1')
     >>> [[10, 20], ['', 30]]
+    # find the location of a named range
+    db.nr_loc(name='Table1')
+    >>> ['Sheet1','A1:B2']
+    # update the value of a named range
+    db.update_nr(name='Table1', val=10)
+    # see all existing named ranges
+    db.nr_names
+    >>> {'Table1': 'Sheet1!A1:B2'}
     # remove a named range
     db.remove_nr(name='Table1')
 

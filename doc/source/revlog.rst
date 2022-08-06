@@ -1,8 +1,16 @@
 Revision Log
 ============
 
-pypi version 1.59 (in-work)
----------------------------
+pypi version 1.60
+-----------------
+- added feature: ability to update NamedRanges `wb.update_nr(name, val)`, see issue `#72 <https://github.com/PydPiper/pylightxl/issues/72>`_
+- added feature: ability to find where a NamedRange is `wb.nr_loc(name)`
+- added feature: ability to fill a range with a single value: `wb.ws('Sheet1').update_range(address='A1:B3', val=10)`
+- update: NamedRanges now add the worksheets if they are not already in the workbook. Note that using `readxl` with worksheet names specified will also ignore NamedRanges from being read in from the sheet that are not read in.
+- update: updated quickstart docs with the new feature demo scripts
+
+pypi version 1.59
+-----------------
 - bug fix: error in printing formulas that were read in as None type, see issue `#59 <https://github.com/PydPiper/pylightxl/issues/59>`_
 - bug fix: added custom datetime and time style handling, see issue `#36 <https://github.com/PydPiper/pylightxl/issues/36>`_
 

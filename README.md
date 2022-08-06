@@ -99,7 +99,7 @@ Although every effort was made to support a variety of users, the following limi
     - Want your project remain truly dependent-less? Copy the single source file into your project without any extra
       dependency issues or setup.
     - Do you struggle with other libraries weighing your projects down due to their very large size? Pylightxl's
-      single source file size and zero dependency will not weight your project down (preferable for django apps)
+      single source file size and zero dependency will not weigh your project down (preferable for django apps)
     - Do you struggle with ``pyinstaller`` or other ``exe`` wrappers failing to build or building to very large
       packages? Pylightxl will not cause any build errors and will not add to your build size since it has zero
       dependencies and a small lib size.
@@ -127,12 +127,15 @@ and/or download restrictions, see [docs - installation](https://pylightxl.readth
 
 ---
 
-#### **pypi version 1.59**
+#### **pypi version 1.60**
 
-pypi version 1.59
+pypi version 1.60
 -----------------
-- bug fix: error in printing formulas that were read in as None type, see issue `#59 <https://github.com/PydPiper/pylightxl/issues/59>`_
-- bug fix: added custom datetime and time style handling, see issue `#36 <https://github.com/PydPiper/pylightxl/issues/36>`_
+- added feature: ability to update NamedRanges `wb.update_nr(name, val)`, see issue [#72](https://github.com/PydPiper/pylightxl/issues/72)
+- added feature: ability to find where a NamedRange is `wb.nr_loc(name)`
+- added feature: ability to fill a range with a single value: `wb.ws('Sheet1').update_range(address='A1:B3', val=10)`
+- update: NamedRanges now add the worksheets if they are not already in the workbook. Note that using `readxl` with worksheet names specified will also ignore NamedRanges from being read in from the sheet that are not read in.
+- update: updated quickstart docs with the new feature demo scripts
 
 
 See full history log of revisions: [Here](https://pylightxl.readthedocs.io/en/latest/revlog.html)
