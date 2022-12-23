@@ -356,27 +356,23 @@ def readxl_get_styles(fn):
         tag_numFmts = root.findall('./default:numFmts', ns)[0]
     except IndexError:
         tag_numFmts = []
+    num_chars = '0#?'
+    date_chars = 'yd'  # 'm' is ambiguos
+    time_chars = 'hs'
     for tag in tag_numFmts:
-        if any([timetype in tag.get('formatCode') for timetype in [
-            r'm/d/yy\ h:mm'
-            ]]):
+        fc = tag.get('formatCode').lower().split(';')[0]
+        if fc == 'general':
+            continue
+        nnu = sum(fc.count(c) for c in num_chars)
+        ndc = sum(fc.count(c) for c in date_chars)
+        ntc = sum(fc.count(c) for c in time_chars)
+        if nnu > ndc + ntc:
+            pass
+        elif ndc and ntc:
             custom_styles[tag.get('numFmtId')] = '22'
-        elif any([datetype in tag.get('formatCode') for datetype in [
-            r'dddd\,\ mmmm\ dd\,\ yyyy',
-            'm/d',
-            r'yyyy\-mm\-dd',
-            'mm/dd/yy',
-            r'd\-mmm',
-            r'mmm\-yy',
-            r'mmmm\ d\,\ yyyy',
-            'mmmmm',
-            r'd\-mmm\-yyyy',
-            ]]):
+        elif ndc:
             custom_styles[tag.get('numFmtId')] = '14'
-        elif any([timetype in tag.get('formatCode') for timetype in [
-            'mm:ss',
-            'h:mm'
-            ]]):
+        elif ntc:
             custom_styles[tag.get('numFmtId')] = '18'
 
 
@@ -505,36 +501,21 @@ def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
             # int or float
             test_cell = cell_val if '-' not in cell_val else cell_val[1:]
             if test_cell.isdigit():
-                if styles[cell_style] in ['14', '15', '16', '17']:
-                    if PYVER > 3:
-                        cell_val = (EXCEL_STARTDATE + timedelta(days=int(cell_val))).strftime('%Y/%m/%d')
-                    else:
-                        cell_val = '/'.join((EXCEL_STARTDATE + timedelta(days=int(cell_val))).isoformat().split('T')[0].split('-'))
-                elif styles[cell_style] in ['18', '19', '20', '21']:
-                    partialday = float(cell_val) % 1
-                    if PYVER > 3:
-                        cell_val = (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).strftime('%H:%M:%S')
-                    else:
-                        cell_val = (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).isoformat().split('T')[1]
-                elif styles[cell_style] in ['22']:
-                    partialday = float(cell_val) % 1
-                    cell_val = '/'.join((EXCEL_STARTDATE + timedelta(days=int(cell_val.split('.')[0]))).isoformat().split('T')[0].split('-')) + ' ' + \
-                               (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).isoformat().split('T')[1]
-                else:
-                    cell_val = int(cell_val)
+                cell_val = int(cell_val)
             else:
-                if styles[cell_style] in ['18', '19', '20', '21']:
-                    partialday = float(cell_val) % 1
-                    if PYVER > 3:
-                        cell_val = (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).strftime('%H:%M:%S')
-                    else:
-                        cell_val = (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).isoformat().split('T')[1]
-                elif styles[cell_style] in ['22']:
-                    partialday = float(cell_val) % 1
-                    cell_val = '/'.join((EXCEL_STARTDATE + timedelta(days=int(cell_val.split('.')[0]))).isoformat().split('T')[0].split('-')) + ' ' + \
-                               (EXCEL_STARTDATE + timedelta(seconds=partialday * 86400)).isoformat().split('T')[1]
-                else:
-                    cell_val = float(cell_val)
+                cell_val = float(cell_val)
+            st = styles[cell_style]
+            if st in ['14', '15', '16', '17']:
+                dt = EXCEL_STARTDATE + timedelta(cell_val)
+                cell_val = dt.isoformat()[:10].replace('-', '/')
+            elif st in ['18', '19', '20', '21']:
+                partialday = cell_val % 1
+                dt = EXCEL_STARTDATE + timedelta(2, round(partialday * 86400))
+                cell_val = dt.strftime('%H:%M:%S')
+            elif st in ['22']:
+                partialday = cell_val % 1
+                dt = EXCEL_STARTDATE + timedelta(int(cell_val), round(partialday * 86400))
+                cell_val = dt.isoformat().replace('T', ' ').replace('-', '/')
 
         data.update({cell_address: {'v': cell_val, 'f': cell_formula, 's': '', 'c': comment}})
 
