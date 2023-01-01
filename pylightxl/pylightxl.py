@@ -89,7 +89,7 @@ if sys.version_info[0] < 3:
 else:
     unicode = str
     WindowsError = Exception
-    import html, pathlib
+    import html, pathlib, io
     from typing import Union, List, Dict, Iterable
     PYVER = 3
 
@@ -548,10 +548,10 @@ def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
 
 
 def readcsv(fn, delimiter=',', ws='Sheet1'):
-    # type: (Union[str, pathlib.Path], str, str) -> Database
+    # type: (Union[str, pathlib.Path, io.StringIO], str, str) -> Database
     """Reads an xlsx or xlsm file and returns a pylightxl database
 
-    :param fn: _description_
+    :param fn: filename, pathlib, or stringIO object
     :type fn: str
     :param delimiter: csv file delimiter, defaults to ','
     :type delimiter: str, optional
@@ -571,7 +571,12 @@ def readcsv(fn, delimiter=',', ws='Sheet1'):
     # data = {'A1': data1, 'A2': data2...}
     data = {}
 
-    with open(fn, 'r') as f:
+    try:
+        f = fn if 'readline' in dir(fn) else open(fn, 'r')
+    except Exception:
+        f.close()
+        raise Exception
+    else:
         i_row = 0
         while True:
             i_row += 1
@@ -1383,14 +1388,14 @@ def writexl_new_content_types_text(db):
 
 
 def writecsv(db, fn, ws=(), delimiter=','):
-    # type: (Database, Union[str, pathlib.Path], Union[str, tuple], str) -> None
+    # type: (Database, Union[str, pathlib.Path, io.StringIO], Union[str, tuple], str) -> None
     """Writes a csv file from pylightxl database. For db that have more than one sheet, will write out,
     multiple files with the sheetname tagged on the end (ex: "fn_sh2.csv")
 
     :param db: pylightxl Database
     :type db: Database
     :param fn: output file name (without extension; ie. no '.csv')
-    :type fn: Union[str, pathlib.Path]
+    :type fn: Union[str, pathlib.Path, io.StringIO]
     :param ws: sheetname(s) to read into the database, if not specified - all sheets are read, defaults to ()
     :type ws: Union[str, tuple], optional
     :param delimiter: csv delimiter, defaults to ','

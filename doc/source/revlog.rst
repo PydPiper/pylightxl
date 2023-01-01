@@ -1,6 +1,13 @@
 Revision Log
 ============
 
+pypi version 1.61
+-----------------
+- bug-fix: occasionally a `<definedName>` tag would case pylightxl to add duplicate of the same worksheet, see issue `#75 <https://github.com/PydPiper/pylightxl/issues/75>`_
+- update: updated date handling (code cleanup)
+- added feature: added python2 compatible typing to the library
+- added feature: added `io.StringIO` support to `readcsv`
+
 pypi version 1.60
 -----------------
 - added feature: ability to update NamedRanges `wb.update_nr(name, val)`, see issue `#72 <https://github.com/PydPiper/pylightxl/issues/72>`_
