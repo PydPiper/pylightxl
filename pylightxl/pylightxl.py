@@ -4,7 +4,7 @@
 """
 Title: pylightxl
 Developed by: pydpiper
-Version: 1.60
+Version: 1.61
 License: MIT
 
 Copyright (c) 2019 Viktor Kis
@@ -89,22 +89,25 @@ if sys.version_info[0] < 3:
 else:
     unicode = str
     WindowsError = Exception
-    import html
+    import html, pathlib
+    from typing import Union, List, Dict, Iterable
     PYVER = 3
-
 
 ########################################################################################################
 # SEC-03: READXL FUNCTIONS
 ########################################################################################################
 
 def readxl(fn, ws=None):
-    """
-    Reads an xlsx or xlsm file and returns a pylightxl database
+    # type: (Union[str, pathlib.Path], Union[str,List[str]]) -> Database
+    """Reads an xlsx or xlsm file and returns a pylightxl database
 
-    :param str fn: Excel file path, also supports Pathlib.Path object, as well as file-like object from with/open
-    :param str or list ws: sheetnames to read into the database, if not specified - all sheets are read
-                            entry support single ws name (ex: ws='sh1') or multi (ex: ws=['sh1', 'sh2'])
-    :return: pylightxl.Database class
+    :param fn: Excel file path, also supports Pathlib.Path object, as well as file-like object from with/open
+    :type fn: Union[str, pathlib.Path]
+    :param ws: sheetnames to read into the database, if not specified - all sheets are read
+                entry support single ws name (ex: ws='sh1') or multi (ex: ws=['sh1', 'sh2']), defaults to None
+    :type ws: Union[str,List[str]], optional
+    :return: pylightxl Database 
+    :rtype: Database
     """
 
     if type(ws) is str:
@@ -168,11 +171,13 @@ def readxl(fn, ws=None):
 
 
 def readxl_check_excelfile(fn):
-    """
-    Takes a file-path and raises error if the file is not found/unsupported.
+    # type: (Union[str, pathlib.Path]) -> str
+    """Takes a file-path and raises error if the file is not found/unsupported.
 
-    :param str fn: Excel file path, also supports Pathlib.Path object, as well as file-like object from with/open
-    :return str: filename conditioned
+    :param fn: Excel file path, also supports Pathlib.Path object, as well as file-like object from with/open
+    :type fn: Union[str, pathlib.Path]
+    :return: filename
+    :rtype: str
     """
 
     # test for pathlib
@@ -203,12 +208,14 @@ def readxl_check_excelfile(fn):
 
 
 def readxl_get_workbook(fn):
-    """
-    Takes a file-path for xl/workbook.xml and returns a list of sheetnames
+    # type: (str) -> Dict[str, dict]
+    """Takes a file-path for xl/workbook.xml and returns a list of sheetnames
 
-    :param str fn: Excel file path
-    :return dict: {'ws': {ws1: {'ws': str, 'rId': str, 'order': str, 'fn_ws': str}}, ...
-                   'nr': {nr1: {'nr': str, 'ws': str, 'address': str}}, ...}
+    :param fn: Excel file path
+    :type fn: str
+    :return: {'ws': {ws1: {'ws': str, 'rId': str, 'order': str, 'fn_ws': str}}, ...
+                'nr': {nr1: {'nr': str, 'ws': str, 'address': str}}, ...}
+    :rtype: Dict[str, dict]
     """
 
     # {'ws': ws1: {'ws': str, 'rId': str, 'order': str, 'fn_ws': str}, ...
@@ -244,6 +251,8 @@ def readxl_get_workbook(fn):
         fulladdress = tag_sheet.text.replace('$', '')
         try:
             ws, address = fulladdress.split('!')
+            # sometimes definedNames will have extra quate around it, remove these to prevent duplicate ws names
+            ws = ws.replace("'","")
         except ValueError:
             msg = ('pylightxl - Ill formatted workbook.xml. '
                    'Skipping NamedRange not containing sheet reference (ex: "Sheet1!A1"): '
@@ -257,11 +266,13 @@ def readxl_get_workbook(fn):
 
 
 def readxl_get_workbookxmlrels(fn):
-    """
-    Takes a file-path for xl/_rels/workbook.xml.rels file and gets the sheet#.xml to rId relations
+    # type: (str) -> Dict[str, dict]
+    """Takes a file-path for xl/_rels/workbook.xml.rels file and gets the sheet#.xml to rId relations
 
-    :param str fn: Excel file name
-    :return dict: {rId: fn_ws,...}
+    :param fn: Excel file name
+    :type fn: str
+    :return: {rId: fn_ws,...}
+    :rtype: Dict[str, dict]
     """
 
     # {rId: fn_ws,...}
@@ -291,11 +302,13 @@ def readxl_get_workbookxmlrels(fn):
 
 
 def readxl_get_sharedStrings(fn):
-    """
-    Takes a file-path for xl/sharedStrings.xml and returns a dictionary of commonly used strings
+    # type: (str) -> Dict[str, dict]
+    """Takes a file-path for xl/sharedStrings.xml and returns a dictionary of commonly used strings
 
-    :param str fn: Excel file name
+    :param fn: Excel file name
+    :type fn: str
     :return: dict of commonly used strings
+    :rtype: Dict[str, dict]
     """
 
     sharedStrings = {}
@@ -327,11 +340,13 @@ def readxl_get_sharedStrings(fn):
 
 
 def readxl_get_styles(fn):
-    """
-    Takes a file-path for xl/styles.xml and returns a dictionary of commonly used strings
+    # type: (str) -> Dict[int, str]
+    """Takes a file-path for xl/styles.xml and returns a dictionary of cell formatting keys (example for dates)
 
-    :param str fn: Excel file name
-    :return: dict of commonly used strings
+    :param fn: Excel file name
+    :type fn: str
+    :return: dict of cell formatting keys
+    :rtype: Dict[int, str]
     """
 
     styles = {0: '0'}
@@ -380,17 +395,19 @@ def readxl_get_styles(fn):
         numFmtId = tag_cellXfs.get('numFmtId')
         styles.update({i: custom_styles[numFmtId] if numFmtId in custom_styles else numFmtId})
 
-
     return styles
 
 
 def readxl_get_ws_rels(fn, fn_ws):
-    """
-    Takes a file-path for xl/worksheets/sheet#.xml and returns a dict of cell data
+    # type: (str, str) -> Dict[str, str]
+    """Takes a file-path for xl/worksheets/sheet#.xml and returns a dict of cell data (comments)
 
-    :param str fn: Excel file name
-    :param str fn_ws: file path for worksheet (ex: xl/worksheets/sheet1.xml)
-    :return:
+    :param fn: Excel file name
+    :type fn: str
+    :param fn_ws: file path for worksheet (ex: xl/worksheets/sheet1.xml)
+    :type fn_ws: str
+    :return: dict of cell data (comments)
+    :rtype: Dict[str, str]
     """
 
     rv = {}
@@ -446,13 +463,21 @@ def readxl_get_ws_rels(fn, fn_ws):
 
 
 def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
-    """
-    Takes a file-path for xl/worksheets/sheet#.xml and returns a dict of cell data
+    # type: (str, str, dict, dict, dict) -> Dict[str, dict]
+    """Takes a file-path for xl/worksheets/sheet#.xml and returns a dict of cell data
 
-    :param str fn: Excel file name
-    :param str fn_ws: file path for worksheet (ex: xl/worksheets/sheet1.xml)
-    :param dict sharedString: shared string dict lookup table from xl/sharedStrings.xml for string only cell values
-    :return dict: dict of cell data {address: {'v': cell_val, 'f': cell_formula, 's': '', 'c': cell_comment}}
+    :param fn: Excel file name
+    :type fn: str
+    :param fn_ws: file path for worksheet (ex: xl/worksheets/sheet1.xml)
+    :type fn_ws: str
+    :param sharedString: shared string dict lookup table from xl/sharedStrings.xml for string only cell values
+    :type sharedString: dict
+    :param styles: styles dict for date parsing
+    :type styles: dict
+    :param comments: comments dict
+    :type comments: dict
+    :return: dict of cell data {address: {'v': cell_val, 'f': cell_formula, 's': '', 'c': cell_comment}}
+    :rtype: Dict[str, dict]
     """
 
     # {address: {'v': cell_val, 'f': cell_formula, 's': '', 'c': cell_comment}}
@@ -523,13 +548,17 @@ def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
 
 
 def readcsv(fn, delimiter=',', ws='Sheet1'):
-    """
-    Reads an xlsx or xlsm file and returns a pylightxl database
+    # type: (Union[str, pathlib.Path], str, str) -> Database
+    """Reads an xlsx or xlsm file and returns a pylightxl database
 
-    :param str fn: Excel file name
-    :param str delimiter=',': csv file delimiter
-    :param str ws='Sheet1': worksheet name that the csv data will be stored in
-    :return: pylightxl.Database class
+    :param fn: _description_
+    :type fn: str
+    :param delimiter: csv file delimiter, defaults to ','
+    :type delimiter: str, optional
+    :param ws: worksheet name that the csv data will be stored in, defaults to 'Sheet1'
+    :type ws: str, optional
+    :return: pylightxl database
+    :rtype: Database
     """
 
     # declare a db
@@ -583,12 +612,13 @@ def readcsv(fn, delimiter=',', ws='Sheet1'):
 
 
 def writexl(db, fn):
-    """
-    Writes an excel file from pylightxl.Database
+    # type: (Database, Union[str, pathlib.Path]) -> None
+    """Writes an excel file from pylightxl.Database
 
-    :param pylightxl.Database db: database contains sheetnames, and their data
-    :param str/pathlib fn: file output path
-    :return: None
+    :param db: database contains sheetnames, and their data
+    :type db: Database
+    :param fn: file output path
+    :type fn: Union[str, pathlib.path]
     """
 
     # test that file entered was a valid excel file
@@ -615,12 +645,13 @@ def writexl(db, fn):
 
 
 def writexl_alt_writer(db, path):
-    """
-    Writes to an existing excel file. Only injects cell overwrites or new/removed sheets
+    # type: (Database, str) -> None
+    """Writes to an existing excel file. Only injects cell overwrites or new/removed sheets
 
-    :param pylightxl.Database db: database contains sheetnames, and their data
-    :param str path: file output path
-    :return: None
+    :param db: database contains sheetnames, and their data
+    :type db: Database
+    :param path: file output path
+    :type path: str
     """
 
     filename = os.path.split(path)[-1]
@@ -752,16 +783,19 @@ def writexl_alt_writer(db, path):
 
 
 def writexl_alt_app_text(db, filepath):
-    """
-    Takes a docProps/app.xml filepath and returns the updated xml text version of it.
+    # type: (Database, str) -> str
+    """Takes a docProps/app.xml filepath and returns the updated xml text version of it.
     Updates:
         - HeadingPairs/vt:variant/vt:i4 "text" after Worksheets
         - TitlesOfParts/vt:vector named filed "size"
         - TitlesOfParts/vt:vector/vt:lpstr
 
-    :param pylightxl.Database db: pylightxl database that contains data to update xml file
-    :param str filepath: file path for docProps/app.xml
-    :return str: returns the updated xml text
+    :param db: pylightxl database that contains data to update xml file
+    :type db: Database
+    :param filepath: file path for docProps/app.xml
+    :type filepath: str
+    :return: returns the updated xml text
+    :rtype: str
     """
 
     # extract text from existing app.xml
@@ -866,17 +900,20 @@ def writexl_alt_app_text(db, filepath):
 
 
 def writexl_alt_getsheetref(path_wbrels, path_wb):
-    """
-    Takes a file path for '/xl/_rels/workbook.xml.rels' and '/xl/workbook.xml' files
+    # type: (str, str) -> Dict[int, dict]
+    """Takes a file path for '/xl/_rels/workbook.xml.rels' and '/xl/workbook.xml' files
     and returns a dictionary relationship between sheetID, name and xml worksheet file path
         rId: xml's indexing between files (workbook.xml.rels defined rID to xml worksheet file path)
         sheetId: order of worksheet in the workbook as it appears in excel
         name: worksheet name as it appears in excel (user defined name)
         filename: xml worksheet file path
 
-    :param str path_wbrels: file path to '/xl/_rels/workbook.xml.rels'
-    :param str path_wb: file path to '/xl/workbook.xml'
-    :return dict: dictionary of filenames {'rId#': {'name': str, 'filename': str, 'sheetId': int}}
+    :param path_wbrels: file path to '/xl/_rels/workbook.xml.rels'
+    :type path_wbrels: str
+    :param path_wb: file path to '/xl/workbook.xml'
+    :type path_wb: str
+    :return: dictionary of filenames {'rId#': {'name': str, 'filename': str, 'sheetId': int}}
+    :rtype: Dict[int, dict]
     """
 
     sheetref = {}
@@ -914,12 +951,13 @@ def writexl_alt_getsheetref(path_wbrels, path_wb):
 
 
 def writexl_new_writer(db, path):
-    """
-    Writes to a new excel file. The minimum xml parts are zipped together and converted to an .xlsx
+    # type: (Database, str) -> None
+    """Writes to a new excel file. The minimum xml parts are zipped together and converted to an .xlsx
 
-    :param pylightxl.Database db: database contains sheetnames, and their data
-    :param str path: file output path
-    :return: None
+    :param db: database contains sheetnames, and their data
+    :type db: Database
+    :param path: file output path
+    :type path: str
     """
 
     filename = os.path.split(path)[-1]
@@ -958,6 +996,14 @@ def writexl_new_writer(db, path):
 
 
 def writexl_new_rels_text(db):
+    # type: (Database) -> str
+    """Returns text for /_rels/.rels file
+
+    :param db: pylightxl Database
+    :type db: Database
+    :return: text for /_rels/.rels file
+    :rtype: str
+    """
 
     # location: /_rels/.rels
     # inserts: -
@@ -972,11 +1018,13 @@ def writexl_new_rels_text(db):
 
 
 def writexl_new_app_text(db):
-    """
-    Returns /docProps/app.xml text
+    # type: (Database) -> str
+    """Returns /docProps/app.xml text
 
-    :param pylightxl.Database db: database contains sheetnames, and their data
-    :return str: /docProps/app.xml text
+    :param db: database contains sheetnames, and their data
+    :type db: Database
+    :return: /docProps/app.xml text
+    :rtype: str
     """
 
     # location: /docProps/app.xml
@@ -1040,11 +1088,13 @@ def writexl_new_app_text(db):
 
 
 def writexl_new_core_text(db):
-    """
-    Returns /docProps/core.xml text
+    # type: (Database) -> str
+    """Returns /docProps/core.xml text
 
-    :param pylightxl.Database db: database contains sheetnames, and their data
-    :return str: /docProps/core.xml text
+    :param db: database contains sheetnames, and their data
+    :type db: Database
+    :return: /docProps/core.xml text
+    :rtype: str
     """
 
     # location: /docProps/core.xml
@@ -1061,11 +1111,13 @@ def writexl_new_core_text(db):
 
 
 def writexl_new_workbookrels_text(db):
-    """
-    Returns /xl/_rels/workbook.xml.rels text
+    # type: (Database) -> str
+    """Returns /xl/_rels/workbook.xml.rels text
 
-    :param pylightxl.Database db: database contains sheetnames, and their data
-    :return str: /xl/_rels/workbook.xml.rels text
+    :param db: database contains sheetnames, and their data
+    :type db: Database
+    :return: /xl/_rels/workbook.xml.rels text
+    :rtype: str
     """
 
     # location: /xl/_rels/workbook.xml.rels
@@ -1102,11 +1154,13 @@ def writexl_new_workbookrels_text(db):
 
 
 def writexl_new_workbook_text(db):
-    """
-    Returns xl/workbook.xml text
+    # type: (Database) -> str
+    """Returns xl/workbook.xml text
 
-    :param pylightxl.Database db: database contains sheetnames, and their data
-    :return str: xl/workbook.xml text
+    :param db: database contains sheetnames, and their data
+    :type db: Database
+    :return: xl/workbook.xml text
+    :rtype: str
     """
 
     # location: xl/workbook.xml
@@ -1147,11 +1201,15 @@ def writexl_new_workbook_text(db):
 
 
 def writexl_new_worksheet_text(db, sheet_name):
-    """
-    Returns xl/worksheets/sheet#.xml text
+    # type: (Database, str) -> str
+    """Returns xl/worksheets/sheet#.xml text
 
-    :param pylightxl.Database db: database contains sheetnames, and their data
-    :return str: xl/worksheets/sheet#.xml text
+    :param db: database contains sheetnames, and their data
+    :type db: Database
+    :param sheet_name: worksheet name
+    :type sheet_name: str
+    :return: xl/worksheets/sheet#.xml text
+    :rtype: str
     """
 
     # dev note: the reason why db._sharedStrings is defined in here is to take advantage of single time
@@ -1245,11 +1303,13 @@ def writexl_new_worksheet_text(db, sheet_name):
 
 
 def writexl_new_sharedStrings_text(db):
-    """
-    Returns xl/sharedStrings.xml text
+    # type: (Database) -> str
+    """Returns xl/sharedStrings.xml text
 
-    :param pylightxl.Database db: database contains sheetnames, and their data
-    :return str: xl/sharedStrings.xml text
+    :param db: database contains sheetnames, and their data
+    :type db: Database
+    :return: xl/sharedStrings.xml text
+    :rtype: str
     """
 
     # location: xl/sharedStrings.xml
@@ -1279,11 +1339,13 @@ def writexl_new_sharedStrings_text(db):
 
 
 def writexl_new_content_types_text(db):
-    """
-    Returns [Content_Types].xml text
+    # type: (Database) -> str
+    """Returns [Content_Types].xml text
 
-    :param pylightxl.Database db: database contains sheetnames, and their data
-    :return str: [Content_Types].xml text
+    :param db: database contains sheetnames, and their data
+    :type db: Database
+    :return: [Content_Types].xml text
+    :rtype: str
     """
 
     # location: [Content_Types].xml
@@ -1321,15 +1383,18 @@ def writexl_new_content_types_text(db):
 
 
 def writecsv(db, fn, ws=(), delimiter=','):
-    """
-    Writes a csv file from pylightxl database. For db that have more than one sheet, will write out,
+    # type: (Database, Union[str, pathlib.Path], Union[str, tuple], str) -> None
+    """Writes a csv file from pylightxl database. For db that have more than one sheet, will write out,
     multiple files with the sheetname tagged on the end (ex: "fn_sh2.csv")
 
-    :param pylightxl.Database db:
-    :param str/pathlib/io.StringIO fn: output file name (without extension; ie. no '.csv')
-    :param str or tuple ws=(): sheetname(s) to read into the database, if not specified - all sheets are read
-    :param delimiter=',': csv delimiter
-    :return: None
+    :param db: pylightxl Database
+    :type db: Database
+    :param fn: output file name (without extension; ie. no '.csv')
+    :type fn: Union[str, pathlib.Path]
+    :param ws: sheetname(s) to read into the database, if not specified - all sheets are read, defaults to ()
+    :type ws: Union[str, tuple], optional
+    :param delimiter: csv delimiter, defaults to ','
+    :type delimiter: str, optional
     """
 
     # test that file entered was a valid excel file
@@ -1402,11 +1467,13 @@ class Database:
         return 'pylightxl.Database'
 
     def ws(self, ws):
-        """
-        Indexes worksheets within the database
+        # type: (str) -> Worksheet
+        """Indexes worksheets within the database
 
-        :param str ws: worksheet name
+        :param ws: worksheet name
+        :type ws: str
         :return: pylightxl.Database.Worksheet class object
+        :rtype: Worksheet
         """
 
         try:
@@ -1416,10 +1483,11 @@ class Database:
 
     @property
     def ws_names(self):
-        """
-        Returns a list of database stored worksheet names
+        # type: () -> List[str]
+        """Returns a list of database stored worksheet names
 
         :return: list of worksheet names
+        :rtype: List[str]
         """
 
         rv = []
@@ -1430,12 +1498,13 @@ class Database:
         return rv
 
     def add_ws(self, ws, data=None):
-        """
-        Logs worksheet name and its data in the database
+        # type: (str, dict) -> None
+        """Logs worksheet name and its data in the database
 
-        :param str ws: worksheet name
-        :param data: dictionary of worksheet cell values (ex: {'A1': {'v':10,'f':'','s':'', 'c': ''}, 'A2': {'v':20,'f':'','s':'', 'c': ''}})
-        :return: None
+        :param ws: worksheet name
+        :type ws: str
+        :param data: dictionary of worksheet cell values (ex: {'A1': {'v':10,'f':'','s':'', 'c': ''}, 'A2': {'v':20,'f':'','s':'', 'c': ''}}), defaults to None
+        :type data: dict, optional
         """
 
         if data is None:
@@ -1445,11 +1514,11 @@ class Database:
             self._wsorder[len(self._wsorder) + 1] = ws
 
     def remove_ws(self, ws):
-        """
-        Removes a worksheet and its data from the database
+        # type: (str) -> None
+        """Removes a worksheet and its data from the database
 
-        :param str ws: worksheet name
-        :return: None
+        :param ws: worksheet name
+        :type ws: str
         """
 
         try:
@@ -1476,12 +1545,13 @@ class Database:
             pass
 
     def rename_ws(self, old, new):
-        """
-        Renames an existing worksheet. Caution, renaming to an existing new worksheet name will overwrite
+        # type: (str, str) -> None
+        """Renames an existing worksheet. Caution, renaming to an existing new worksheet name will overwrite
 
-        :param str old: old name
-        :param str new: new name
-        :return: None
+        :param old: old name
+        :type old: str
+        :param new: new name
+        :type new: str
         """
 
         if new == "":
@@ -1507,25 +1577,27 @@ class Database:
             pass
 
     def set_emptycell(self, val):
-        """
-        Custom definition for how pylightxl returns an empty cell
+        # type: (Union[str,int,float]) -> None
+        """Custom definition for how pylightxl returns an empty cell
 
         :param val: (default='') empty cell value
-        :return: None
+        :type val: Union[str,int,float]
         """
 
         for ws in self.ws_names:
             self.ws(ws).set_emptycell(val)
 
     def add_nr(self, name, ws, address):
-        """
-        Add a NamedRange to the database. There can not be duplicate name or addresses. A named range
+        # type: (str, str, str) -> None
+        """Add a NamedRange to the database. There can not be duplicate name or addresses. A named range
         that overlaps either the name or address will overwrite the database's existing NamedRange
 
-        :param str name: NamedRange name
-        :param str ws: worksheet name
-        :param str address: range of address (single cell ex: "A1", range ex: "A1:B4")
-        :return: None
+        :param name: NamedRange name
+        :type name: str
+        :param ws: worksheet name
+        :type ws: str
+        :param address: range of address (single cell ex: "A1", range ex: "A1:B4")
+        :type address: str
         """
 
         if ws not in self.ws_names:
@@ -1545,11 +1617,11 @@ class Database:
             self._NamedRange.update({name: full_address})
 
     def remove_nr(self, name):
-        """
-        Removes a Named Range from the database
+        # type: (str) -> None
+        """Removes a Named Range from the database
 
-        :param str name: NamedRange name
-        :return: None
+        :param name: NamedRange name
+        :type name: str
         """
 
         try:
@@ -1559,22 +1631,27 @@ class Database:
 
     @property
     def nr_names(self):
-        """
-        Returns the dictionary of named ranges ex: {unique_name: unique_address, ...}
+        # type: () -> Dict[str, str]
+        """Returns the dictionary of named ranges ex: {unique_name: unique_address, ...}
 
-        :return dict: {unique_name: unique_address, ...}
+        :return: {unique_name: unique_address, ...}
+        :rtype: Dict[str, str]
         """
 
         return self._NamedRange
 
     def nr(self, name, formula=False, output='v'):
-        """
-        Returns the contents of a name range in a nest list form [row][col]
+        # type: (str, bool, str) -> List[list]
+        """Returns the contents of a name range in a nest list form [row][col]
 
-        :param str name: NamedRange name
-        :param bool formula: flag to return the formula of this cell
-        :param str output: output request "v" for value, "f" for formula, "c" for comment
-        :return list: nest list form [row][col]
+        :param name: NamedRange name
+        :type name: str
+        :param formula: flag to return the formula of this cell, defaults to False
+        :type formula: bool, optional
+        :param output: output request "v" for value, "f" for formula, "c" for comment, defaults to 'v'
+        :type output: str, optional
+        :return: nest list form [row][col]
+        :rtype: List[list]
         """
 
         output = output.lower()
@@ -1597,25 +1674,33 @@ class Database:
         return self.ws(ws).range(address, output=output)
 
     def nr_loc(self, name):
+        # type: (str) -> List[str]
         """Returns the worksheet and address loction of a named range
 
-        :param str name: NamedRange name
-        :return list(str,str): [worksheet, address]
+        :param name: NamedRange name
+        :type name: str
+        :return: [worksheet, address]
+        :rtype: List[str]
         """
+
         try:
             full_address = self._NamedRange[name]
         except KeyError:
-            return [[]]
+            return []
 
         ws, address = full_address.split('!')
         return [ws, address]
 
     def update_nr(self, name, val):
+        # type: (str, Union[int,float,str]) -> None
         """Updates a NamedRange with a single value. Raises UserWarning if name not in workbook.
 
-        :param str name: NamedRange name
-        :param int/float/str value: cell value; equations are string and must being with "="
+        :param name: NamedRange name
+        :type name: str
+        :param val: cell value; equations are string and must being with "="
+        :type val: Union[int,float,str]
         """
+
         try:
             full_address = self._NamedRange[name]
         except KeyError:
@@ -1627,10 +1712,11 @@ class Database:
 class Worksheet():
 
     def __init__(self, data=None):
-        """
-        Takes a data dict of worksheet cell data (ex: {'A1': 1})
+        # type: (dict) -> None
+        """Takes a data dict of worksheet cell data (ex: {'A1': 1})
 
-        :param dict data: worksheet cell data (ex: {'A1': 1})
+        :param data: worksheet cell data (ex: {'A1': 1}), defaults to None
+        :type data: dict, optional
         """
         self._data = data if data != None else {}
         self.maxrow = 0
@@ -1667,33 +1753,38 @@ class Worksheet():
             self.maxcol = 0
 
     def set_emptycell(self, val):
-        """
-        Custom definition for how pylightxl returns an empty cell
+        # type: (Union[int, float, str]) -> None
+        """Custom definition for how pylightxl returns an empty cell
 
         :param val: (default='') empty cell value
-        :return: None
+        :type val: Union[int, float, str]
         """
 
         self._emptycell = val
 
     @property
     def size(self):
-        """
-        Returns the size of the worksheet (row/col)
+        # type: () -> List[int]
+        """Returns the size of the worksheet (row/col)
 
         :return: list of [maxrow, maxcol]
+        :rtype: List[int]
         """
 
         return [self.maxrow, self.maxcol]
 
     def address(self, address, formula=False, output='v'):
-        """
-        Takes an excel address and returns the worksheet stored value
+        # type: (str, bool, str) -> Union[int, float, str, bool]
+        """Takes an excel address and returns the worksheet stored value
 
-        :param str address: Excel address (ex: "A1")
-        :param bool formula: flag to return the formula of this cell
-        :param str output: output request "v" for value, "f" for formula, "c" for comment
+        :param address: Excel address (ex: "A1")
+        :type address: str
+        :param formula: flag to return the formula of this cell, defaults to False
+        :type formula: bool, optional
+        :param output: output request "v" for value, "f" for formula, "c" for comment, defaults to 'v'
+        :type output: str, optional
         :return: cell value
+        :rtype: Union[int, float, str, bool]
         """
 
         address = address.replace('$', '')
@@ -1722,13 +1813,17 @@ class Worksheet():
         return rv
 
     def range(self, address, formula=False, output='v'):
-        """
-        Takes a range (ex: "A1:A2") and returns a nested list [row][col]
+        # type: (str, bool, str) -> List[List[Union[int, float, str, bool]]]
+        """Takes a range (ex: "A1:A2") and returns a nested list [row][col]
 
-        :param str address: cell range (ex: "A1:A2", or "A1")
-        :param bool formula: returns the values if false, or formulas if true of cells
-        :param str output: output request "v" for value, "f" for formula, "c" for comment
-        :return list: nested list [row][col] regardless if range is a single cell or a range
+        :param address: cell range (ex: "A1:A2", or "A1")
+        :type address: str
+        :param formula: returns the values if false, or formulas if true of cells, defaults to False
+        :type formula: bool, optional
+        :param output: output request "v" for value, "f" for formula, "c" for comment, defaults to 'v'
+        :type output: str, optional
+        :return: nested list [row][col] regardless if range is a single cell or a range
+        :rtype: _type_
         """
 
         rv = []
@@ -1767,14 +1862,19 @@ class Worksheet():
         return rv
 
     def index(self, row, col, formula=False, output='v'):
-        """
-        Takes an excel row and col starting at index 1 and returns the worksheet stored value
+        # type: (int, int, bool, str) -> Union[int, float, str, bool]
+        """Takes an excel row and col starting at index 1 and returns the worksheet stored value
 
-        :param int row: row index (starting at 1)
-        :param int col: col index (start at 1 that corresponds to column "A")
-        :param bool formula: flag to return the formula of this cell
-        :param str output: output request "v" for value, "f" for formula, "c" for comment
+        :param row: row index (starting at 1)
+        :type row: int
+        :param col: col index (start at 1 that corresponds to column "A")
+        :type col: int
+        :param formula: flag to return the formula of this cell, defaults to False
+        :type formula: bool, optional
+        :param output: output request "v" for value, "f" for formula, "c" for comment, defaults to 'v'
+        :type output: str, optional
         :return: cell value
+        :rtype: Union[int, float, str, bool]
         """
 
         address = utility_index2address(row, col)
@@ -1792,13 +1892,17 @@ class Worksheet():
         return self.address(address, output=output)
 
     def update_index(self, row, col, val):
-        """
-        Update worksheet data via index
+        # type: (int, int, Union[int, float, str, bool]) -> None
+        """Update worksheet data via index
 
-        :param int row: row index
-        :param int col: column index
-        :param int/float/str val: cell value; equations are strings and must begin with "="
+        :param row: row index
+        :type row: int
+        :param col: column index
+        :type col: int
+        :param val: cell value; equations are strings and must begin with "="
+        :type val: Union[int, float, str, bool]
         """
+
         address = utility_index2address(row, col)
         self.maxcol = col if col > self.maxcol else self.maxcol
         self.maxrow = row if row > self.maxrow else self.maxrow
@@ -1810,12 +1914,15 @@ class Worksheet():
             self._data.update({address: {'v': val, 'f': '', 's': ''}})
 
     def update_address(self, address, val):
-        """
-        Update worksheet data via address
+        # type: (str, Union[int, float, str, bool]) -> None
+        """Update worksheet data via address
 
-        :param str address: excel address (ex: "A1")
-        :param int/float/str val: cell value; equations are strings and must begin with "="
+        :param address: excel address (ex: "A1")
+        :type address: str
+        :param val: cell value; equations are strings and must begin with "="
+        :type val: Union[int, float, str, bool]
         """
+
         address = address.replace('$', '')
         row, col = utility_address2index(address)
         self.maxcol = col if col > self.maxcol else self.maxcol
@@ -1828,11 +1935,13 @@ class Worksheet():
             self._data.update({address: {'v': val, 'f': '', 's': ''}})
 
     def update_range(self, address, val):
-        """
-        Update worksheet data via address range with a single value
+        # type: (str, Union[int, float, str, bool]) -> None
+        """Update worksheet data via address range with a single value
 
-        :param str address: excel address (ex: "A1:B3")
-        :param int/float/str val: cell value; equations are strings and must begin with "="
+        :param address: excel address (ex: "A1:B3")
+        :type address: str
+        :param val: cell value; equations are strings and must begin with "="
+        :type val: Union[int, float, str, bool]
         """
 
         if ':' in address:
@@ -1848,13 +1957,17 @@ class Worksheet():
             self.update_address(address, val)
 
     def row(self, row, formula=False, output='v'):
-        """
-        Takes a row index input and returns a list of cell data
+        # type: (int, bool, str) -> List[Union[int, float, str, bool]]
+        """Takes a row index input and returns a list of cell data
 
-        :param int row: row index (starting at 1)
-        :param bool formula: flag to return the formula of this cell
-        :param str output: output request "v" for value, "f" for formula, "c" for comment
+        :param row: row index (starting at 1)
+        :type row: int
+        :param formula: flag to return the formula of this cell, defaults to False
+        :type formula: bool, optional
+        :param output: output request "v" for value, "f" for formula, "c" for comment, defaults to 'v'
+        :type output: str, optional
         :return: list of cell data
+        :rtype: List[Union[int, float, str, bool]]
         """
 
         rv = []
@@ -1876,13 +1989,17 @@ class Worksheet():
         return rv
 
     def col(self, col, formula=False, output='v'):
-        """
-        Takes a col index input and returns a list of cell data
+        # type: (int, bool, str) -> List[Union[int, float, str, bool]]
+        """Takes a col index input and returns a list of cell data
 
-        :param int col: col index (start at 1 that corresponds to column "A")
-        :param bool formula: flag to return the formula of this cell
-        :param str output: output request "v" for value, "f" for formula, "c" for comment
+        :param col: col index (start at 1 that corresponds to column "A")
+        :type col: int
+        :param formula: flag to return the formula of this cell, defaults to False
+        :type formula: bool, optional
+        :param output: output request "v" for value, "f" for formula, "c" for comment, defaults to 'v'
+        :type output: str, optional
         :return: list of cell data
+        :rtype: List[Union[int, float, str, bool]]
         """
 
         rv = []
@@ -1905,10 +2022,11 @@ class Worksheet():
 
     @property
     def rows(self):
-        """
-        Returns a list of rows that can be iterated through
+        # type: () -> Iterable[List[Union[int, float, str, bool]]]
+        """Returns a list of rows that can be iterated through
 
         :return: list of rows-lists (ex: [[11,12,13],[21,22,23]] for 2 rows with 3 columns of data
+        :rtype: Iterable[List[Union[int, float, str, bool]]]
         """
 
         rv = []
@@ -1920,10 +2038,11 @@ class Worksheet():
 
     @property
     def cols(self):
-        """
-        Returns a list of cols that can be iterated through
+        # type: () -> Iterable[List[Union[int, float, str, bool]]]
+        """Returns a list of cols that can be iterated through
 
         :return: list of cols-lists (ex: [[11,21],[12,22],[13,23]] for 2 rows with 3 columns of data
+        :rtype: Iterable[List[Union[int, float, str, bool]]]
         """
 
         rv = []
@@ -1934,13 +2053,16 @@ class Worksheet():
         return iter(rv)
 
     def keycol(self, key, keyindex=1):
-        """
-        Takes a column key value (value of any cell within keyindex row) and returns the entire column,
+        # type: (Union[str,int,float,bool],int) -> List[Union[str,int,float,bool]]
+        """Takes a column key value (value of any cell within keyindex row) and returns the entire column,
         no match returns an empty list
 
-        :param str/int/float key: any cell value within keyindex row (type sensitive)
-        :param int keyindex: option keyrow override. Must be >0 and smaller than worksheet size
-        :return list: list of the entire matched key column data (only first match is returned)
+        :param key: any cell value within keyindex row (type sensitive)
+        :type key: Union[str,int,float,bool]
+        :param keyindex: option keyrow override. Must be >0 and smaller than worksheet size, defaults to 1
+        :type keyindex: int, optional
+        :return: list of the entire matched key column data (only first match is returned)
+        :rtype: List[Union[str,int,float,bool]]
         """
 
         if not keyindex > 0 and not keyindex <= self.size[0]:
@@ -1953,13 +2075,16 @@ class Worksheet():
         return []
 
     def keyrow(self, key, keyindex=1):
-        """
-        Takes a row key value (value of any cell within keyindex col) and returns the entire row,
+        # type: (Union[str,int,float,bool],int) -> List[Union[str,int,float,bool]]
+        """Takes a row key value (value of any cell within keyindex col) and returns the entire row,
         no match returns an empty list
 
-        :param str/int/float key: any cell value within keyindex col (type sensitive)
-        :param int keyrow: option keyrow override. Must be >0 and smaller than worksheet size
-        :return list: list of the entire matched key row data (only first match is returned)
+        :param key: any cell value within keyindex col (type sensitive)
+        :type key: Union[str,int,float,bool]
+        :param keyindex: option keyrow override. Must be >0 and smaller than worksheet size, defaults to 1
+        :type keyindex: int, optional
+        :return: list of the entire matched key row data (only first match is returned)
+        :rtype: List[Union[str,int,float,bool]]
         """
 
         if not keyindex > 0 and not keyindex <= self.size[1]:
@@ -1972,16 +2097,19 @@ class Worksheet():
         return []
 
     def ssd(self, keyrows='KEYROWS', keycols='KEYCOLS'):
-        """
-        Runs through the worksheet and looks for "KEYROWS" and "KEYCOLS" flags in each cell to identify
+        # type: (str, str) -> List[Dict[str,list]]
+        """Runs through the worksheet and looks for "KEYROWS" and "KEYCOLS" flags in each cell to identify
         the start of a semi-structured data. A data table is read until an empty header is
         found by row or column. The search supports multiple tables.
 
-        :param str keyrows: (default='KEYROWS') a flag to indicate the start of keyrow's
-                            cells below are read until an empty cell is reached
-        :param str keycols: (default='KEYCOLS') a flag to indicate the start of keycol's
-                            cells to the right are read until an empty cell is reached
-        :return list: list of data dict in the form of [{'keyrows': [], 'keycols': [], 'data': [[], ...]}, {...},]
+        :param keyrows: a flag to indicate the start of keyrow's
+                            cells below are read until an empty cell is reached, defaults to 'KEYROWS'
+        :type keyrows: str, optional
+        :param keycols: a flag to indicate the start of keycol's
+                            cells to the right are read until an empty cell is reached, defaults to 'KEYCOLS'
+        :type keycols: str, optional
+        :return: list of data dict in the form of [{'keyrows': [], 'keycols': [], 'data': [[], ...]}, {...},]
+        :rtype: List[Dict[str,list]]
         """
 
         # find the index of keyrow(s) and keycol(s) plural if there are multiple datasets - this is a fast loop downselect
@@ -2057,12 +2185,15 @@ class Worksheet():
 
 
 def utility_address2index(address):
-    """
-    Convert excel address to row/col index
+    # type: (str) -> List[int]
+    """Convert excel address to row/col index
 
-    :param str address: Excel address (ex: "A1")
+    :param address: Excel address (ex: "A1")
+    :type address: str
     :return: list of [row, col]
+    :rtype: List[int]
     """
+
     if type(address) is not str:
         raise UserWarning('pylightxl - Address ({}) must be a string.'.format(address))
     if address == '':
@@ -2093,13 +2224,17 @@ def utility_address2index(address):
 
 
 def utility_index2address(row, col):
-    """
-    Converts index row/col to excel address
+    # type: (int, int) -> str
+    """Converts index row/col to excel address
 
-    :param int row: row index (starting at 1)
-    :param int col: col index (start at 1 that corresponds to column "A")
+    :param row: row index (starting at 1)
+    :type row: int
+    :param col: col index (start at 1 that corresponds to column "A")
+    :type col: int
     :return: str excel address
+    :rtype: str
     """
+
     if type(row) is not int and type(row) is not float:
         raise UserWarning('pylightxl - Incorrect row ({}) entry. Row must either be a int or float'.format(row))
     if type(col) is not int and type(col) is not float:
@@ -2114,12 +2249,15 @@ def utility_index2address(row, col):
 
 
 def utility_columnletter2num(text):
-    """
-    Takes excel column header string and returns the equivalent column count
+    # type: (str) -> int
+    """Takes excel column header string and returns the equivalent column count
 
-    :param str text: excel column (ex: 'AAA' will return 703)
+    :param text: excel column (ex: 'AAA' will return 703)
+    :type text: str
     :return: int of column count
+    :rtype: int
     """
+
     letter_pos = len(text) - 1
     val = 0
     try:
@@ -2132,11 +2270,13 @@ def utility_columnletter2num(text):
 
 
 def utility_num2columnletters(num):
-    """
-    Takes a column number and converts it to the equivalent excel column letters
+    # type: (int) -> str
+    """Takes a column number and converts it to the equivalent excel column letters
 
-    :param int num: column number
-    :return str: excel column letters
+    :param num: column number
+    :type num: int
+    :return: excel column letters
+    :rtype: str
     """
 
     def pre_num2alpha(num):
@@ -2156,11 +2296,13 @@ def utility_num2columnletters(num):
 
 
 def utility_xml_namespace(file):
-    """
-    Takes an xml file and returns the root namespace as a dict
+    # type: (str) -> Dict[str, str]
+    """Takes an xml file and returns the root namespace as a dict
 
-    :param str file: xml file path
-    :return dict: dictionary of root namespace
+    :param file: xml file path
+    :type file: str
+    :return: dictionary of root namespace
+    :rtype: Dict[str, str]
     """
 
     events = "start", "start-ns", "end-ns"
