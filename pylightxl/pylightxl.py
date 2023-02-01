@@ -548,18 +548,17 @@ def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
 
         data.update({cell_address: {'v': cell_val, 'f': cell_formula, 's': '', 'c': comment}})
 
-    cell_range_pattern = re.compile(r'([A-Z]+)(\d+):([A-Z]+)\d+')
-
-    if formula_refs:
-        for k, v in formula_refs.items():
-            if ':' not in v:
-                continue
-            formula_template = data[k]['f']
-            start_col, row, end_col = re.match(cell_range_pattern, v).groups()
-            for col_num in range(utility_columnletter2num(start_col)+1, utility_columnletter2num(end_col)):
+    cell_range_pattern = re.compile(r'([A-Z]+)(\d+):([A-Z]+)(\d+)')
+    for k, v in formula_refs.items():
+        if ':' not in v:
+            continue
+        formula_template = data[k]['f']
+        start_col, start_row, end_col, end_row = re.match(cell_range_pattern, v).groups()
+        for col_num in range(utility_columnletter2num(start_col), utility_columnletter2num(end_col) + 1):
+            for row in range(int(start_row), int(end_row) + 1):
                 col = utility_num2columnletters(col_num)
                 if f'{col}{row}' in data:
-                data[f'{col}{row}']['f'] = formula_template.replace(f'{start_col}{row}', f'{col}{row}')
+                    data[f'{col}{row}']['f'] = formula_template.replace(k, f'{col}{row}')
     
     return data
 
