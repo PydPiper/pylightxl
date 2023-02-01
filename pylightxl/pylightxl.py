@@ -1848,7 +1848,7 @@ class Worksheet():
         if ':' in address:
             address_start, address_end = address.split(':')
             # check for entire row/col address
-            if address_start.isnumeric() and address_end.isnumeric():
+            if unicode(address_start).isnumeric() and unicode(address_end).isnumeric():
                 # 1:1 is row 1, 1:3 is rows 1-3
                 row_start, col_start = int(address_start), 1
                 row_end, col_end = int(address_end), MAX_XL_COLS
