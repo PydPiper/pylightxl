@@ -86,7 +86,6 @@ if sys.version_info[0] < 3:
     WindowsError = Exception
     FileExistsError = Exception
     import cgi as html
-    from io import open
     PYVER = 2
 else:
     unicode = str
@@ -690,8 +689,8 @@ def writexl_alt_writer(db, path):
     existing_sheetnames = [d['name'] for d in sheetref.values()]
 
     text = writexl_new_workbook_text(db)
-    with open(temp_folder + '/xl/workbook.xml', 'w', encoding='utf-8') as f:
-        f.write(text)
+    with open(temp_folder + '/xl/workbook.xml', 'wb') as f:
+        f.write(text.encode('utf-8'))
 
     for shID, sheet_name in enumerate(db.ws_names, 1):
         if sheet_name in existing_sheetnames:
@@ -703,31 +702,31 @@ def writexl_alt_writer(db, path):
             # rewrite the sheet as if it was new
             text = writexl_new_worksheet_text(db, sheet_name)
             # feed altered text to new sheet based on db indexing order
-            with open(temp_folder + '/xl/worksheets/sheet{}.xml'.format(shID), 'w', encoding='utf-8') as f:
-                f.write(text)
+            with open(temp_folder + '/xl/worksheets/sheet{}.xml'.format(shID), 'wb') as f:
+                f.write(text.encode('utf-8'))
             # remove temp xml sheet file
             os.remove(temp_folder + '/xl/worksheets/{}'.format(fn))
         else:
             # this sheet is new, create a new sheet
             text = writexl_new_worksheet_text(db, sheet_name)
-            with open(temp_folder + '/xl/worksheets/sheet{shID}.xml'.format(shID=shID), 'w', encoding='utf-8') as f:
-                f.write(text)
+            with open(temp_folder + '/xl/worksheets/sheet{shID}.xml'.format(shID=shID), 'wb') as f:
+                f.write(text.encode('utf-8'))
 
     # this has to come after sheets for db._sharedStrings to be populated
     text = writexl_new_workbookrels_text(db)
-    with open(temp_folder + '/xl/_rels/workbook.xml.rels', 'w', encoding='utf-8') as f:
-        f.write(text)
+    with open(temp_folder + '/xl/_rels/workbook.xml.rels', 'wb') as f:
+        f.write(text.encode('utf-8'))
 
     if os.path.isfile(temp_folder + '/xl/sharedStrings.xml'):
         # sharedStrings is always recreated from db._sharedStrings since all sheets are rewritten
         os.remove(temp_folder + '/xl/sharedStrings.xml')
     text = writexl_new_sharedStrings_text(db)
-    with open(temp_folder + '/xl/sharedStrings.xml', 'w', encoding='utf-8') as f:
-        f.write(text)
+    with open(temp_folder + '/xl/sharedStrings.xml', 'wb') as f:
+        f.write(text.encode('utf-8'))
 
     text = writexl_new_content_types_text(db)
-    with open(temp_folder + '/[Content_Types].xml', 'w', encoding='utf-8') as f:
-        f.write(text)
+    with open(temp_folder + '/[Content_Types].xml', 'wb') as f:
+        f.write(text.encode('utf-8'))
 
     # cleanup files that would cause a "repair" workbook
     try:
