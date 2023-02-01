@@ -669,8 +669,8 @@ def writexl_alt_writer(db, path):
         f.extractall(temp_folder)
 
     text = writexl_alt_app_text(db, temp_folder + '/docProps/app.xml')
-    with open(temp_folder + '/docProps/app.xml', 'w', encoding='utf-8') as f:
-        f.write(text)
+    with open(temp_folder + '/docProps/app.xml', 'wb') as f:
+        f.write(text.encode('utf-8'))
 
 
     # rename sheet#.xml to temp to prevent overwriting
