@@ -483,6 +483,7 @@ def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
 
     # {address: {'v': cell_val, 'f': cell_formula, 's': '', 'c': cell_comment}}
     data = {}
+    formula_refs = {}
 
     # zip up the excel file to expose the xml files
     with zipfile.ZipFile(fn, 'r') as f_zip:
@@ -507,6 +508,8 @@ def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
         tag_val = tag_cell.find('./default:v', ns)
         cell_val = tag_val.text or '' if tag_val is not None else ''
         tag_formula = tag_cell.find('./default:f', ns)
+        if tag_formula is not None and 'ref' in tag_formula.attrib:
+            formula_refs[cell_address] = tag_formula.attrib['ref']
         cell_formula = tag_formula.text or '' if tag_formula is not None else ''
         comment = comments[cell_address] if cell_address in comments.keys() else ''
 
@@ -545,6 +548,19 @@ def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
 
         data.update({cell_address: {'v': cell_val, 'f': cell_formula, 's': '', 'c': comment}})
 
+    cell_range_pattern = re.compile(r'([A-Z]+)(\d+):([A-Z]+)\d+')
+
+    if formula_refs:
+        for k, v in formula_refs.items():
+            if ':' not in v:
+                continue
+            formula_template = data[k]['f']
+            start_col, row, end_col = re.match(cell_range_pattern, v).groups()
+            for col_num in range(utility_columnletter2num(start_col)+1, utility_columnletter2num(end_col)):
+                col = utility_num2columnletters(col_num)
+                if f'{col}{row}' in data:
+                    data[f'{col}{row}']['f'] = formula_template.replace(start_col, col)
+    
     return data
 
 
