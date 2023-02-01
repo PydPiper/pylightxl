@@ -559,7 +559,7 @@ def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
             for col_num in range(utility_columnletter2num(start_col)+1, utility_columnletter2num(end_col)):
                 col = utility_num2columnletters(col_num)
                 if f'{col}{row}' in data:
-                    data[f'{col}{row}']['f'] = formula_template.replace(start_col, col)
+                data[f'{col}{row}']['f'] = formula_template.replace(f'{start_col}{row}', f'{col}{row}')
     
     return data
 
