@@ -669,7 +669,7 @@ def writexl_alt_writer(db, path):
         f.extractall(temp_folder)
 
     text = writexl_alt_app_text(db, temp_folder + '/docProps/app.xml')
-    with open(temp_folder + '/docProps/app.xml', 'w') as f:
+    with open(temp_folder + '/docProps/app.xml', 'w', encoding='utf-8') as f:
         f.write(text)
 
 
@@ -689,7 +689,7 @@ def writexl_alt_writer(db, path):
     existing_sheetnames = [d['name'] for d in sheetref.values()]
 
     text = writexl_new_workbook_text(db)
-    with open(temp_folder + '/xl/workbook.xml', 'w') as f:
+    with open(temp_folder + '/xl/workbook.xml', 'w', encoding='utf-8') as f:
         f.write(text)
 
     for shID, sheet_name in enumerate(db.ws_names, 1):
@@ -702,30 +702,30 @@ def writexl_alt_writer(db, path):
             # rewrite the sheet as if it was new
             text = writexl_new_worksheet_text(db, sheet_name)
             # feed altered text to new sheet based on db indexing order
-            with open(temp_folder + '/xl/worksheets/sheet{}.xml'.format(shID), 'w') as f:
+            with open(temp_folder + '/xl/worksheets/sheet{}.xml'.format(shID), 'w', encoding='utf-8') as f:
                 f.write(text)
             # remove temp xml sheet file
             os.remove(temp_folder + '/xl/worksheets/{}'.format(fn))
         else:
             # this sheet is new, create a new sheet
             text = writexl_new_worksheet_text(db, sheet_name)
-            with open(temp_folder + '/xl/worksheets/sheet{shID}.xml'.format(shID=shID), 'w') as f:
+            with open(temp_folder + '/xl/worksheets/sheet{shID}.xml'.format(shID=shID), 'w', encoding='utf-8') as f:
                 f.write(text)
 
     # this has to come after sheets for db._sharedStrings to be populated
     text = writexl_new_workbookrels_text(db)
-    with open(temp_folder + '/xl/_rels/workbook.xml.rels', 'w') as f:
+    with open(temp_folder + '/xl/_rels/workbook.xml.rels', 'w', encoding='utf-8') as f:
         f.write(text)
 
     if os.path.isfile(temp_folder + '/xl/sharedStrings.xml'):
         # sharedStrings is always recreated from db._sharedStrings since all sheets are rewritten
         os.remove(temp_folder + '/xl/sharedStrings.xml')
     text = writexl_new_sharedStrings_text(db)
-    with open(temp_folder + '/xl/sharedStrings.xml', 'w') as f:
+    with open(temp_folder + '/xl/sharedStrings.xml', 'w', encoding='utf-8') as f:
         f.write(text)
 
     text = writexl_new_content_types_text(db)
-    with open(temp_folder + '/[Content_Types].xml', 'w') as f:
+    with open(temp_folder + '/[Content_Types].xml', 'w', encoding='utf-8') as f:
         f.write(text)
 
     # cleanup files that would cause a "repair" workbook
@@ -779,13 +779,6 @@ def writexl_alt_writer(db, path):
         os.remove(os.path.join(old_dir, filename))
         shutil.move(filename, old_dir)
     os.chdir(exe_dir)
-    # remove temp folder
-    try:
-        shutil.rmtree(temp_folder)
-    except PermissionError:
-        # windows sometimes messes up cleaning this up in python3
-        #os.system(r'rmdir /s /q {}'.format(temp_folder))
-        time.sleep(1)
 
 
 def writexl_alt_app_text(db, filepath):
