@@ -86,6 +86,7 @@ if sys.version_info[0] < 3:
     WindowsError = Exception
     FileExistsError = Exception
     import cgi as html
+    from io import open
     PYVER = 2
 else:
     unicode = str
