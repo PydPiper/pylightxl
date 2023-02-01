@@ -71,7 +71,8 @@ import time
 from datetime import datetime, timedelta
 
 EXCEL_STARTDATE = datetime(1899,12,30)
-
+MAX_XL_ROWS = 1048576
+MAX_XL_COLS = 16384
 
 ########################################################################################################
 # SEC-02: PYTHON2 COMPATIBILITY
@@ -1846,8 +1847,18 @@ class Worksheet():
 
         if ':' in address:
             address_start, address_end = address.split(':')
-            row_start, col_start = utility_address2index(address_start)
-            row_end, col_end = utility_address2index(address_end)
+            # check for entire row/col address
+            if address_start.isnumeric() and address_end.isnumeric():
+                # 1:1 is row 1, 1:3 is rows 1-3
+                row_start, col_start = int(address_start), 1
+                row_end, col_end = int(address_end), MAX_XL_COLS
+            elif address_start.isalpha() and address_end.isalpha():
+                # A:A is col A, A:C is col A-C
+                row_start, col_start = 1, utility_columnletter2num(address_start)
+                row_end, col_end = MAX_XL_ROWS, utility_columnletter2num(address_end)
+            else:
+                row_start, col_start = utility_address2index(address_start)
+                row_end, col_end = utility_address2index(address_end)
 
             # +1 to include the end
             for n_row in range(row_start, row_end + 1):

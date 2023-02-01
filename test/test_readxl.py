@@ -502,6 +502,9 @@ class TestWorksheet(TestCase):
         self.assertEqual([[11, 12, ''], ['', '', 23]], db.ws('sh1').range('A1:C2'))
         self.assertEqual([[12, '', ''], ['', 23, ''], ['', '', '']], db.ws('sh1').range('B1:D3'))
 
+        self.assertEqual([[11, 12] + ['']*(xl.MAX_XL_COLS - 2)], db.ws('sh1').range('1:1'))
+        self.assertEqual([[11]] + [['']]*(xl.MAX_XL_ROWS - 1), db.ws('sh1').range('A:A'))
+
         db.ws('sh1').update_address('A1', '=11')
         db.ws('sh1').update_address('B1', '=12')
         db.ws('sh1').update_address('C2', '=23')
