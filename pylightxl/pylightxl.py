@@ -60,19 +60,27 @@ Code Structure:
 ########################################################################################################
 
 
-import zipfile
-import re
 import os
-import sys
+import re
 import shutil
-import warnings
-from xml.etree import cElementTree as ET
+import sys
 import time
+import warnings
+import zipfile
+from contextlib import contextmanager
 from datetime import datetime, timedelta
+from xml.etree import cElementTree as ET
 
 EXCEL_STARTDATE = datetime(1899,12,30)
 MAX_XL_ROWS = 1048576
 MAX_XL_COLS = 16384
+
+try:
+    from contextlib import nullcontext
+except ImportError:
+    @contextmanager  # backwards compatibility
+    def nullcontext(item):
+        yield item
 
 ########################################################################################################
 # SEC-02: PYTHON2 COMPATIBILITY
@@ -98,10 +106,12 @@ else:
 # SEC-03: READXL FUNCTIONS
 ########################################################################################################
 
-def readxl(fn, ws=None):
-    # type: (Union[str, pathlib.Path], Union[str,List[str]]) -> Database
+
+def readxl(fn, ws=None, infer_types=True):
+    # type: (Union[str, pathlib.Path], Union[str,List[str]], bool) -> Database
     """Reads an xlsx or xlsm file and returns a pylightxl database
 
+    :param infer_types: automatically cast types
     :param fn: Excel file path, also supports Pathlib.Path object, as well as file-like object from with/open
     :type fn: Union[str, pathlib.Path]
     :param ws: sheetnames to read into the database, if not specified - all sheets are read
@@ -149,7 +159,7 @@ def readxl(fn, ws=None):
             worksheet = ordered_ws[order]
             fn_ws = wb_rels['ws'][worksheet]['fn_ws']
             comments = readxl_get_ws_rels(fn, fn_ws)
-            data = readxl_scrape(fn, fn_ws, sharedString, styles, comments)
+            data = readxl_scrape(fn, fn_ws, sharedString, styles, comments, infer_types)
             db.add_ws(ws=worksheet, data=data)
     else:
         # get only user specified worksheets
@@ -162,7 +172,7 @@ def readxl(fn, ws=None):
             if worksheet in ws:
                 fn_ws = wb_rels['ws'][worksheet]['fn_ws']
                 comments = readxl_get_ws_rels(fn, fn_ws)
-                data = readxl_scrape(fn, fn_ws, sharedString, styles, comments)
+                data = readxl_scrape(fn, fn_ws, sharedString, styles, comments, infer_types)
                 db.add_ws(ws=worksheet, data=data)
 
     if 'pylightxlIOtemp_wb' in fn:
@@ -421,15 +431,7 @@ def readxl_get_ws_rels(fn, fn_ws):
 
         if 'xl/' + fn_wsrels not in f_zip.NameToInfo.keys():
             return rv
-
-        with f_zip.open('xl/' + fn_wsrels, 'r') as file:
-            ns = utility_xml_namespace(file)
-            for prefix, uri in ns.items():
-                ET.register_namespace(prefix, uri)
-
-        with f_zip.open('xl/' + fn_wsrels, 'r') as file:
-            tree = ET.parse(file)
-            root = tree.getroot()
+        root, ns = xml_from_excel(fn_wsrels, f_zip=f_zip)
 
     comment_fn = ''
     for tag_rel in root.findall('./default:Relationship', ns):
@@ -439,16 +441,7 @@ def readxl_get_ws_rels(fn, fn_ws):
 
     if comment_fn:
         # zip up the excel file to expose the xml files
-        with zipfile.ZipFile(fn, 'r') as f_zip:
-
-            with f_zip.open('xl/' + comment_fn, 'r') as file:
-                ns = utility_xml_namespace(file)
-                for prefix, uri in ns.items():
-                    ET.register_namespace(prefix, uri)
-
-            with f_zip.open('xl/' + comment_fn, 'r') as file:
-                tree = ET.parse(file)
-                root = tree.getroot()
+        root, ns = xml_from_excel(comment_fn, fn=fn)
 
         for tag_comment in root.findall('./default:commentList/default:comment', ns):
             celladdress = tag_comment.get('ref')
@@ -463,16 +456,69 @@ def readxl_get_ws_rels(fn, fn_ws):
     return rv
 
 
-def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
-    # type: (str, str, dict, dict, dict) -> Dict[str, dict]
+def infer_cell_val(cell_type, cell_val, cell_formula, comment, styles, cell_style, shared_string):
+    if all([entry == '' or entry is None for entry in [cell_val, cell_formula, comment]]):
+        # this is a style only entry, currently we don't parse style therefore this data would unnecessarily store
+        return cell_val
+
+    if cell_type == 's':
+        # commonString
+        cell_val = shared_string[int(cell_val)]
+    elif cell_type == 'b':
+        # bool
+        cell_val = True if cell_val == '1' else False
+    elif cell_val == '' or cell_type == 'str' or cell_type == 'e':
+        # cell is either empty, or is a str formula - leave cell_val as a string
+        pass
+    else:
+        # int or float
+        test_cell = cell_val if '-' not in cell_val else cell_val[1:]
+        if test_cell.isdigit():
+            cell_val = int(cell_val)
+        else:
+            cell_val = float(cell_val)
+        st = styles[cell_style]
+        if st in ['14', '15', '16', '17']:
+            dt = EXCEL_STARTDATE + timedelta(cell_val)
+            cell_val = dt.isoformat()[:10].replace('-', '/')
+        elif st in ['18', '19', '20', '21']:
+            partial_day = cell_val % 1
+            dt = EXCEL_STARTDATE + timedelta(2, round(partial_day * 86400))
+            cell_val = dt.strftime('%H:%M:%S')
+        elif st in ['22']:
+            partial_day = cell_val % 1
+            dt = EXCEL_STARTDATE + timedelta(int(cell_val), round(partial_day * 86400))
+            cell_val = dt.isoformat().replace('T', ' ').replace('-', '/')
+    return cell_val
+
+
+def xml_from_excel(fn_ws, *, fn=None, f_zip=None):
+    if sum(1 for x in (fn, f_zip) if x is not None) in [0, 2]:
+        raise ValueError("You should provide `fn` or `f_zip` arguments (they're mutually exclusive)")
+    context = nullcontext(f_zip) if f_zip is not None else zipfile.ZipFile(fn, 'r')
+    with context as f_zip:
+        with f_zip.open('xl/' + fn_ws, 'r') as file:
+            ns = utility_xml_namespace(file)
+            for prefix, uri in ns.items():
+                ET.register_namespace(prefix, uri)
+
+        with f_zip.open('xl/' + fn_ws, 'r') as file:
+            tree = ET.parse(file)
+            root = tree.getroot()
+    return root, ns
+
+
+def readxl_scrape(fn, fn_ws, shared_string, styles, comments, infer_types):
+    # type: (str, str, dict, dict, dict, bool) -> Dict[str, dict]
     """Takes a file-path for xl/worksheets/sheet#.xml and returns a dict of cell data
 
+    :param infer_types: automatically cast cell type
     :param fn: Excel file name
     :type fn: str
     :param fn_ws: file path for worksheet (ex: xl/worksheets/sheet1.xml)
     :type fn_ws: str
-    :param sharedString: shared string dict lookup table from xl/sharedStrings.xml for string only cell values
-    :type sharedString: dict
+    :param shared_string: shared string dict lookup table from xl/sharedStrings.xml for string only cell values
+    :type shared_string: dict
     :param styles: styles dict for date parsing
     :type styles: dict
     :param comments: comments dict
@@ -485,18 +531,9 @@ def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
     data = {}
 
     # zip up the excel file to expose the xml files
-    with zipfile.ZipFile(fn, 'r') as f_zip:
+    xml_root, ns = xml_from_excel(fn_ws, fn=fn)
 
-        with f_zip.open('xl/' + fn_ws, 'r') as file:
-            ns = utility_xml_namespace(file)
-            for prefix, uri in ns.items():
-                ET.register_namespace(prefix, uri)
-
-        with f_zip.open('xl/' + fn_ws, 'r') as file:
-            tree = ET.parse(file)
-            root = tree.getroot()
-
-    for tag_cell in root.findall('./default:sheetData/default:row/default:c', ns):
+    for tag_cell in xml_root.findall('./default:sheetData/default:row/default:c', ns):
         cell_address = tag_cell.get('r')
         # t="e" is for error cells "#N/A"
         # t="s" is for common strings
@@ -509,39 +546,16 @@ def readxl_scrape(fn, fn_ws, sharedString, styles, comments):
         tag_formula = tag_cell.find('./default:f', ns)
         cell_formula = tag_formula.text or '' if tag_formula is not None else ''
         comment = comments[cell_address] if cell_address in comments.keys() else ''
-
-        if all([entry == '' or entry is None for entry in [cell_val, cell_formula, comment]]):
-            # this is a style only entry, currently we dont parse style therefore this data would unnecessarily stored
-            continue
-
-        if cell_type == 's':
-            # commonString
-            cell_val = sharedString[int(cell_val)]
-        elif cell_type == 'b':
-            # bool
-            cell_val = True if cell_val == '1' else False
-        elif cell_val == '' or cell_type == 'str' or cell_type == 'e':
-            # cell is either empty, or is a str formula - leave cell_val as a string
-            pass
-        else:
-            # int or float
-            test_cell = cell_val if '-' not in cell_val else cell_val[1:]
-            if test_cell.isdigit():
-                cell_val = int(cell_val)
-            else:
-                cell_val = float(cell_val)
-            st = styles[cell_style]
-            if st in ['14', '15', '16', '17']:
-                dt = EXCEL_STARTDATE + timedelta(cell_val)
-                cell_val = dt.isoformat()[:10].replace('-', '/')
-            elif st in ['18', '19', '20', '21']:
-                partialday = cell_val % 1
-                dt = EXCEL_STARTDATE + timedelta(2, round(partialday * 86400))
-                cell_val = dt.strftime('%H:%M:%S')
-            elif st in ['22']:
-                partialday = cell_val % 1
-                dt = EXCEL_STARTDATE + timedelta(int(cell_val), round(partialday * 86400))
-                cell_val = dt.isoformat().replace('T', ' ').replace('-', '/')
+        if infer_types:
+            cell_val = infer_cell_val(
+                cell_type,
+                cell_val,
+                cell_formula,
+                comment,
+                styles,
+                cell_style,
+                shared_string
+            )
 
         data.update({cell_address: {'v': cell_val, 'f': cell_formula, 's': '', 'c': comment}})
 
