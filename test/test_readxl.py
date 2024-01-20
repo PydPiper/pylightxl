@@ -261,6 +261,7 @@ class TestIntegration(TestCase):
         table3 = DB.ws('semistrucdata1').ssd()[2]
 
         table4 = DB.ws('semistrucdata1').ssd(keyrows='myrows', keycols='mycols')[0]
+        table5 = DB.ws('semistrucdata1').ssd(keyrows='KEY1ROWS', keycols='KEY1COLS')[0]
 
         self.assertEqual({'keyrows': ['r1', 'r2', 'r3'], 'keycols': ['c1', 'c2'],
                           'data': [[11, 12], [21, 22], [31, 32]]}, table1)
@@ -271,6 +272,9 @@ class TestIntegration(TestCase):
 
         self.assertEqual({'keyrows': ['rrrr1'], 'keycols': ['cccc1', 'cccc2', 'cccc3'],
                           'data': [['one', 'two', 'three']]}, table4)
+
+        self.assertEqual(len(table5['keyrows']), 8)
+        self.assertEqual(len(table5['keycols']), 51)
 
         with self.assertRaises(UserWarning) as e:
             _ = DB.ws('semistrucdata2').ssd()

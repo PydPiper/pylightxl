@@ -2174,7 +2174,7 @@ class Worksheet():
             try:
                 end_row_index = kc_header.index('')
             except ValueError:
-                end_row_index = self.maxrow - kc_indexID[c]
+                end_row_index = self.maxcol - kc_indexID[c]
             kc_end = end_row_index
 
             # truncate headers down
